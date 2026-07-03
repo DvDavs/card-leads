@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+import { ingest } from "./stages/ingest.js";
+import { buildLinktree } from "./stages/build-linktree.js";
+import { extract } from "./stages/extract.js";
+import { buildWeb } from "./stages/build-web.js";
+import { deploy } from "./stages/deploy.js";
+import { proposal } from "./stages/proposal.js";
+import { pkg } from "./stages/package.js";
+
+type Flags = Record<string, string | boolean>;
+
+interface ParsedArgs {
+  positionals: string[];
+  flags: Flags;
+}
+
+/** Parser minimo: separa positionals de --flag / --flag=valor / --flag (boolean). */
+function parseArgs(argv: string[]): ParsedArgs {
+  const positionals: string[] = [];
+  const flags: Flags = {};
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]!;
+    if (a.startsWith("--")) {
+      const eq = a.indexOf("=");
+      if (eq > -1) {
+        flags[a.slice(2, eq)] = a.slice(eq + 1);
+      } else {
+        const key = a.slice(2);
+        const next = argv[i + 1];
+        if (next !== undefined && !next.startsWith("--")) {
+          flags[key] = next;
+          i++;
+        } else {
+          flags[key] = true;
+        }
+      }
+    } else {
+      positionals.push(a);
+    }
+  }
+  return { positionals, flags };
+}
+
+function asString(v: string | boolean | undefined): string | undefined {
+  return typeof v === "string" ? v : undefined;
+}
+
+const USAGE = `card-leads — pipeline tarjeta -> linktree + web
+
+Uso:
+  cli ingest <front> [back] [--slug s] [--rubro r] [--channel c] [--force]
+  cli build-linktree <slug>
+  cli extract <slug>          (stub)
+  cli build-web <slug>        (stub)
+  cli deploy <slug>           (stub)
+  cli proposal <slug>         (stub)
+  cli package <slug>          (stub)
+
+Rubros: doctor, barberia, estetica, veterinario, nutriologo, otro
+`;
+
+async function main(): Promise<void> {
+  const [cmd, ...rest] = process.argv.slice(2);
+  const { positionals, flags } = parseArgs(rest);
+
+  switch (cmd) {
+    case "ingest": {
+      const lead = await ingest({
+        front: positionals[0]!,
+        back: positionals[1],
+        slug: asString(flags.slug),
+        rubro: asString(flags.rubro),
+        channel: asString(flags.channel),
+        force: flags.force === true || flags.force === "true",
+      });
+      console.log(`ingested: ${lead.slug} (rubro=${lead.rubro}, status=${lead.status})`);
+      if (lead.meta.needs.length) {
+        console.log("  pendiente:");
+        for (const n of lead.meta.needs) console.log(`   - ${n}`);
+      }
+      break;
+    }
+
+    case "build-linktree": {
+      const out = await buildLinktree(positionals[0]!);
+      console.log(`linktree escrito: ${out}`);
+      break;
+    }
+
+    case "extract":
+      await extract(positionals[0]!);
+      break;
+    case "build-web":
+      await buildWeb(positionals[0]!);
+      break;
+    case "deploy":
+      await deploy(positionals[0]!);
+      break;
+    case "proposal":
+      await proposal(positionals[0]!);
+      break;
+    case "package":
+      await pkg(positionals[0]!);
+      break;
+
+    case undefined:
+    case "help":
+    case "--help":
+    case "-h":
+      console.log(USAGE);
+      break;
+
+    default:
+      console.error(`Comando desconocido: "${cmd}"\n`);
+      console.error(USAGE);
+      process.exitCode = 1;
+  }
+}
+
+main().catch((err: unknown) => {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exitCode = 1;
+});

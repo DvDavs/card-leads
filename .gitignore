@@ -1,0 +1,16 @@
+# third-party lead data — never commit
+leads/
+
+# deps
+node_modules/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# build / cache
+dist/
+coverage/
+*.log
+.DS_Store

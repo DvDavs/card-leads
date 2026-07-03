@@ -1,0 +1,27 @@
+{
+  "name": "card-leads",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CLI pipeline: business card photos -> linktree + web.",
+  "bin": {
+    "card-leads": "src/cli.ts"
+  },
+  "scripts": {
+    "cli": "tsx src/cli.ts",
+    "ingest": "tsx src/cli.ts ingest",
+    "build-linktree": "tsx src/cli.ts build-linktree",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  }
+}
