@@ -80,6 +80,14 @@ export function geminiProvider(): VisionProvider {
       if (topP !== undefined) generationConfig.topP = topP;
       if (topK !== undefined) generationConfig.topK = topK;
 
+      // gemini-2.5-* son modelos de "thinking": por default gastan tokens de
+      // salida razonando ANTES de escribir, lo que con un maxOutputTokens chico
+      // corta el JSON a la mitad. La extraccion no necesita razonar, asi que el
+      // thinking se DESACTIVA (thinkingBudget: 0). Overridable por env si hiciera
+      // falta en un modelo que exige thinking.
+      const thinkingBudget = numEnv("GEMINI_THINKING_BUDGET") ?? 0;
+      generationConfig.thinkingConfig = { thinkingBudget };
+
       const url = `${API_BASE}/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: "POST",
@@ -95,18 +103,30 @@ export function geminiProvider(): VisionProvider {
       }
 
       const body = (await res.json()) as GeminiResponse;
+      const finishReason = body.candidates?.[0]?.finishReason;
       const text =
         body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
 
       if (!text.trim()) {
         // sin texto: bloqueo por seguridad o corte por tokens. No lanza: es un
         // fallo de extraccion, va a meta.errors como cualquier respuesta invalida.
-        const reason =
-          body.candidates?.[0]?.finishReason ?? body.promptFeedback?.blockReason ?? "sin texto";
+        const reason = finishReason ?? body.promptFeedback?.blockReason ?? "sin texto";
         return {
           ok: false,
           error: `gemini no devolvio texto (${reason})`,
           raw: JSON.stringify(body).slice(0, 300),
+        };
+      }
+
+      // Con texto PERO cortado por limite de tokens: el JSON queda incompleto y
+      // parsear daria el error generico "no es JSON valido". Damos uno accionable.
+      if (finishReason === "MAX_TOKENS") {
+        return {
+          ok: false,
+          error:
+            "gemini corto la respuesta por limite de tokens (MAX_TOKENS): el JSON quedo incompleto. " +
+            "Subi GEMINI_MAX_TOKENS (p.ej. 2048) y/o dejá GEMINI_THINKING_BUDGET=0 en tu .env.",
+          raw: text.slice(0, 300),
         };
       }
 
