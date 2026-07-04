@@ -19,7 +19,7 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
   },
   "rubro": "doctor" | "barberia" | "estetica" | "veterinario" | "nutriologo" | "otro" | null,
   "contact": {
-    "phone": string | null,
+    "phones": string[],
     "whatsapp": string | null,
     "email": string | null,
     "address": string | null,
@@ -44,6 +44,9 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
 - PROHIBIDO inventar. Si un dato no esta visible en la tarjeta, va `null`. No lo
   deduzcas por contexto, no lo completes con conocimiento general, no adivines.
 - Transcribe textual: nombres, telefonos, correos y direcciones tal como se leen.
+- `phones`: LISTA de telefonos. Si la tarjeta muestra varios numeros, ponelos
+  todos como elementos separados del array (uno por numero, NO los juntes en un
+  solo string). Si no hay ninguno, devuelve `[]`. No inventes numeros.
 - `whatsapp`: si hay un numero marcado como WhatsApp, normalizalo a formato E.164
   (ej. `+521234567890`) solo si el codigo de pais es claro; si no, dejalo como se ve.
 - `rubro`: elige el que mejor describe el negocio SEGUN lo que ves. Si no queda

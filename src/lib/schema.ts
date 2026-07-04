@@ -32,6 +32,41 @@ export type Status = z.infer<typeof StatusSchema>;
 export const ChannelSchema = z.enum(["telegram", "manual"]);
 export type Channel = z.infer<typeof ChannelSchema>;
 
+/**
+ * migrateContact — MIGRACION en carga: los data.json viejos guardaban un solo
+ * `contact.phone` (string). Ahora un consultorio puede tener varios telefonos,
+ * asi que el campo es `contact.phones` (string[]). Este preprocess convierte el
+ * legacy `phone` en `phones` ANTES de validar, para que ningun lead existente
+ * reviente al leerse. Es idempotente: si ya hay `phones`, no toca nada.
+ *
+ * Ademas SEPARA por coma: en pruebas reales el modelo viejo metio varios numeros
+ * en un solo string ("num1, num2, num3"), lo que romperia los botones tel:/wa.me.
+ * Un numero de telefono no lleva comas legitimas, asi que dividir por coma es
+ * seguro y deja la lista limpia sin intervencion humana.
+ */
+function migrateContact(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const c = raw as Record<string, unknown>;
+  if (c.phones !== undefined || c.phone === undefined) return raw;
+  const { phone, ...rest } = c;
+  const phones =
+    typeof phone === "string" ? phone.split(",").map((p) => p.trim()).filter(Boolean) : [];
+  return phones.length ? { ...rest, phones } : rest;
+}
+
+export const ContactSchema = z.preprocess(
+  migrateContact,
+  z.object({
+    // varios telefonos: un consultorio puede listar mas de uno (llamada / wa.me
+    // se arman por cada numero en build-linktree).
+    phones: z.array(z.string()).optional(),
+    whatsapp: z.string().optional(), // WhatsApp es UNO solo; normalizado a E.164 si se puede
+    email: z.string().optional(),
+    address: z.string().optional(),
+    website: z.string().optional(),
+  }),
+);
+
 export const LeadSchema = z.object({
   slug: z.string().min(1), // llave. ej "dr-perez-cardiologo"
   status: StatusSchema,
@@ -53,13 +88,7 @@ export const LeadSchema = z.object({
     attrs: z.record(z.string()), // atributos libres por rubro
   }),
 
-  contact: z.object({
-    phone: z.string().optional(),
-    whatsapp: z.string().optional(), // normalizado a E.164 si se puede
-    email: z.string().optional(),
-    address: z.string().optional(),
-    website: z.string().optional(),
-  }),
+  contact: ContactSchema,
 
   socials: z.object({
     facebook: z.string().optional(),

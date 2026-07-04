@@ -30,8 +30,8 @@ export const ExtractionSchema = z.object({
   rubro: RubroSchema.nullish(),
   contact: z
     .object({
-      phone: str,
-      whatsapp: str,
+      phones: z.array(z.string()).nullish(), // varios telefonos posibles
+      whatsapp: str, // WhatsApp es uno solo
       email: str,
       address: str,
       website: str,

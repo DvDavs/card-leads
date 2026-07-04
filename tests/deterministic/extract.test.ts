@@ -36,7 +36,7 @@ const SAMPLE = {
   business: { name: "Barberia El Corte", person_name: "Juan Perez", tagline: "Estilo clasico" },
   rubro: "barberia",
   contact: {
-    phone: "55 1234 5678",
+    phones: ["55 1234 5678"],
     whatsapp: "+525512345678",
     email: "hola@elcorte.mx",
     address: "Av. Reforma 123, CDMX",
@@ -106,7 +106,7 @@ describe("applyExtraction", () => {
     expect(lead.business.name).toBe("Barberia El Corte");
     expect(lead.business.person_name).toBe("Juan Perez");
     expect(lead.business.tagline).toBe("Estilo clasico");
-    expect(lead.contact.phone).toBe("55 1234 5678");
+    expect(lead.contact.phones).toEqual(["55 1234 5678"]);
     expect(lead.contact.whatsapp).toBe("+525512345678");
     expect(lead.contact.email).toBe("hola@elcorte.mx");
     expect(lead.socials.instagram).toBe("https://instagram.com/elcorte");
@@ -130,9 +130,17 @@ describe("applyExtraction", () => {
   });
 
   it("no pisa un dato existente cuando el modelo manda null", () => {
-    const base = ingestedLead({ contact: { phone: "55 0000 0000" } });
-    const lead = applyExtraction(base, parseOk({ contact: { phone: null } }));
-    expect(lead.contact.phone).toBe("55 0000 0000");
+    const base = ingestedLead({ contact: { phones: ["55 0000 0000"] } });
+    const lead = applyExtraction(base, parseOk({ contact: { phones: null } }));
+    expect(lead.contact.phones).toEqual(["55 0000 0000"]);
+  });
+
+  it("mapea varios telefonos como lista (consultorios con multiples numeros)", () => {
+    const lead = applyExtraction(
+      ingestedLead(),
+      parseOk({ contact: { phones: ["951 111 11 11", "951 222 22 22"] } }),
+    );
+    expect(lead.contact.phones).toEqual(["951 111 11 11", "951 222 22 22"]);
   });
 
   it("omite el campo (no lo deja en null) cuando el modelo manda null y no habia dato", () => {

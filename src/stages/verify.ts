@@ -29,7 +29,7 @@ export type LeadFieldPath =
   | "business.person_name"
   | "business.tagline"
   | "rubro"
-  | "contact.phone"
+  | "contact.phones"
   | "contact.whatsapp"
   | "contact.email"
   | "contact.address"
@@ -115,8 +115,8 @@ export function applyCorrection(
     case "rubro":
       return { ...lead, rubro: parseRubro(value) };
 
-    case "contact.phone":
-      return withContact(lead, { phone: normStr(value) });
+    case "contact.phones":
+      return withContact(lead, { phones: normList(value) });
     case "contact.whatsapp":
       return withContact(lead, { whatsapp: normStr(value) });
     case "contact.email":
@@ -156,7 +156,8 @@ export function applyCorrection(
 function remainingNeeds(lead: Lead): string[] {
   const needs: string[] = [];
   if (!val(lead.business.name)) needs.push("falta nombre del negocio");
-  if (!val(lead.contact.phone) && !val(lead.contact.whatsapp)) needs.push("falta telefono / whatsapp");
+  const noPhone = !(lead.contact.phones && lead.contact.phones.length);
+  if (noPhone && !val(lead.contact.whatsapp)) needs.push("falta telefono / whatsapp");
   if (!val(lead.contact.email)) needs.push("falta email");
   if (!val(lead.contact.address)) needs.push("falta direccion");
 
@@ -186,39 +187,61 @@ export function finalizeVerified(lead: Lead): Lead {
 
 // ───────────────────────────── I/O interactivo (no testeado) ─────────────────────────────
 
-/** Traduce un hex a un nombre de color aproximado, como pista para el humano. */
-function describeColor(hex: string | undefined): string | undefined {
+/**
+ * describeColor — traduce un hex a un nombre de color aproximado, como PISTA
+ * para el humano al verificar contra la tarjeta.
+ *
+ * Clasifica en HSV, no por distancia RGB: la version vieja (vecino mas cercano
+ * en RGB) etiquetaba morados oscuros (#4A0A4A) y azules marino (#2C2C54) como
+ * "marron", porque los colores oscuros colapsaban al unico tono calido oscuro
+ * de la paleta. Un nombre que MIENTE desorienta mas que ayuda. Aca:
+ * - baja saturacion => acromatico (negro / gris / blanco segun brillo);
+ * - con color, el TONO (hue) decide el nombre;
+ * - "marron" solo para tonos calidos (rojo/naranja) y oscuros.
+ * Preferimos correcto y simple sobre exhaustivo.
+ */
+export function describeColor(hex: string | undefined): string | undefined {
   if (!hex) return undefined;
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
   if (!m) return undefined;
   const n = parseInt(m[1]!, 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const palette: Array<[string, number, number, number]> = [
-    ["negro", 0, 0, 0],
-    ["blanco", 255, 255, 255],
-    ["gris", 128, 128, 128],
-    ["rojo", 200, 30, 30],
-    ["naranja", 230, 120, 30],
-    ["amarillo", 230, 210, 50],
-    ["verde", 40, 160, 60],
-    ["turquesa", 60, 170, 190],
-    ["azul", 40, 80, 200],
-    ["morado", 120, 50, 170],
-    ["rosa", 230, 110, 170],
-    ["marron", 120, 70, 40],
-  ];
-  let best = palette[0]!;
-  let bestDist = Infinity;
-  for (const p of palette) {
-    const d = (r - p[1]) ** 2 + (g - p[2]) ** 2 + (b - p[3]) ** 2;
-    if (d < bestDist) {
-      bestDist = d;
-      best = p;
-    }
+  const r = ((n >> 16) & 255) / 255;
+  const g = ((n >> 8) & 255) / 255;
+  const b = (n & 255) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  const v = max; // brillo (value)
+  const s = max === 0 ? 0 : delta / max; // saturacion
+
+  // Acromatico: sin tono definido. Nombre por brillo.
+  if (s < 0.15 || delta < 0.04) {
+    if (v < 0.2) return "negro";
+    if (v > 0.85) return "blanco";
+    return "gris";
   }
-  return best[0];
+  if (v < 0.1) return "negro"; // muy oscuro: el tono ya no se percibe
+
+  // Tono en grados [0, 360).
+  let h: number;
+  if (max === r) h = ((g - b) / delta) % 6;
+  else if (max === g) h = (b - r) / delta + 2;
+  else h = (r - g) / delta + 4;
+  h *= 60;
+  if (h < 0) h += 360;
+
+  // "marron" = calido (rojo/naranja) pero oscuro y no muy saturado como neon.
+  if ((h < 45 || h >= 345) && v < 0.55 && s > 0.2) return "marron";
+
+  if (h < 15 || h >= 345) return "rojo";
+  if (h < 45) return "naranja";
+  if (h < 70) return "amarillo";
+  if (h < 170) return "verde";
+  if (h < 200) return "turquesa";
+  if (h < 255) return "azul";
+  if (h < 320) return "morado";
+  return "rosa";
 }
 
 /** Descripcion de un campo para el recorrido interactivo. */
@@ -229,8 +252,9 @@ interface FieldDef {
   color?: boolean; // muestra pista de color junto al hex
 }
 
+// Campos de riesgo que son un SOLO string. Los telefonos (lista) se recorren
+// aparte con promptListField, tambien marcados como riesgo.
 const RISKY_FIELDS: FieldDef[] = [
-  { path: "contact.phone", label: "Telefono", risky: true },
   { path: "contact.whatsapp", label: "WhatsApp", risky: true },
   { path: "socials.facebook", label: "Facebook", risky: true },
   { path: "socials.instagram", label: "Instagram", risky: true },
@@ -255,8 +279,6 @@ function currentString(lead: Lead, path: LeadFieldPath): string | undefined {
       return lead.business.person_name;
     case "business.tagline":
       return lead.business.tagline;
-    case "contact.phone":
-      return lead.contact.phone;
     case "contact.whatsapp":
       return lead.contact.whatsapp;
     case "contact.email":
@@ -317,17 +339,28 @@ async function promptRubro(rl: Rl, lead: Lead): Promise<Lead> {
   }
 }
 
-/** Recorre servicios (lista): aceptar toda, vaciar, o reemplazar entera por comas. */
-async function promptServices(rl: Rl, lead: Lead): Promise<Lead> {
-  const list = lead.content.services;
-  console.log(`\n─ Servicios (${list.length})`);
+/**
+ * promptListField — recorre un campo LISTA (telefonos, servicios): muestra la
+ * lista actual y deja aceptar toda, vaciar, o reemplazarla entera separando por
+ * comas. Es v1: no edita elemento por elemento, reemplaza la lista completa.
+ */
+async function promptListField(
+  rl: Rl,
+  lead: Lead,
+  field: "contact.phones" | "content.services",
+  label: string,
+  risky: boolean,
+): Promise<Lead> {
+  const list = field === "contact.phones" ? lead.contact.phones ?? [] : lead.content.services;
+  const mark = risky ? "  ⚠ VERIFICAR CONTRA LA TARJETA" : "";
+  console.log(`\n─ ${label} (${list.length})${mark}`);
   if (list.length === 0) console.log("  (vacio)");
   else list.forEach((s, i) => console.log(`   ${i + 1}. ${s}`));
   console.log(`  [Enter]=aceptar toda  '${CLEAR_KEY}'=vaciar  o escribi la lista nueva separada por comas`);
   const ans = (await rl.question("  > ")).trim();
   if (ans === "") return lead;
-  if (ans === CLEAR_KEY) return applyCorrection(lead, "content.services", null);
-  return applyCorrection(lead, "content.services", ans);
+  if (ans === CLEAR_KEY) return applyCorrection(lead, field, null);
+  return applyCorrection(lead, field, ans);
 }
 
 /** Resumen final de lo que quedo, antes de pedir la confirmacion. */
@@ -339,7 +372,8 @@ function printSummary(lead: Lead): void {
   console.log(`  Persona:   ${g(lead.business.person_name)}`);
   console.log(`  Tagline:   ${g(lead.business.tagline)}`);
   console.log(`  Rubro:     ${lead.rubro}`);
-  console.log(`  Telefono:  ${g(lead.contact.phone)}`);
+  const phones = lead.contact.phones ?? [];
+  console.log(`  Telefonos: ${phones.length ? phones.join(", ") : "(vacio)"}`);
   console.log(`  WhatsApp:  ${g(lead.contact.whatsapp)}`);
   console.log(`  Email:     ${g(lead.contact.email)}`);
   console.log(`  Direccion: ${g(lead.contact.address)}`);
@@ -378,6 +412,8 @@ export async function verify(slug: string): Promise<Lead | null> {
     console.log("Primero los campos DE RIESGO (el modelo barato falla mas aca). Revisa contra la tarjeta.");
 
     let draft = lead;
+    // telefonos: lista de riesgo (el modelo cambia digitos). Va primero.
+    draft = await promptListField(rl, draft, "contact.phones", "Telefonos", true);
     for (const def of RISKY_FIELDS) draft = await promptStringField(rl, draft, def);
 
     console.log("\n── Campos generales ──");
@@ -387,7 +423,7 @@ export async function verify(slug: string): Promise<Lead | null> {
     draft = await promptRubro(rl, draft);
     draft = await promptStringField(rl, draft, ADDRESS);
     draft = await promptStringField(rl, draft, EMAIL);
-    draft = await promptServices(rl, draft);
+    draft = await promptListField(rl, draft, "content.services", "Servicios", false);
 
     printSummary(draft);
     const ok = (await rl.question("\n¿Confirmas? Se guarda y avanza a 'verified' (s/n): "))

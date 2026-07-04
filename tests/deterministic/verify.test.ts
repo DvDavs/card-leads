@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCorrection, finalizeVerified } from "../../src/stages/verify.js";
+import { applyCorrection, finalizeVerified, describeColor } from "../../src/stages/verify.js";
 import { parseLead, type Lead } from "../../src/lib/schema.js";
 
 /**
@@ -28,7 +28,7 @@ function extractedLead(overrides: Partial<Lead> = {}): Lead {
       attrs: {},
     },
     contact: {
-      phone: "951 544 21 92",
+      phones: ["951 544 21 92"],
       address: "Torre Medica Universidad Piso 8, Oaxaca",
     },
     socials: {},
@@ -49,14 +49,24 @@ function extractedLead(overrides: Partial<Lead> = {}): Lead {
 }
 
 describe("applyCorrection", () => {
-  it("corrige un digito del telefono (el fallo tipico del modelo barato)", () => {
-    const lead = applyCorrection(extractedLead(), "contact.phone", "951 544 21 93");
-    expect(lead.contact.phone).toBe("951 544 21 93");
+  it("corrige un digito del telefono, lista con array (el fallo tipico del modelo barato)", () => {
+    const lead = applyCorrection(extractedLead(), "contact.phones", ["951 544 21 93"]);
+    expect(lead.contact.phones).toEqual(["951 544 21 93"]);
   });
 
-  it("recorta el valor entrante", () => {
-    const lead = applyCorrection(extractedLead(), "contact.phone", "  951 000 00 00  ");
-    expect(lead.contact.phone).toBe("951 000 00 00");
+  it("reemplaza la lista de telefonos con varios numeros separados por comas", () => {
+    const lead = applyCorrection(extractedLead(), "contact.phones", "951 111 11 11, 951 222 22 22");
+    expect(lead.contact.phones).toEqual(["951 111 11 11", "951 222 22 22"]);
+  });
+
+  it("vacia la lista de telefonos con null", () => {
+    const lead = applyCorrection(extractedLead(), "contact.phones", null);
+    expect(lead.contact.phones).toEqual([]);
+  });
+
+  it("recorta el valor entrante de un campo string", () => {
+    const lead = applyCorrection(extractedLead(), "contact.whatsapp", "  +529515442192  ");
+    expect(lead.contact.whatsapp).toBe("+529515442192");
   });
 
   it("setea un handle de red social que estaba vacio", () => {
@@ -64,7 +74,7 @@ describe("applyCorrection", () => {
     expect(lead.socials.instagram).toBe("@drkarey");
   });
 
-  it("setea el whatsapp que no venia", () => {
+  it("setea el whatsapp que no venia (WhatsApp sigue siendo uno solo)", () => {
     const lead = applyCorrection(extractedLead(), "contact.whatsapp", "+529515442192");
     expect(lead.contact.whatsapp).toBe("+529515442192");
   });
@@ -75,8 +85,8 @@ describe("applyCorrection", () => {
   });
 
   it("vacia un campo opcional con null (queda undefined, no en null)", () => {
-    const lead = applyCorrection(extractedLead(), "contact.phone", null);
-    expect(lead.contact.phone).toBeUndefined();
+    const lead = applyCorrection(extractedLead(), "contact.whatsapp", null);
+    expect(lead.contact.whatsapp).toBeUndefined();
   });
 
   it("vacia business.name (requerido) dejandolo en cadena vacia, no undefined", () => {
@@ -111,7 +121,7 @@ describe("applyCorrection", () => {
   it("NO muta el lead de entrada (inmutable)", () => {
     const base = extractedLead();
     const before = JSON.parse(JSON.stringify(base));
-    applyCorrection(base, "contact.phone", "999");
+    applyCorrection(base, "contact.phones", ["999"]);
     expect(base).toEqual(before);
   });
 
@@ -155,5 +165,40 @@ describe("finalizeVerified", () => {
   it("el lead finalizado valida contra el schema estricto", () => {
     const lead = finalizeVerified(extractedLead());
     expect(() => parseLead(lead)).not.toThrow();
+  });
+});
+
+describe("describeColor", () => {
+  // Regresion del bug reportado: la version RGB-nearest etiquetaba estos como
+  // "marron". El nombre no debe MENTIR.
+  it("clasifica un morado oscuro como morado (no marron)", () => {
+    expect(describeColor("#4A0A4A")).toBe("morado");
+  });
+
+  it("clasifica un azul marino como azul (no marron)", () => {
+    expect(describeColor("#2C2C54")).toBe("azul");
+  });
+
+  it("clasifica colores primarios correctamente", () => {
+    expect(describeColor("#FF0000")).toBe("rojo");
+    expect(describeColor("#00FF00")).toBe("verde");
+    expect(describeColor("#0000FF")).toBe("azul");
+  });
+
+  it("reconoce acromaticos por brillo", () => {
+    expect(describeColor("#000000")).toBe("negro");
+    expect(describeColor("#FFFFFF")).toBe("blanco");
+    expect(describeColor("#808080")).toBe("gris");
+  });
+
+  it("marron solo para calidos oscuros de verdad", () => {
+    expect(describeColor("#7A4A20")).toBe("marron"); // naranja oscuro = marron
+    expect(describeColor("#E67822")).toBe("naranja"); // naranja brillante NO es marron
+  });
+
+  it("tolera hex sin '#' y devuelve undefined si no es hex de 6 digitos", () => {
+    expect(describeColor("4A0A4A")).toBe("morado");
+    expect(describeColor("no-hex")).toBeUndefined();
+    expect(describeColor(undefined)).toBeUndefined();
   });
 });

@@ -30,7 +30,14 @@ export function buildLinktreeView(lead: Lead): Record<string, unknown> {
   const links: LinktreeLink[] = [];
 
   if (c.whatsapp) links.push({ label: "WhatsApp", url: `https://wa.me/${digits(c.whatsapp)}`, kind: "whatsapp" });
-  if (c.phone) links.push({ label: "Llamar", url: `tel:${c.phone}`, kind: "phone" });
+  // varios telefonos => un boton de llamada por cada uno. tel: se arma con
+  // solo digitos y '+' para que el enlace funcione en el celular.
+  const phones = c.phones ?? [];
+  phones.forEach((p, i) => {
+    const tel = p.replace(/[^\d+]/g, "");
+    if (!tel) return;
+    links.push({ label: phones.length > 1 ? `Llamar ${i + 1}` : "Llamar", url: `tel:${tel}`, kind: "phone" });
+  });
   if (c.email) links.push({ label: "Email", url: `mailto:${c.email}`, kind: "email" });
   if (c.website) links.push({ label: "Sitio web", url: c.website, kind: "website" });
   if (s.instagram) links.push({ label: "Instagram", url: s.instagram, kind: "instagram" });

@@ -20,7 +20,8 @@ function computeNeeds(lead: Lead, originalRubro: Rubro, modelRubro: Rubro | null
   const needs: string[] = [];
 
   if (!val(lead.business.name)) needs.push("falta nombre del negocio");
-  if (!val(lead.contact.phone) && !val(lead.contact.whatsapp)) needs.push("falta telefono / whatsapp");
+  const noPhone = !(lead.contact.phones && lead.contact.phones.length);
+  if (noPhone && !val(lead.contact.whatsapp)) needs.push("falta telefono / whatsapp");
   if (!val(lead.contact.email)) needs.push("falta email");
   if (!val(lead.contact.address)) needs.push("falta direccion");
 
@@ -73,9 +74,10 @@ export function applyExtraction(lead: Lead, ex: Extraction): Lead {
     ...(val(b.tagline) ? { tagline: val(b.tagline)! } : {}),
   };
 
+  const phones = (c.phones ?? []).map((v) => v.trim()).filter(Boolean);
   const contact: Lead["contact"] = {
     ...lead.contact,
-    ...(val(c.phone) ? { phone: val(c.phone)! } : {}),
+    ...(phones.length ? { phones } : {}),
     ...(val(c.whatsapp) ? { whatsapp: val(c.whatsapp)! } : {}),
     ...(val(c.email) ? { email: val(c.email)! } : {}),
     ...(val(c.address) ? { address: val(c.address)! } : {}),
