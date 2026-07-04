@@ -44,15 +44,10 @@ export const ExtractionSchema = z.object({
       tiktok: str,
     })
     .nullish(),
+  // Los COLORES ya no los pide el modelo: se miden de los pixeles con colorthief
+  // (ver lib/colors). El LLM solo aporta has_logo y font_hint.
   brand: z
     .object({
-      colors: z
-        .object({
-          primary: str,
-          secondary: str,
-          accent: str,
-        })
-        .nullish(),
       has_logo: z.boolean().nullish(),
       font_hint: str,
     })

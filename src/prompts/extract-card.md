@@ -31,7 +31,6 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
     "tiktok": string | null
   },
   "brand": {
-    "colors": { "primary": string | null, "secondary": string | null, "accent": string | null },
     "has_logo": boolean,
     "font_hint": "serif" | "sans" | "display" | null
   },
@@ -51,8 +50,8 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
   (ej. `+521234567890`) solo si el codigo de pais es claro; si no, dejalo como se ve.
 - `rubro`: elige el que mejor describe el negocio SEGUN lo que ves. Si no queda
   claro, usa `"otro"`.
-- `brand.colors`: son una PISTA. Da el hex aproximado de los colores dominantes
-  de la tarjeta (`#RRGGBB`). Si no puedes estimarlos, `null`.
+- Los COLORES no se piden: se miden de los pixeles con una libreria aparte
+  (colorthief). No estimes colores ni los devuelvas.
 - `brand.has_logo`: `true` solo si hay un logo/isotipo real (no si es solo texto).
 - `content.services`: lista los servicios que la tarjeta enumere explicitamente.
   Si no enumera ninguno, devuelve `[]` (lista vacia). No inventes servicios.

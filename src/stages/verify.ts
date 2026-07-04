@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { textColorFor } from "../lib/colors.js";
 import { parseLead, RubroSchema, type Lead, type Rubro } from "../lib/schema.js";
 import { readLead, writeLead } from "../lib/storage.js";
 
@@ -173,76 +174,38 @@ function remainingNeeds(lead: Lead): string[] {
 }
 
 /**
+ * recomputeColorsText — recalcula el mapa `colorsText` a partir de los hex de
+ * `colors`. El humano edita los hex a mano en verify; el textColor es derivado,
+ * asi que se re-deriva aca para que nunca quede desfasado del color (si el hex no
+ * es un #rrggbb valido, ese rol se omite). Se corre al finalizar.
+ */
+function recomputeColorsText(colors: Lead["brand"]["colors"]): Lead["brand"]["colorsText"] {
+  const out: Lead["brand"]["colorsText"] = {};
+  const p = colors.primary ? textColorFor(colors.primary) : undefined;
+  const s = colors.secondary ? textColorFor(colors.secondary) : undefined;
+  const a = colors.accent ? textColorFor(colors.accent) : undefined;
+  if (p) out.primary = p;
+  if (s) out.secondary = s;
+  if (a) out.accent = a;
+  return out;
+}
+
+/**
  * finalizeVerified — funcion PURA: cierra el lead tras la confirmacion humana.
- * Avanza status a "verified" y deja en meta.needs solo los huecos que siguen
- * abiertos (limpia los pasos de proceso y lo ya resuelto). No toca disco.
+ * Avanza status a "verified", RE-DERIVA colorsText de los hex (por si el humano
+ * corrigio algun color) y deja en meta.needs solo los huecos que siguen abiertos
+ * (limpia los pasos de proceso y lo ya resuelto). No toca disco.
  */
 export function finalizeVerified(lead: Lead): Lead {
   return {
     ...lead,
     status: "verified",
+    brand: { ...lead.brand, colorsText: recomputeColorsText(lead.brand.colors) },
     meta: { ...lead.meta, needs: remainingNeeds(lead) },
   };
 }
 
 // ───────────────────────────── I/O interactivo (no testeado) ─────────────────────────────
-
-/**
- * describeColor — traduce un hex a un nombre de color aproximado, como PISTA
- * para el humano al verificar contra la tarjeta.
- *
- * Clasifica en HSV, no por distancia RGB: la version vieja (vecino mas cercano
- * en RGB) etiquetaba morados oscuros (#4A0A4A) y azules marino (#2C2C54) como
- * "marron", porque los colores oscuros colapsaban al unico tono calido oscuro
- * de la paleta. Un nombre que MIENTE desorienta mas que ayuda. Aca:
- * - baja saturacion => acromatico (negro / gris / blanco segun brillo);
- * - con color, el TONO (hue) decide el nombre;
- * - "marron" solo para tonos calidos (rojo/naranja) y oscuros.
- * Preferimos correcto y simple sobre exhaustivo.
- */
-export function describeColor(hex: string | undefined): string | undefined {
-  if (!hex) return undefined;
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return undefined;
-  const n = parseInt(m[1]!, 16);
-  const r = ((n >> 16) & 255) / 255;
-  const g = ((n >> 8) & 255) / 255;
-  const b = (n & 255) / 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const delta = max - min;
-  const v = max; // brillo (value)
-  const s = max === 0 ? 0 : delta / max; // saturacion
-
-  // Acromatico: sin tono definido. Nombre por brillo.
-  if (s < 0.15 || delta < 0.04) {
-    if (v < 0.2) return "negro";
-    if (v > 0.85) return "blanco";
-    return "gris";
-  }
-  if (v < 0.1) return "negro"; // muy oscuro: el tono ya no se percibe
-
-  // Tono en grados [0, 360).
-  let h: number;
-  if (max === r) h = ((g - b) / delta) % 6;
-  else if (max === g) h = (b - r) / delta + 2;
-  else h = (r - g) / delta + 4;
-  h *= 60;
-  if (h < 0) h += 360;
-
-  // "marron" = calido (rojo/naranja) pero oscuro y no muy saturado como neon.
-  if ((h < 45 || h >= 345) && v < 0.55 && s > 0.2) return "marron";
-
-  if (h < 15 || h >= 345) return "rojo";
-  if (h < 45) return "naranja";
-  if (h < 70) return "amarillo";
-  if (h < 170) return "verde";
-  if (h < 200) return "turquesa";
-  if (h < 255) return "azul";
-  if (h < 320) return "morado";
-  return "rosa";
-}
 
 /** Descripcion de un campo para el recorrido interactivo. */
 interface FieldDef {
@@ -310,8 +273,10 @@ async function promptStringField(rl: Rl, lead: Lead, def: FieldDef): Promise<Lea
   const cur = val(currentString(lead, def.path));
   console.log(`\n─ ${def.label}${mark}`);
   if (def.color && cur) {
-    const name = describeColor(cur);
-    console.log(`  actual: ${cur}${name ? `  (≈ ${name})` : ""}`);
+    // Los colores ya se MIDEN de la foto (colorthief), no se adivina el nombre.
+    // Mostramos el textColor legible que se guardara junto al hex.
+    const t = textColorFor(cur);
+    console.log(`  actual: ${cur}${t ? `  (texto legible encima: ${t})` : ""}`);
   } else {
     console.log(`  actual: ${cur ?? "(vacio)"}`);
   }

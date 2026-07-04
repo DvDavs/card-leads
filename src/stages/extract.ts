@@ -1,4 +1,5 @@
 import path from "node:path";
+import { extractBrandColors, type ExtractedBrandColors } from "../lib/colors.js";
 import { loadEnv } from "../lib/env.js";
 import type { Extraction } from "../lib/llm/extraction.js";
 import { getProvider, resolveProviderName } from "../lib/llm/index.js";
@@ -30,7 +31,9 @@ function computeNeeds(lead: Lead, originalRubro: Rubro, modelRubro: Rubro | null
 
   const noColors =
     !lead.brand.colors.primary && !lead.brand.colors.secondary && !lead.brand.colors.accent;
-  if (noColors) needs.push("faltan colores de marca");
+  // colorthief no pudo medir colores (imagen rara o solo texto sobre blanco):
+  // no es un error, el humano los revisa/carga a mano en verify.
+  if (noColors) needs.push("revisar colores en verify");
 
   if (lead.content.services.length === 0) needs.push("faltan servicios");
 
@@ -55,17 +58,23 @@ function computeNeeds(lead: Lead, originalRubro: Rubro, modelRubro: Rubro | null
  * - `has_logo` es booleano: se toma el del modelo solo si vino como boolean.
  * - `rubro` se corrige con el del modelo cuando lo trae (puede enmendar el que
  *   se puso al ingerir); el cambio queda anotado en meta.needs para revision.
+ * - Los COLORES ya no vienen del modelo: se miden con colorthief y entran por el
+ *   parametro `brandColors`. Si vino vacio (colorthief fallo o no detecto nada),
+ *   los colores quedan vacios y computeNeeds lo anota como pendiente.
  * - Recalcula meta.needs y limpia meta.errors (mapeo exitoso = arranque limpio).
  *
  * NO cambia status ni toca disco: eso es responsabilidad de extract().
  */
-export function applyExtraction(lead: Lead, ex: Extraction): Lead {
+export function applyExtraction(
+  lead: Lead,
+  ex: Extraction,
+  brandColors: ExtractedBrandColors = {},
+): Lead {
   const originalRubro = lead.rubro;
   const b = ex.business ?? {};
   const c = ex.contact ?? {};
   const s = ex.socials ?? {};
   const brand = ex.brand ?? {};
-  const colors = brand.colors ?? {};
 
   const business: Lead["business"] = {
     ...lead.business,
@@ -91,13 +100,20 @@ export function applyExtraction(lead: Lead, ex: Extraction): Lead {
     ...(val(s.tiktok) ? { tiktok: val(s.tiktok)! } : {}),
   };
 
+  // colores MEDIDOS por colorthief: hex en `colors`, textColor legible en el mapa
+  // paralelo `colorsText`. colorthief es la autoridad, asi que se REEMPLAZA (no se
+  // fusiona con lo previo): al llegar aca el lead recien ingerido los trae vacios.
   const brandOut: Lead["brand"] = {
     ...lead.brand,
     colors: {
-      ...lead.brand.colors,
-      ...(val(colors.primary) ? { primary: val(colors.primary)! } : {}),
-      ...(val(colors.secondary) ? { secondary: val(colors.secondary)! } : {}),
-      ...(val(colors.accent) ? { accent: val(colors.accent)! } : {}),
+      ...(brandColors.primary ? { primary: brandColors.primary.hex } : {}),
+      ...(brandColors.secondary ? { secondary: brandColors.secondary.hex } : {}),
+      ...(brandColors.accent ? { accent: brandColors.accent.hex } : {}),
+    },
+    colorsText: {
+      ...(brandColors.primary ? { primary: brandColors.primary.textColor } : {}),
+      ...(brandColors.secondary ? { secondary: brandColors.secondary.textColor } : {}),
+      ...(brandColors.accent ? { accent: brandColors.accent.textColor } : {}),
     },
     has_logo: typeof brand.has_logo === "boolean" ? brand.has_logo : lead.brand.has_logo,
     ...(val(brand.font_hint) ? { font_hint: val(brand.font_hint)! } : {}),
@@ -159,6 +175,20 @@ export async function extract(slug: string): Promise<Lead> {
 
   const result = await provider.extractCard(front, back);
 
+  // Colores: medidos de los pixeles con colorthief, NO por el LLM. Esto NUNCA
+  // debe crashear el pipeline: si la imagen es rara y colorthief/sharp lanza, se
+  // atrapa, los colores quedan vacios y computeNeeds lo marca como pendiente.
+  let brandColors: ExtractedBrandColors = {};
+  try {
+    brandColors = await extractBrandColors(front, back);
+  } catch (err) {
+    console.warn(
+      `extract: colorthief no pudo medir colores (${
+        err instanceof Error ? err.message : String(err)
+      }). Se dejan vacios para cargar a mano en verify.`,
+    );
+  }
+
   if (!result.ok) {
     // No se escribe basura: solo se registra el error y el status queda en
     // "ingested" para poder reintentar.
@@ -172,7 +202,10 @@ export async function extract(slug: string): Promise<Lead> {
     );
   }
 
-  const extracted: Lead = { ...applyExtraction(lead, result.data), status: "extracted" };
+  const extracted: Lead = {
+    ...applyExtraction(lead, result.data, brandColors),
+    status: "extracted",
+  };
   await writeLead(extracted);
   return extracted;
 }

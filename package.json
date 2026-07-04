@@ -17,6 +17,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "colorthief": "^3.4.0",
+    "sharp": "^0.35.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCorrection, finalizeVerified, describeColor } from "../../src/stages/verify.js";
+import { applyCorrection, finalizeVerified } from "../../src/stages/verify.js";
 import { parseLead, type Lead } from "../../src/lib/schema.js";
 
 /**
@@ -166,39 +166,18 @@ describe("finalizeVerified", () => {
     const lead = finalizeVerified(extractedLead());
     expect(() => parseLead(lead)).not.toThrow();
   });
-});
 
-describe("describeColor", () => {
-  // Regresion del bug reportado: la version RGB-nearest etiquetaba estos como
-  // "marron". El nombre no debe MENTIR.
-  it("clasifica un morado oscuro como morado (no marron)", () => {
-    expect(describeColor("#4A0A4A")).toBe("morado");
+  it("re-deriva colorsText de los hex (incluye correcciones hechas a mano)", () => {
+    // el humano corrigio primary a un color CLARO: su textColor debe ser negro.
+    const corrected = applyCorrection(extractedLead(), "brand.colors.primary", "#e5e9ee");
+    const final = finalizeVerified(corrected);
+    expect(final.brand.colorsText?.primary).toBe("#000000"); // texto negro sobre claro
+    expect(final.brand.colorsText?.accent).toBe("#000000"); // #60B0C0 es claro
   });
 
-  it("clasifica un azul marino como azul (no marron)", () => {
-    expect(describeColor("#2C2C54")).toBe("azul");
-  });
-
-  it("clasifica colores primarios correctamente", () => {
-    expect(describeColor("#FF0000")).toBe("rojo");
-    expect(describeColor("#00FF00")).toBe("verde");
-    expect(describeColor("#0000FF")).toBe("azul");
-  });
-
-  it("reconoce acromaticos por brillo", () => {
-    expect(describeColor("#000000")).toBe("negro");
-    expect(describeColor("#FFFFFF")).toBe("blanco");
-    expect(describeColor("#808080")).toBe("gris");
-  });
-
-  it("marron solo para calidos oscuros de verdad", () => {
-    expect(describeColor("#7A4A20")).toBe("marron"); // naranja oscuro = marron
-    expect(describeColor("#E67822")).toBe("naranja"); // naranja brillante NO es marron
-  });
-
-  it("tolera hex sin '#' y devuelve undefined si no es hex de 6 digitos", () => {
-    expect(describeColor("4A0A4A")).toBe("morado");
-    expect(describeColor("no-hex")).toBeUndefined();
-    expect(describeColor(undefined)).toBeUndefined();
+  it("omite del colorsText un color que no es hex valido (no rompe)", () => {
+    const named = applyCorrection(extractedLead(), "brand.colors.primary", "azul");
+    const final = finalizeVerified(named);
+    expect(final.brand.colorsText?.primary).toBeUndefined();
   });
 });

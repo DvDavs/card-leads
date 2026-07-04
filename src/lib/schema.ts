@@ -98,11 +98,25 @@ export const LeadSchema = z.object({
   }),
 
   brand: z.object({
+    // colors: hex de marca MEDIDOS de los pixeles con colorthief (ver lib/colors).
+    // Siguen siendo editables a mano en verify (el humano confirma o corrige).
     colors: z.object({
       primary: z.string().optional(),
       secondary: z.string().optional(),
       accent: z.string().optional(),
     }),
+    // colorsText: color de texto legible (#fff/#000) DERIVADO de cada hex de
+    // `colors` (WCAG). Mapa paralelo, no editable a mano: se recalcula del hex.
+    // Lo consume el linktree para pintar texto legible sobre cada color de marca.
+    // Opcional => los data.json viejos (sin esta clave) siguen validando; extract
+    // y verify siempre lo escriben, asi que downstream (linktree) lo ve completo.
+    colorsText: z
+      .object({
+        primary: z.string().optional(),
+        secondary: z.string().optional(),
+        accent: z.string().optional(),
+      })
+      .optional(),
     has_logo: z.boolean(),
     logo_path: z.string().optional(),
     font_hint: z.string().optional(), // "serif"/"sans"/"display" — pista, no exacto

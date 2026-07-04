@@ -43,8 +43,8 @@ const SAMPLE = {
     website: null,
   },
   socials: { instagram: "https://instagram.com/elcorte", facebook: null, tiktok: null },
+  // el modelo YA NO devuelve colores: se miden con colorthief (ver colors.test.ts).
   brand: {
-    colors: { primary: "#0A0A0A", secondary: "#C8A24B", accent: null },
     has_logo: true,
     font_hint: "display",
   },
@@ -110,8 +110,6 @@ describe("applyExtraction", () => {
     expect(lead.contact.whatsapp).toBe("+525512345678");
     expect(lead.contact.email).toBe("hola@elcorte.mx");
     expect(lead.socials.instagram).toBe("https://instagram.com/elcorte");
-    expect(lead.brand.colors.primary).toBe("#0A0A0A");
-    expect(lead.brand.colors.secondary).toBe("#C8A24B");
     expect(lead.brand.has_logo).toBe(true);
     expect(lead.brand.font_hint).toBe("display");
     expect(lead.content.services).toEqual(["Corte", "Barba", "Afeitado clasico"]);
@@ -174,5 +172,26 @@ describe("applyExtraction", () => {
     });
     const lead = applyExtraction(base, parseOk(SAMPLE));
     expect(lead.meta.errors).toEqual([]);
+  });
+
+  it("escribe los colores MEDIDOS (colorthief) en colors + colorsText", () => {
+    const brandColors = {
+      primary: { hex: "#24376d", textColor: "#ffffff" },
+      accent: { hex: "#d1857c", textColor: "#000000" },
+    };
+    const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE), brandColors);
+    expect(lead.brand.colors.primary).toBe("#24376d");
+    expect(lead.brand.colors.accent).toBe("#d1857c");
+    expect(lead.brand.colorsText?.primary).toBe("#ffffff");
+    expect(lead.brand.colorsText?.accent).toBe("#000000");
+    // no se inventa un rol que colorthief no dio
+    expect(lead.brand.colors.secondary).toBeUndefined();
+    expect(lead.brand.colorsText?.secondary).toBeUndefined();
+  });
+
+  it("sin colores medidos, los deja vacios y lo anota como pendiente", () => {
+    const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE)); // brandColors default {}
+    expect(lead.brand.colors.primary).toBeUndefined();
+    expect(lead.meta.needs.join(" | ")).toContain("revisar colores en verify");
   });
 });

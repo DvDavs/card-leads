@@ -1,7 +1,5 @@
-# esbuild trae un binario por plataforma via su script de instalacion.
-# tsx y vitest lo necesitan, asi que aprobamos su build.
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  esbuild: true
 
 # No re-verificar deps antes de cada script: el store ya esta instalado
 # y la verificacion re-dispara un install que falla por el build de esbuild.
