@@ -2,6 +2,7 @@
 import { ingest } from "./stages/ingest.js";
 import { buildLinktree } from "./stages/build-linktree.js";
 import { extract } from "./stages/extract.js";
+import { verify } from "./stages/verify.js";
 import { buildWeb } from "./stages/build-web.js";
 import { deploy } from "./stages/deploy.js";
 import { proposal } from "./stages/proposal.js";
@@ -50,7 +51,8 @@ const USAGE = `card-leads — pipeline tarjeta -> linktree + web
 Uso:
   cli ingest <front> [back] [--slug s] [--rubro r] [--channel c] [--force]
   cli build-linktree <slug>
-  cli extract <slug>          (stub)
+  cli extract <slug>
+  cli verify <slug>           (checkpoint humano interactivo)
   cli build-web <slug>        (stub)
   cli deploy <slug>           (stub)
   cli proposal <slug>         (stub)
@@ -87,9 +89,28 @@ async function main(): Promise<void> {
       break;
     }
 
-    case "extract":
-      await extract(positionals[0]!);
+    case "extract": {
+      const lead = await extract(positionals[0]!);
+      console.log(`extracted: ${lead.slug} (rubro=${lead.rubro}, status=${lead.status})`);
+      console.log(`  negocio: ${lead.business.name || "(sin nombre)"}`);
+      if (lead.meta.needs.length) {
+        console.log("  pendiente (revision humana):");
+        for (const n of lead.meta.needs) console.log(`   - ${n}`);
+      }
       break;
+    }
+    case "verify": {
+      const lead = await verify(positionals[0]!);
+      if (!lead) break; // cancelado: verify ya explico, el lead sigue en "extracted"
+      console.log(`\nverified: ${lead.slug} (status=${lead.status})`);
+      if (lead.meta.needs.length) {
+        console.log("  pendiente todavia:");
+        for (const n of lead.meta.needs) console.log(`   - ${n}`);
+      } else {
+        console.log("  sin pendientes: datos completos.");
+      }
+      break;
+    }
     case "build-web":
       await buildWeb(positionals[0]!);
       break;

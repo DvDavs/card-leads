@@ -10,6 +10,7 @@
   "scripts": {
     "cli": "tsx src/cli.ts",
     "ingest": "tsx src/cli.ts ingest",
+    "extract": "tsx src/cli.ts extract",
     "build-linktree": "tsx src/cli.ts build-linktree",
     "test": "vitest run",
     "test:watch": "vitest",
