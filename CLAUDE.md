@@ -1,0 +1,204 @@
+# card-leads — memoria del proyecto
+
+Este archivo orienta a Claude Code al abrir una sesión nueva sobre este repo.
+Está derivado del código real (no de intenciones); si algo cambia en el
+código y este archivo queda desactualizado, gana el código — actualizar este
+archivo en ese caso.
+
+Idioma de este archivo: español neutro. Ver `AGENTS.MD` — no usar
+vocabulario argentino (ni voseo) en el código, commits ni documentación de
+este repo.
+
+## Qué es el proyecto
+
+CLI en TypeScript (Node + pnpm) que convierte fotos de una tarjeta de
+presentación en un linktree y, a futuro, una web publicada. Sirve para
+cualquier rubro (doctor, barbería, estética, veterinario, nutriólogo,
+"otro"), no solo consultorios médicos. Es un generador de leads: se parte de
+una tarjeta física y se llega a una presencia web que se le muestra al
+negocio como propuesta comercial.
+
+## Arquitectura y principios
+
+- **Pipeline de etapas CLI independientes, no un orquestador.** Cada etapa
+  es un comando separado (`pnpm cli <etapa> <slug>`), se testea aislada y se
+  puede reanudar desde donde quedó un lead sin repetir las etapas previas.
+- **El estado vive en `leads/<slug>/data.json`.** Es la fuente de verdad de
+  ese lead; la carpeta `leads/<slug>/` es su "expediente" (fotos + JSON +
+  artefactos generados como `linktree.html`).
+- **`leads/` está gitignoreado.** Contiene PII de terceros (nombres,
+  teléfonos, direcciones, email). Nunca commitear nada de ahí.
+- **Máquina de estados por `status`** (`src/lib/schema.ts`, `StatusSchema`),
+  secuencia real que recorre un lead:
+  `ingested → extracted → verified → linktree_built → web_built → deployed → proposal_ready → packaged`
+  (más `error` como estado de escape). Cada etapa exige el status anterior y
+  avanza al siguiente; si el status no matchea, la etapa lanza y no toca
+  disco.
+- **Principio rector: lo determinista va en código, lo interpretativo va al
+  LLM.**
+  - Texto de la tarjeta (nombre, teléfonos, redes, servicios) → LLM
+    (Gemini), porque es lectura/interpretación de una foto real.
+  - Colores de marca → **medición de píxeles** con `colorthief` + `sharp`
+    (`src/lib/colors.ts`), NO el LLM. El LLM estimaba colores muy mal (le
+    decía "negro" a un verde). Ver más abajo, es una decisión ya tomada y
+    probada.
+  - Relleno de templates (`linktree.html`) → templating puro
+    (`src/lib/template.ts`), sin LLM.
+- **Checkpoint humano obligatorio (`verify`).** El modelo barato
+  (`gemini-2.5-flash`) falla de forma **aleatoria** en campos finos (un
+  dígito de teléfono, un handle de red inventado), distinto en cada corrida,
+  así que no se puede cachear ni saltear con más prompt-engineering. `verify`
+  muestra primero los campos de riesgo (teléfonos, whatsapp, redes, colores)
+  marcados `⚠ VERIFICAR CONTRA LA TARJETA` y no escribe nada hasta que el
+  humano confirma (`s`/`si`). Esto **no es opcional** y no debe quitarse ni
+  "optimizarse" para automatizar de punta a punta.
+
+## El estado: `Lead` (`src/lib/schema.ts`)
+
+El tipo `Lead` se **infiere** del schema Zod (`z.infer<typeof LeadSchema>`),
+no se declara a mano — así el runtime (validación) y el compile-time (tipos)
+no pueden divergir. `parseLead()` es el único punto de entrada para validar
+un `data.json` crudo.
+
+Campos principales:
+
+| Campo | Qué es |
+|---|---|
+| `slug` | Clave del lead (kebab-case), nombre de su carpeta en `leads/`. |
+| `status` | Estado en la máquina de estados (ver arriba). |
+| `rubro` | Enum: `doctor · barberia · estetica · veterinario · nutriologo · otro`. |
+| `source` | Rutas a `card_front`/`card_back` (relativas a la carpeta del lead), `ingested_at`, `channel` (`telegram`\|`manual`). |
+| `business` | `name` (string, puede quedar vacío hasta `extract`), `person_name`, `tagline`, `attrs` (libre por rubro). |
+| `contact` | `phones` (**lista**, no un solo string — un consultorio puede tener varios), `whatsapp` (uno solo), `email`, `address`, `website`. |
+| `socials` | `facebook`, `instagram`, `tiktok`, `other`. |
+| `brand.colors` | `primary`/`secondary`/`accent` en hex, **medidos** de la foto (no estimados por el modelo). |
+| `brand.colorsText` | Color de texto legible (`#ffffff`/`#000000`, WCAG) **derivado** de cada hex de `colors`; se recalcula, nunca se edita a mano. |
+| `brand.has_logo`, `brand.font_hint` | Sí los aporta el LLM (`font_hint` es pista: "serif"/"sans"/"display", no exacto). |
+| `content.services` | Lista de servicios detectados/confirmados. |
+| `generated` | URLs/paths de artefactos generados (`linktree_url`, `web_url`, `proposal_path`, `outreach_message`). |
+| `meta.needs` | Huecos pendientes para el checkpoint humano (recalculado en cada etapa, no es un diff acumulado). |
+| `meta.errors` | Errores de la última corrida (p.ej. el modelo no devolvió JSON válido). |
+
+**Migración automática:** los `data.json` viejos con `contact.phone` (string
+único) se migran a `contact.phones` (lista) al leer, vía `z.preprocess` en
+`ContactSchema` (`migrateContact` en `schema.ts`). Es idempotente y además
+separa por coma si el string viejo traía varios números pegados. No hace
+falta correr nada a mano.
+
+## Las etapas (`src/stages/*.ts`)
+
+| Etapa | Exige status | Deja status | LLM | Qué hace |
+|---|---|---|---|---|
+| `ingest` | (nuevo) | `ingested` | no | Crea `leads/<slug>/`, copia las fotos como `card_front.<ext>`/`card_back.<ext>`, escribe `data.json` con los campos de negocio vacíos. `rubro` default `"otro"` si no se pasa (queda anotado en `meta.needs`). |
+| `extract` | `ingested` | `extracted` | sí (Gemini) | Manda las fotos al proveedor de visión, valida la respuesta y llena `business`/`contact`/`socials`/`content.services`. Los **colores se miden aparte** con `extractBrandColors` (`colors.ts`), nunca por el LLM. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (el lead queda `ingested` para reintentar). |
+| `verify` | `extracted` | `verified` | no | Checkpoint humano interactivo por terminal (`readline`). Recorre primero los campos de riesgo, después los generales; al confirmar (`s`) valida contra `LeadSchema` estricto y recién ahí escribe disco. `n`/Ctrl+C no escribe nada. |
+| `build-linktree` | (lee `data.json`, no exige status puntual) | `linktree_built` | no | Rellena el template `generico` (`src/templates/generico/index.html`) con `contact`+`socials`+`brand.colors` y escribe `leads/<slug>/linktree.html`. |
+| `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
+| `deploy` | — | `deployed` | — | **Stub**, lanza `"no implementado"`. |
+| `proposal` | — | `proposal_ready` | — | **Stub**, lanza `"no implementado"`. |
+| `package` | — | `packaged` | — | **Stub**, lanza `"no implementado"`. |
+
+Confirmado leyendo `src/stages/build-web.ts`, `deploy.ts`, `proposal.ts` y
+`package.ts`: los cuatro son literalmente `throw new Error("...: no
+implementado")`, sin lógica todavía.
+
+## `src/lib/` — piezas de soporte
+
+- **`colors.ts`** — mide colores de marca con `colorthief`+`sharp` en vez de
+  pedírselos al LLM. `brandWeight()` puntúa cada color candidato por
+  saturación + área + oscuridad, penalizando fuerte los colores muy claros
+  (papel/fondo) para que no ganen `primary`. Umbrales documentados como
+  constantes tuneables en el propio archivo (`LIGHT_HARD_L`, `LIGHT_SOFT_L`,
+  `DARK_REF_L`, `AREA_REF`, `MIN_ROLE_DIST`). `secondary`/`accent` se eligen
+  garantizando distancia mínima en RGB contra lo ya elegido, para no repetir
+  tres tonos casi iguales. Si colorthief/sharp fallan, no crashea el
+  pipeline: `extract.ts` atrapa el error y deja los colores vacíos
+  (`meta.needs` lo anota).
+- **`storage.ts`** — todo el I/O de disco de un lead. Raíz configurable por
+  `LEADS_DIR` (env), usado por los tests para aislar en un directorio
+  temporal. `readLead`/`writeLead` siempre validan contra `LeadSchema`
+  (nunca se puede persistir un lead que rompa el schema).
+- **`slug.ts`** — `slugify` (normaliza acentos, kebab-case), `isValidSlug`,
+  `slugFromFilename` (deriva el slug del nombre del archivo del frente si no
+  se pasa `--slug`). Puro, sin I/O.
+- **`template.ts`** — motor de templates propio, subconjunto tipo mustache
+  (`{{var}}`, `{{{raw}}}`, `{{#section}}`, `{{^inverted}}`, `{{.}}`). Sin
+  dependencias externas. Puro y determinista.
+- **`llm/`** — interfaz común `VisionProvider` + switch por
+  `LLM_PROVIDER` (env, default `gemini`). `gemini.ts` pega directo al REST
+  API de Google (sin SDK, `fetch` nativo) con `gemini-2.5-flash` por
+  defecto; fuerza `thinkingBudget: 0` porque los modelos `gemini-2.5-*`
+  gastan tokens de salida "pensando" antes de escribir y eso cortaba el JSON
+  a la mitad con un `maxOutputTokens` chico. `openai.ts` es un **stub**
+  deliberado (lanza "no implementado"; queda pensado para `gpt-4o-mini`).
+  `extraction.ts` define el contrato de salida del modelo (`ExtractionSchema`,
+  todo `.nullish()` porque el modelo llena solo lo que ve) y
+  `parseExtraction()`, que nunca lanza — enruta cualquier fallo a
+  `{ ok: false, error }` para que `extract.ts` lo registre en `meta.errors`.
+
+## Convenciones técnicas
+
+- **pnpm**, no npm (hay `pnpm-lock.yaml`; con npm los args van tras `--`).
+- Sin paso de build: se corre TypeScript directo con `tsx`.
+- Node **≥ 20.12** (usa `process.loadEnvFile` nativo en `src/lib/env.ts`);
+  probado en Node 24.
+- Proveedor de LLM conmutable por env var `LLM_PROVIDER` (`gemini` por
+  default; `openai` es stub). Llave en `.env` (gitignoreado, nunca
+  hardcodear ni pegar llaves en el código o en el chat).
+- El tipo `Lead` se infiere del schema Zod — nunca declarar una interfaz
+  paralela a mano; editar el schema y dejar que el tipo se derive.
+- Tests en `tests/deterministic/`: aserciones estrictas (TDD real) sobre
+  lógica pura — `slug.test.ts`, `template.test.ts`, `schema.test.ts`,
+  `colors.test.ts`, `extract.test.ts`, `verify.test.ts`.
+
+## Sobre `tests/evals/` — discrepancia encontrada
+
+El resumen que se pidió documentar asumía una carpeta `tests/evals/` para
+golden examples de salida del LLM, separada de `tests/deterministic/`. **Al
+explorar el código esa carpeta no existe todavía**: solo hay
+`tests/deterministic/`. El propio `README.md` la lista como pendiente
+("`evals/` — golden de LLM (pendiente)"). Documentado acá tal cual está hoy;
+si se crea `tests/evals/` más adelante, actualizar esta sección.
+
+## Cómo correr
+
+```powershell
+pnpm install
+Copy-Item .env.example .env       # completar GEMINI_API_KEY
+pnpm cli ingest anverso.jpg reverso.jpg --slug dr-karey --rubro doctor
+pnpm cli extract dr-karey          # llama a Gemini -> status=extracted
+pnpm cli verify dr-karey           # checkpoint humano -> status=verified
+pnpm cli build-linktree dr-karey   # -> leads/dr-karey/linktree.html
+```
+
+Comandos (firma real, `src/cli.ts`):
+
+| Comando | Firma | Requiere API key |
+|---|---|---|
+| `pnpm cli ingest` | `ingest <front> [back] [--slug s] [--rubro r] [--channel c] [--force]` | no |
+| `pnpm cli extract` | `extract <slug>` | sí (`GEMINI_API_KEY`) |
+| `pnpm cli verify` | `verify <slug>` | no |
+| `pnpm cli build-linktree` | `build-linktree <slug>` | no |
+| `pnpm cli build-web` \| `deploy` \| `proposal` \| `package` | `<comando> <slug>` | — (stubs) |
+| `pnpm test` | suite determinista (vitest) | no |
+| `pnpm typecheck` | `tsc --noEmit` | no |
+
+Rubros válidos: `doctor · barberia · estetica · veterinario · nutriologo ·
+otro`. Solo `doctor`, `barberia` y `estetica` tienen template web propio hoy
+(`src/templates/`); `veterinario`, `nutriologo` y `otro` caen al template
+`generico` (`src/config/rubro-map.ts`) — el linktree, de todas formas,
+siempre usa `generico`.
+
+## Decisiones pendientes / cosas a saber
+
+- `contact.phones` es lista (no un string único) porque un consultorio
+  suele tener varios números; cada uno genera su propio botón "Llamar" en el
+  linktree.
+- Para `build-web` (futuro): la idea es un **Tier A** automático (template +
+  datos, para volumen) y un **Tier B** a mano con Claude Code para los leads
+  que valen la pena más atención. No generar caras/fotos falsas de personas:
+  usar placeholder o el logo real del negocio.
+- Escala futura: servir cada lead por subdominio (`slug.dominio`) vía
+  Cloudflare.
+- `openai` como segundo proveedor de LLM queda pendiente (stub ya con la
+  interfaz lista en `src/lib/llm/openai.ts`).

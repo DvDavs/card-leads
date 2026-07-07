@@ -202,3 +202,37 @@ No hay que correr ningún comando: pasa solo al cargar el lead en cualquier etap
 | `pnpm cli verify <slug>` | Checkpoint humano interactivo | no |
 | `pnpm cli build-linktree <slug>` | Genera linktree.html | no |
 | `pnpm cli help` | Muestra el uso | no |
+
+---
+
+## 9. Última corrida de prueba (`ingest` + `extract`, sin `verify`)
+
+Corrida sobre **todas** las fotos de `testImages/` (5 pares frente/reverso), cada
+una con `--force` bajo un slug `prueba-*` para no pisar los leads reales de
+`leads/`. Se saltea `verify` (checkpoint interactivo) a propósito: esto valida
+`ingest`+`extract` en frío, no el flujo humano.
+
+| Slug | Fotos | Negocio detectado | Rubro (modelo) | Colores primary/secondary/accent | Pendientes |
+|---|---|---|---|---|---|
+| `prueba-anverso` | anverso.jpg + reverso.jpg | DR. GUILLERMO KAREY | doctor | `#1b192e` / `#9d877a` / `#cb6c76` | email, redes, confirmar rubro |
+| `prueba-ej01` | ej01_an.jpg + ej01_re.jpg | (sin nombre de negocio, sí person_name: Dr. Eliseo Solano) | doctor | `#35315e` / `#a49a95` / `#ab6280` | nombre negocio, email, confirmar rubro |
+| `prueba-ej02` | ej02_an.jpg + ej02_re.jpg | VALENTINA LÓPEZ | nutriologo | `#393b37` / `#9d908b` / `#aeb2b5` | servicios, confirmar rubro |
+| `prueba-karey` | karey.jpg + karey2.jpg | Torre Médica Universidad (person_name: Dr. Guillermo Karey) | doctor | `#24376d` / `#352122` / `#d1857c` | email, redes, confirmar rubro |
+| `prueba-vania` | vania.jpg.jpeg + vania2.jpg.jpeg | (sin nombre de negocio, sí person_name: Dra. Vania Cruz) | doctor | `#484c6f` / `#dca566` / `#bdc2ae` | nombre negocio, servicios, confirmar rubro |
+
+**Colores:** los 5 casos dieron primary oscuro+saturado (nunca el gris/papel
+claro) — heurística de `colors.ts` (`brandWeight`, ver umbrales en el archivo)
+sigue funcionando igual con la corrida real de Gemini, porque el color se mide
+con `colorthief`/`sharp` sobre los píxeles, no lo estima el modelo.
+
+**LLM (Gemini):** 5/5 `extract` parsearon sin error (`meta.errors: []` en los
+5 `data.json`). Los "pendientes" listados son huecos normales del checkpoint
+humano (nombre de negocio cuando la tarjeta no lo imprime, email, redes,
+rubro a confirmar), no fallos de la corrida.
+
+**Tests deterministas:** `pnpm test` → 10/10 verde en `colors.test.ts` tras
+`pnpm install` (faltaban `colorthief`/`sharp` en `node_modules`, ya resuelto).
+
+Leads de prueba quedan en `leads/prueba-*/` (gitignored). Para limpiarlos:
+`Remove-Item -Recurse leads/prueba-*` (PowerShell) o `rm -rf leads/prueba-*`
+(bash).
