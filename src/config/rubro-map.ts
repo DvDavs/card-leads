@@ -3,8 +3,10 @@ import type { Rubro } from "../lib/schema.js";
 /**
  * rubro-map.ts — mapea cada rubro a su template web, servicios por defecto
  * (para inferir cuando la tarjeta no los trae) e ideas base de propuesta.
- * El linktree usa siempre el template "generico"; el template por rubro es
- * para la etapa build-web (stub por ahora).
+ * El template por rubro es para la etapa build-web (stub por ahora). Las
+ * digital cards (build-cards) NO se filtran por rubro: cada lead recibe
+ * TODOS los disenos del pool en `src/dc-templates/`, para que el cliente
+ * elija cual le gusta mas.
  */
 
 export interface RubroConfig {
@@ -50,7 +52,35 @@ export function rubroConfig(rubro: Rubro): RubroConfig {
   return CONFIG[rubro];
 }
 
-/** Template a usar para el linktree. Por ahora siempre generico. */
-export function linktreeTemplate(): string {
-  return "generico";
-}
+/**
+ * CARD_LABELS — etiqueta legible + publico objetivo de cada diseno del pool,
+ * para el chip del visor swipeable (`src/dc-templates/_viewer.html`). La
+ * clave es el nombre de archivo del template sin extension (ej. "clinic.html"
+ * -> "clinic"). Un diseno nuevo sin entrada aca cae al fallback en
+ * `labelFor()` (nombre de archivo capitalizado, sin publico objetivo).
+ */
+export const CARD_LABELS: Record<string, { name: string; audience: string }> = {
+  clinic: { name: "Clinic", audience: "Salud · Médicos" },
+  dark: { name: "Dark", audience: "Barberías · Tattoo · Gym" },
+  executive: { name: "Executive", audience: "Abogados · Consultores" },
+  luxury: { name: "Luxury", audience: "Hoteles · Inmobiliarias" },
+  credencial: { name: "Credencial", audience: "General" },
+};
+
+/**
+ * RUBRO_TEMPLATE_ORDER — que diseno del pool abre PRIMERO en el visor
+ * swipeable segun el rubro del lead (el resto sigue en su orden habitual;
+ * el carrusel es un bucle infinito, asi que "primero" solo define el punto
+ * de entrada). La clave del valor debe matchear el nombre de archivo del
+ * template sin extension en `src/dc-templates/`. Si el diseno referenciado
+ * no esta en el pool (se borro el archivo), `orderPoolByRubro`
+ * (`build-cards.ts`) cae al orden original sin romper.
+ */
+export const RUBRO_TEMPLATE_ORDER: Record<Rubro, string> = {
+  doctor: "clinic",
+  veterinario: "clinic",
+  nutriologo: "clinic",
+  barberia: "dark",
+  estetica: "luxury",
+  otro: "credencial",
+};

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarjeta digital — vista previa</title>
+<style>
+  /*
+   * Visor swipeable de digital cards. Cada diseno se carga a pantalla
+   * completa TAL CUAL quedaria en producto (mismo iframe, sin marco de
+   * telefono ni chrome extra); flechas/dots flotan ENCIMA como overlay, no
+   * dentro de un mockup ni tapando el header del diseno. Sin bucle: al llegar
+   * a una punta el boton de avance correspondiente queda disabled, no da
+   * vuelta al otro lado. El primer slide real es siempre el diseno del rubro
+   * del lead (`orderPoolByRubro` en build-cards.ts).
+   */
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
+  body{
+    background:#000;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+
+  /* ---------- carrusel a pantalla completa (el producto real) ---------- */
+  .stage{position:fixed;inset:0;overflow:hidden;touch-action:pan-y}
+  .track{
+    display:flex;
+    width:100%;height:100%;
+    transition:transform .45s cubic-bezier(.22,.75,.3,1);
+    will-change:transform;
+  }
+  .slide{flex:0 0 100%;height:100%;background:#fff}
+  .slide iframe{width:100%;height:100%;border:0;display:block}
+
+  /* ---------- overlay: flotan encima del producto, no lo envuelven ---------- */
+  .hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+
+  .nav{
+    position:absolute;
+    top:50%;transform:translateY(-50%);
+    pointer-events:auto;
+    display:grid;place-items:center;
+    width:42px;height:42px;
+    border-radius:50%;
+    border:1px solid rgb(255 255 255 / 0.22);
+    background:rgb(15 15 18 / 0.45);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:#f2f1ee;
+    cursor:pointer;
+    transition:background .2s ease,transform .2s ease,opacity .2s ease;
+  }
+  .nav-prev{left:max(12px,env(safe-area-inset-left))}
+  .nav-next{right:max(12px,env(safe-area-inset-right))}
+  .nav:hover{background:rgb(15 15 18 / 0.65)}
+  .nav:active{transform:translateY(-50%) scale(.93)}
+  .nav:disabled{opacity:.25;cursor:default;pointer-events:none}
+  .nav svg{width:19px;height:19px}
+
+  .dots{
+    position:absolute;
+    bottom:max(16px,env(safe-area-inset-bottom));
+    left:50%;transform:translateX(-50%);
+    pointer-events:auto;
+    display:flex;gap:7px;align-items:center;
+    padding:8px 10px;
+    border-radius:999px;
+    background:rgb(15 15 18 / 0.45);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .dot{
+    width:7px;height:7px;border-radius:50%;
+    border:none;padding:0;
+    background:rgb(255 255 255 / 0.35);
+    cursor:pointer;
+    transition:background .2s ease,transform .2s ease;
+  }
+  .dot.active{background:#f2f1ee;transform:scale(1.3)}
+
+  @media (prefers-reduced-motion: reduce){
+    .track{transition:none}
+    .dot,.nav{transition:none}
+  }
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="track">
+      {{#cards}}
+      <div class="slide" data-name="{{name}}" data-audience="{{audience}}">
+        <iframe src="{{file}}" title="{{name}}" loading="lazy"></iframe>
+      </div>
+      {{/cards}}
+    </div>
+  </div>
+
+  <div class="hud">
+    <button class="nav nav-prev" type="button" aria-label="Diseño anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="nav nav-next" type="button" aria-label="Siguiente diseño">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+
+    <div class="dots" role="tablist" aria-label="Diseños disponibles"></div>
+  </div>
+
+  <script>
+  (function () {
+    var stage = document.querySelector(".stage");
+    var track = document.querySelector(".track");
+    var realSlides = Array.prototype.slice.call(track.children);
+    var dotsWrap = document.querySelector(".dots");
+    var prevBtn = document.querySelector(".nav-prev");
+    var nextBtn = document.querySelector(".nav-next");
+    var n = realSlides.length;
+
+    /* Sin bucle: index va de 0 a n-1 nomas. Al llegar a una punta el boton
+     * correspondiente se deshabilita (disabled), no da vuelta al otro lado. */
+    var index = 0;
+
+    realSlides.forEach(function (slide, i) {
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "dot";
+      dot.setAttribute("role", "tab");
+      dot.setAttribute("aria-label", "Ver " + (slide.dataset.name || "diseño " + (i + 1)));
+      dot.addEventListener("click", function () {
+        goTo(i);
+      });
+      dotsWrap.appendChild(dot);
+    });
+    var dots = Array.prototype.slice.call(dotsWrap.children);
+
+    function paint(withTransition) {
+      track.style.transition = withTransition === false ? "none" : "transform .45s cubic-bezier(.22,.75,.3,1)";
+      track.style.transform = "translateX(" + index * -100 + "%)";
+      dots.forEach(function (d, i) {
+        d.classList.toggle("active", i === index);
+      });
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === n - 1;
+    }
+
+    // Cerrojo anti doble-click: mientras "animating" es true se ignora
+    // cualquier next/prev/teclado nuevo, para no pisar la transicion en curso.
+    var animating = false;
+
+    function goTo(i) {
+      if (animating) return;
+      if (i < 0 || i > n - 1) return;
+      animating = true;
+      index = i;
+      if (document.startViewTransition) {
+        document.startViewTransition(function () {
+          paint(true);
+        });
+      } else {
+        paint(true);
+      }
+    }
+
+    track.addEventListener("transitionend", function (e) {
+      if (e.target !== track) return;
+      animating = false;
+    });
+
+    prevBtn.addEventListener("click", function () {
+      goTo(index - 1);
+    });
+    nextBtn.addEventListener("click", function () {
+      goTo(index + 1);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") goTo(index - 1);
+      if (e.key === "ArrowRight") goTo(index + 1);
+    });
+
+    /* Swipe: pointerdown arranca el seguimiento; recien si el gesto se
+     * confirma horizontal (supera el umbral) se llama setPointerCapture,
+     * asi un tap normal sobre un boton DENTRO de la card (wa.me, tel:,
+     * mailto:) llega intacto al iframe en vez de ser interceptado. */
+    var dragging = false, captured = false, pointerId = null;
+    var startX = 0, startY = 0, dx = 0, stageWidth = 0;
+    var THRESHOLD_PX = 8;
+    var SWIPE_RATIO = 0.18;
+
+    track.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      captured = false;
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      dx = 0;
+      stageWidth = stage.getBoundingClientRect().width;
+    });
+
+    track.addEventListener("pointermove", function (e) {
+      if (!dragging || e.pointerId !== pointerId) return;
+      var deltaX = e.clientX - startX;
+      var deltaY = e.clientY - startY;
+      if (!captured) {
+        if (Math.abs(deltaX) < THRESHOLD_PX || Math.abs(deltaX) < Math.abs(deltaY)) return;
+        captured = true;
+        track.setPointerCapture(pointerId);
+        track.style.transition = "none";
+      }
+      dx = deltaX;
+      track.style.transform = "translateX(calc(" + index * -100 + "% + " + dx + "px))";
+      e.preventDefault();
+    });
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      if (!captured) return;
+      captured = false;
+      var moved = -dx > stageWidth * SWIPE_RATIO ? 1 : dx > stageWidth * SWIPE_RATIO ? -1 : 0;
+      goTo(index + moved);
+    }
+
+    track.addEventListener("pointerup", endDrag);
+    track.addEventListener("pointercancel", endDrag);
+    track.addEventListener("pointerleave", function () {
+      if (dragging && !captured) dragging = false;
+    });
+
+    paint(false);
+  })();
+  </script>
+</body>
+</html>

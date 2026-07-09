@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { ingest } from "./stages/ingest.js";
-import { buildLinktree } from "./stages/build-linktree.js";
+import { buildCards } from "./stages/build-cards.js";
 import { extract } from "./stages/extract.js";
 import { verify } from "./stages/verify.js";
 import { buildWeb } from "./stages/build-web.js";
@@ -46,11 +46,11 @@ function asString(v: string | boolean | undefined): string | undefined {
   return typeof v === "string" ? v : undefined;
 }
 
-const USAGE = `card-leads — pipeline tarjeta -> linktree + web
+const USAGE = `card-leads — pipeline tarjeta -> digital cards + web
 
 Uso:
   cli ingest <front> [back] [--slug s] [--rubro r] [--channel c] [--force]
-  cli build-linktree <slug>
+  cli build-cards <slug>
   cli extract <slug>
   cli verify <slug>           (checkpoint humano interactivo)
   cli build-web <slug>        (stub)
@@ -83,9 +83,10 @@ async function main(): Promise<void> {
       break;
     }
 
-    case "build-linktree": {
-      const out = await buildLinktree(positionals[0]!);
-      console.log(`linktree escrito: ${out}`);
+    case "build-cards": {
+      const out = await buildCards(positionals[0]!);
+      console.log(`digital cards escritas:`);
+      for (const p of out) console.log(`  - ${p}`);
       break;
     }
 

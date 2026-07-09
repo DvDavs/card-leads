@@ -12,11 +12,12 @@ este repo.
 ## Qué es el proyecto
 
 CLI en TypeScript (Node + pnpm) que convierte fotos de una tarjeta de
-presentación en un linktree y, a futuro, una web publicada. Sirve para
-cualquier rubro (doctor, barbería, estética, veterinario, nutriólogo,
+presentación en una **digital card (dc)** — varios diseños listos para que el
+cliente elija, con un visor swipeable — y, a futuro, una web publicada. Sirve
+para cualquier rubro (doctor, barbería, estética, veterinario, nutriólogo,
 "otro"), no solo consultorios médicos. Es un generador de leads: se parte de
-una tarjeta física y se llega a una presencia web que se le muestra al
-negocio como propuesta comercial.
+una tarjeta física y se llega a una presencia web (la demo de digital cards)
+que se le muestra al negocio como propuesta comercial.
 
 ## Arquitectura y principios
 
@@ -25,7 +26,8 @@ negocio como propuesta comercial.
   puede reanudar desde donde quedó un lead sin repetir las etapas previas.
 - **El estado vive en `leads/<slug>/data.json`.** Es la fuente de verdad de
   ese lead; la carpeta `leads/<slug>/` es su "expediente" (fotos + JSON +
-  artefactos generados como `linktree.html`).
+  artefactos generados, entre ellos `dc/<template>.html` por cada diseño y
+  `dc/index.html`, el visor swipeable).
 - **`leads/` está gitignoreado.** Contiene PII de terceros (nombres,
   teléfonos, direcciones, email). Nunca commitear nada de ahí.
 - **Máquina de estados por `status`** (`src/lib/schema.ts`, `StatusSchema`),
@@ -42,8 +44,8 @@ negocio como propuesta comercial.
     (`src/lib/colors.ts`), NO el LLM. El LLM estimaba colores muy mal (le
     decía "negro" a un verde). Ver más abajo, es una decisión ya tomada y
     probada.
-  - Relleno de templates (`linktree.html`) → templating puro
-    (`src/lib/template.ts`), sin LLM.
+  - Relleno de templates (digital cards en `leads/<slug>/dc/*.html`) →
+    templating puro (`src/lib/template.ts`), sin LLM.
 - **Checkpoint humano obligatorio (`verify`).** El modelo barato
   (`gemini-2.5-flash`) falla de forma **aleatoria** en campos finos (un
   dígito de teléfono, un handle de red inventado), distinto en cada corrida,
@@ -75,7 +77,7 @@ Campos principales:
 | `brand.colorsText` | Color de texto legible (`#ffffff`/`#000000`, WCAG) **derivado** de cada hex de `colors`; se recalcula, nunca se edita a mano. |
 | `brand.has_logo`, `brand.font_hint` | Sí los aporta el LLM (`font_hint` es pista: "serif"/"sans"/"display", no exacto). |
 | `content.services` | Lista de servicios detectados/confirmados. |
-| `generated` | URLs/paths de artefactos generados (`linktree_url`, `web_url`, `proposal_path`, `outreach_message`). |
+| `generated` | URLs/paths de artefactos generados: `dc_url` (visor swipeable, `dc/index.html`), `cards` (lista `{template, path}`, una por diseño rellenado en `dc/`), `linktree_url` (legado, pre digital-cards), `web_url`, `proposal_path`, `outreach_message`. |
 | `meta.needs` | Huecos pendientes para el checkpoint humano (recalculado en cada etapa, no es un diff acumulado). |
 | `meta.errors` | Errores de la última corrida (p.ej. el modelo no devolvió JSON válido). |
 
@@ -92,7 +94,7 @@ falta correr nada a mano.
 | `ingest` | (nuevo) | `ingested` | no | Crea `leads/<slug>/`, copia las fotos como `card_front.<ext>`/`card_back.<ext>`, escribe `data.json` con los campos de negocio vacíos. `rubro` default `"otro"` si no se pasa (queda anotado en `meta.needs`). |
 | `extract` | `ingested` | `extracted` | sí (Gemini) | Manda las fotos al proveedor de visión, valida la respuesta y llena `business`/`contact`/`socials`/`content.services`. Los **colores se miden aparte** con `extractBrandColors` (`colors.ts`), nunca por el LLM. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (el lead queda `ingested` para reintentar). |
 | `verify` | `extracted` | `verified` | no | Checkpoint humano interactivo por terminal (`readline`). Recorre primero los campos de riesgo, después los generales; al confirmar (`s`) valida contra `LeadSchema` estricto y recién ahí escribe disco. `n`/Ctrl+C no escribe nada. |
-| `build-linktree` | (lee `data.json`, no exige status puntual) | `linktree_built` | no | Rellena el template `generico` (`src/templates/generico/index.html`) con `contact`+`socials`+`brand.colors` y escribe `leads/<slug>/linktree.html`. |
+| `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; `_viewer.html` se salta) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código. |
 | `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
 | `deploy` | — | `deployed` | — | **Stub**, lanza `"no implementado"`. |
 | `proposal` | — | `proposal_ready` | — | **Stub**, lanza `"no implementado"`. |
@@ -101,6 +103,35 @@ falta correr nada a mano.
 Confirmado leyendo `src/stages/build-web.ts`, `deploy.ts`, `proposal.ts` y
 `package.ts`: los cuatro son literalmente `throw new Error("...: no
 implementado")`, sin lógica todavía.
+
+## `src/dc-templates/` — pool de diseños de digital card
+
+Cada `.html` de esta carpeta (menos `_viewer.html`) es un diseño completo,
+standalone, que `build-cards` rellena con `buildCardView` y escribe en
+`leads/<slug>/dc/<nombre>.html`. Hoy hay cinco: `clinic`, `dark`, `executive`,
+`luxury` (con público objetivo propio — ver `CARD_LABELS` en
+`src/config/rubro-map.ts`) y `credencial` (el diseño original del linktree,
+el único self-contained sin fuentes remotas). `_viewer.html` es el visor:
+arma un carrusel de `<iframe>` (cada card queda intacta como archivo
+standalone) con swipe (Pointer Events + `setPointerCapture` recién al
+confirmar gesto horizontal, para no robarle el tap a los botones de adentro
+de la card), flechas, dots y `document.startViewTransition()` para el
+crossfade del chip de etiqueta. `@view-transition{navigation:auto}` (CSS) NO
+se usa a propósito: es para navegaciones MPA vía la Navigation API y no
+puede cruzar el borde de un iframe.
+
+**Excepción de self-contained:** `clinic`/`dark`/`executive`/`luxury` traen
+`<link>` a Google Fonts (Anton, Newsreader, Cormorant Garamond, etc.) —
+decisión explícita del usuario para preservar la identidad tipográfica de
+cada diseño. Es la ÚNICA excepción a la regla self-contained del resto del
+repo; `credencial` (heredera del linktree) sigue sin fuentes remotas.
+
+`buildCardView` (en `build-cards.ts`) es un objeto SUPERSET: expone tanto los
+campos del diseño `credencial` (`name`, `personName`, `links`, `address`
+objeto, `fontFamily`...) como campos planos para los diseños nuevos
+(`heroName`, `hasOrgLine`, `hasPhone`, `whatsappUrl`, `attrs`
+`[{key,value}]`, `hasSocials`...). Un campo ausente en el lead nunca se
+muestra vacío: su `{{#hasX}}` correspondiente simplemente no renderiza.
 
 ## `src/lib/` — piezas de soporte
 
@@ -149,7 +180,8 @@ implementado")`, sin lógica todavía.
   paralela a mano; editar el schema y dejar que el tipo se derive.
 - Tests en `tests/deterministic/`: aserciones estrictas (TDD real) sobre
   lógica pura — `slug.test.ts`, `template.test.ts`, `schema.test.ts`,
-  `colors.test.ts`, `extract.test.ts`, `verify.test.ts`.
+  `colors.test.ts`, `extract.test.ts`, `verify.test.ts`, `build-cards.test.ts`
+  (vista `buildCardView` + render real de cada diseño del pool + el visor).
 
 ## Sobre `tests/evals/` — discrepancia encontrada
 
@@ -168,7 +200,7 @@ Copy-Item .env.example .env       # completar GEMINI_API_KEY
 pnpm cli ingest anverso.jpg reverso.jpg --slug dr-karey --rubro doctor
 pnpm cli extract dr-karey          # llama a Gemini -> status=extracted
 pnpm cli verify dr-karey           # checkpoint humano -> status=verified
-pnpm cli build-linktree dr-karey   # -> leads/dr-karey/linktree.html
+pnpm cli build-cards dr-karey      # -> leads/dr-karey/dc/*.html + dc/index.html
 ```
 
 Comandos (firma real, `src/cli.ts`):
@@ -178,22 +210,23 @@ Comandos (firma real, `src/cli.ts`):
 | `pnpm cli ingest` | `ingest <front> [back] [--slug s] [--rubro r] [--channel c] [--force]` | no |
 | `pnpm cli extract` | `extract <slug>` | sí (`GEMINI_API_KEY`) |
 | `pnpm cli verify` | `verify <slug>` | no |
-| `pnpm cli build-linktree` | `build-linktree <slug>` | no |
+| `pnpm cli build-cards` | `build-cards <slug>` | no |
 | `pnpm cli build-web` \| `deploy` \| `proposal` \| `package` | `<comando> <slug>` | — (stubs) |
 | `pnpm test` | suite determinista (vitest) | no |
 | `pnpm typecheck` | `tsc --noEmit` | no |
 
 Rubros válidos: `doctor · barberia · estetica · veterinario · nutriologo ·
 otro`. Solo `doctor`, `barberia` y `estetica` tienen template web propio hoy
-(`src/templates/`); `veterinario`, `nutriologo` y `otro` caen al template
-`generico` (`src/config/rubro-map.ts`) — el linktree, de todas formas,
-siempre usa `generico`.
+(`src/templates/`, para `build-web`, todavía stub); `veterinario`,
+`nutriologo` y `otro` caen al template `generico` ahí. Las digital cards
+(`build-cards`) son independientes de esto: NO se filtran por rubro, cada
+lead recibe todos los diseños de `src/dc-templates/`.
 
 ## Decisiones pendientes / cosas a saber
 
 - `contact.phones` es lista (no un string único) porque un consultorio
   suele tener varios números; cada uno genera su propio botón "Llamar" en el
-  linktree.
+  diseño `credencial` (los otros diseños usan solo `phones[0]`).
 - Para `build-web` (futuro): la idea es un **Tier A** automático (template +
   datos, para volumen) y un **Tier B** a mano con Claude Code para los leads
   que valen la pena más atención. No generar caras/fotos falsas de personas:

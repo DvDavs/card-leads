@@ -66,15 +66,19 @@ export async function copyIntoLead(
   return destName; // ruta relativa que se guarda en source.card_front / card_back
 }
 
-/** Escribe un artefacto de texto (HTML, md) en la carpeta del lead. */
+/**
+ * Escribe un artefacto de texto (HTML, md) en la carpeta del lead. `fileName`
+ * puede traer subcarpetas (ej. "dc/clinic.html", como hacen las digital
+ * cards): se crea todo el arbol de directorios necesario, no solo la raiz
+ * del lead.
+ */
 export async function writeArtifact(
   slug: string,
   fileName: string,
   content: string,
 ): Promise<string> {
-  const dir = leadDir(slug);
-  await fs.mkdir(dir, { recursive: true });
-  const full = path.join(dir, fileName);
+  const full = path.join(leadDir(slug), fileName);
+  await fs.mkdir(path.dirname(full), { recursive: true });
   await fs.writeFile(full, content, "utf8");
   return full;
 }

@@ -58,7 +58,7 @@ export const ContactSchema = z.preprocess(
   migrateContact,
   z.object({
     // varios telefonos: un consultorio puede listar mas de uno (llamada / wa.me
-    // se arman por cada numero en build-linktree).
+    // se arman por cada numero en build-cards).
     phones: z.array(z.string()).optional(),
     whatsapp: z.string().optional(), // WhatsApp es UNO solo; normalizado a E.164 si se puede
     email: z.string().optional(),
@@ -129,7 +129,17 @@ export const LeadSchema = z.object({
   }),
 
   generated: z.object({
-    linktree_url: z.string().optional(),
+    linktree_url: z.string().optional(), // legacy: un solo diseno (pre digital-cards)
+    dc_url: z.string().optional(), // "dc/index.html" — el visor swipeable
+    // una entrada por diseno rellenado en leads/<slug>/dc/
+    cards: z
+      .array(
+        z.object({
+          template: z.string(), // "clinic" | "dark" | "executive" | "luxury" | "credencial"
+          path: z.string(), // "dc/clinic.html"
+        }),
+      )
+      .optional(),
     web_url: z.string().optional(),
     proposal_path: z.string().optional(),
     outreach_message: z.string().optional(),
