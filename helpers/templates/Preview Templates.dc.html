@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<title>Tarjeta Digital — Templates</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #e9e7e2; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif; }
+  a { color: #344563; }
+  a:hover { color: #b08d4a; }
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #e9e7e2; padding: 48px 32px 72px; display: flex; flex-direction: column; gap: 36px;" data-screen-label="Galería de templates">
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <p style="margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: #8a8578;">Tarjeta Digital · Colección de templates</p>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #2e3140; letter-spacing: -0.02em;">4 estilos, 4 rubros</h1>
+    <p style="margin: 0; font-size: 13.5px; color: #8a8578;">Render con datos demo — los templates reales usan placeholders Handlebars en templates/&lt;rubro&gt;/template.html</p>
+  </div>
+  <div style="display: flex; gap: 40px; flex-wrap: wrap; align-items: flex-start;">
+    <sc-for list="{{ cards }}" as="card" hint-placeholder-count="4">
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: baseline; gap: 10px;">
+          <span style="font-size: 12px; font-weight: 800; color: #b08d4a;">{{ card.num }}</span>
+          <span style="font-size: 15px; font-weight: 700; color: #2e3140;">{{ card.name }}</span>
+          <span style="font-size: 12px; color: #8a8578;">{{ card.for }}</span>
+        </div>
+        <div style="width: 380px; height: 760px; border-radius: 34px; background: #ffffff; box-shadow: 0 26px 60px -28px #00000055, 0 0 0 9px #1c1c1e, 0 0 0 11px #3a3a3c; overflow: hidden;">
+          <iframe title="{{ card.name }}" src="{{ card.src }}" style="width: 100%; height: 100%; border: none; display: block;"></iframe>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      cards: [
+        { num: '01', name: 'Clinic', for: 'Salud · Médicos', src: 'previews/clinic.demo.html' },
+        { num: '02', name: 'Executive', for: 'Abogados · Consultores', src: 'previews/executive.demo.html' },
+        { num: '03', name: 'Dark', for: 'Barberías · Tattoo · Gym', src: 'previews/dark.demo.html' },
+        { num: '04', name: 'Luxury', for: 'Hoteles · Inmobiliarias', src: 'previews/luxury.demo.html' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

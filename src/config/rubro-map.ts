@@ -72,6 +72,11 @@ export const CARD_LABELS: Record<string, { name: string; audience: string }> = {
   seda: { name: "Seda", audience: "Estética y belleza" },
   redondo: { name: "Redondo", audience: "Veterinarias y cercanía" },
   lienzo: { name: "Lienzo", audience: "General (default)" },
+  // Guelaguetza (Oaxaca): paleta y arte FIJOS para todos los rubros; solo
+  // cambian los datos y la capa de motivos. Imagenes propias en dc/assets/.
+  "guelaguetza-calenda": { name: "Calenda", audience: "Guelaguetza · Oaxaca" },
+  "guelaguetza-pina": { name: "Flor de Piña", audience: "Guelaguetza · Oaxaca" },
+  "guelaguetza-tehuana": { name: "Tehuana", audience: "Guelaguetza · Oaxaca" },
 };
 
 /**
