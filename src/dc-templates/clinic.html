@@ -15,7 +15,15 @@
   --secondary:{{{colors.secondary}}};
   --accent:{{{colors.accent}}};
   --on-primary:{{{colorsText.primary}}};
-  --bg:#fcfbf9;
+  /* Superficie MEDIDA de la tarjeta (opcional): tine el fondo near-white con un
+     9% del color real. En tarjeta blanca `background` viene null y no se
+     declara => el var() cae a #fcfbf9 y el fondo queda como el original. El rol
+     `text` NO se usa como ink aca: su polaridad depende del fondo de la tarjeta
+     (en una tarjeta oscura el ink es CLARO) y no es portable a un diseno claro;
+     el ink se deriva de `primary`, que siempre es una tinta oscura legible. */
+  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+  --bg:color-mix(in oklab,var(--card-bg,var(--card-surface,#fcfbf9)) 9%,#fcfbf9);
   --ink:color-mix(in oklab,var(--primary) 84%,#000);
   --ink-soft:color-mix(in oklab,var(--primary) 40%,#909090);
   --line:color-mix(in oklab,var(--primary) 8%,#eae8e3);

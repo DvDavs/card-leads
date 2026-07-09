@@ -15,7 +15,13 @@
   --secondary:{{{colors.secondary}}};
   --accent:{{{colors.accent}}};
   --on-primary:{{{colorsText.primary}}};
-  --bg:#f6f5f2;
+  /* Superficie MEDIDA (opcional): tine el fondo con un 10% del color real;
+     ausente => var() cae a #f6f5f2 (fondo original, claro y sobrio). El rol
+     `text` no se usa como ink (polaridad no portable a un diseno claro): el ink
+     se deriva de `primary`. */
+  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+  --bg:color-mix(in oklab,var(--card-bg,var(--card-surface,#f6f5f2)) 10%,#f6f5f2);
   --ink:color-mix(in oklab,var(--primary) 88%,#000);
   --ink-soft:color-mix(in oklab,var(--primary) 38%,#8f8f8f);
   --line:color-mix(in oklab,var(--primary) 14%,#dedcd6);

@@ -133,6 +133,12 @@ export const LeadSchema = z.object({
       .optional(),
     has_logo: z.boolean(),
     logo_path: z.string().optional(),
+    // photo_path: foto real para el avatar circular (retrato del profesional o
+    // imagen del negocio). Ruta local dentro de leads/<slug>/ o data URI. Tiene
+    // PRIORIDAD sobre logo_path en la cascada del avatar (photo -> logo ->
+    // inicial). Opcional: si falta, cada card cae al logo o a la inicial. NUNCA
+    // una cara/foto generada — solo material real que aporta el negocio.
+    photo_path: z.string().optional(),
     font_hint: z.string().optional(), // "serif"/"sans"/"display" — pista, no exacto
   }),
 

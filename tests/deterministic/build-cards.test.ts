@@ -5,7 +5,9 @@ import {
   assertBuildableStatus,
   buildCardView,
   buildMapsUrl,
+  parseMotifs,
   socialUrl,
+  swapMotif,
   type CardLink,
 } from "../../src/stages/build-cards.js";
 import { renderTemplate } from "../../src/lib/template.js";
@@ -229,6 +231,63 @@ describe("buildCardView — tema (colores + colorsText)", () => {
     expect((view.colors as Record<string, string>).primary).toBe("#24376d");
     expect((view.colorsText as Record<string, string>).primary).toBe("#ffffff");
   });
+
+  it("expone background/surface/text medidos con sus flags hasX (roles opcionales)", () => {
+    const lead = verifiedLead();
+    lead.brand = {
+      colors: {
+        primary: "#24376d",
+        secondary: "#352122",
+        accent: "#d1857c",
+        background: "#f4efe6",
+        surface: "#e7ddc9",
+        text: "#1a1a1a",
+      },
+      colorsText: {
+        primary: "#ffffff",
+        secondary: "#ffffff",
+        accent: "#000000",
+        background: "#000000",
+        surface: "#000000",
+      },
+      has_logo: true,
+      font_hint: "serif",
+    };
+    const view = buildCardView(lead);
+    const colors = view.colors as Record<string, string>;
+    expect(colors.background).toBe("#f4efe6");
+    expect(colors.surface).toBe("#e7ddc9");
+    expect(colors.text).toBe("#1a1a1a");
+    expect(view.hasBackground).toBe(true);
+    expect(view.hasSurface).toBe(true);
+    expect(view.hasText).toBe(true);
+    // background/surface son superficie => llevan colorsText; text es TINTA => no.
+    const colorsText = view.colorsText as Record<string, string>;
+    expect(colorsText.background).toBe("#000000");
+    expect(colorsText.surface).toBe("#000000");
+    expect(colorsText.text).toBeUndefined();
+  });
+
+  it("background/surface/text ausentes (tarjeta blanca: ignoreWhite descarta el fondo): flags en false, sin clave", () => {
+    const view = buildCardView(verifiedLead()); // el fixture no trae estos roles
+    expect(view.hasBackground).toBe(false);
+    expect(view.hasSurface).toBe(false);
+    expect(view.hasText).toBe(false);
+    const colors = view.colors as Record<string, string>;
+    expect(colors.background).toBeUndefined();
+    expect(colors.surface).toBeUndefined();
+    expect(colors.text).toBeUndefined();
+    // no debe contaminar el bloque p/s/a que ya consumen las cards
+    expect(colors).toEqual({ primary: "#24376d", secondary: "#352122", accent: "#d1857c" });
+  });
+
+  it("superficie medida sin colorsText (data.json viejo): deriva el texto WCAG con textColorFor", () => {
+    const lead = verifiedLead();
+    lead.brand = { colors: { surface: "#0b0b0d" }, has_logo: false }; // superficie oscura => texto claro
+    const view = buildCardView(lead);
+    expect((view.colorsText as Record<string, string>).surface).toBe("#ffffff");
+    expect(view.hasSurface).toBe(true);
+  });
 });
 
 describe("buildCardView — tipografia por font_hint (diseno credencial)", () => {
@@ -280,6 +339,19 @@ describe("buildCardView — identidad y extras", () => {
     const lead = verifiedLead();
     lead.brand.logo_path = "logo.png";
     expect(buildCardView(lead).logoPath).toBe("logo.png");
+  });
+
+  it("avatar: photo_path pasa tal cual y coexiste con logo_path (prioridad la da el template)", () => {
+    const lead = verifiedLead();
+    lead.brand.photo_path = "foto.jpg";
+    lead.brand.logo_path = "logo.png";
+    const view = buildCardView(lead);
+    expect(view.photoPath).toBe("foto.jpg");
+    expect(view.logoPath).toBe("logo.png");
+  });
+
+  it("avatar: sin photo_path, photoPath queda vacio (cascada cae al logo o a la inicial)", () => {
+    expect(buildCardView(verifiedLead()).photoPath).toBe("");
   });
 
   it("sin nombre de negocio la inicial cae a la persona", () => {
@@ -527,6 +599,110 @@ describe("render de cada diseno nuevo del pool (clinic/dark/executive/luxury)", 
       const html = renderTemplate(template, buildCardView(lead, 2026));
       expect(html).not.toContain('aria-label="Redes sociales"');
     }
+  });
+});
+
+describe("render del pool decorativo (celeste/vitrina/rotulo/seda/redondo/lienzo)", () => {
+  const DECOR = ["celeste", "vitrina", "rotulo", "seda", "redondo", "lienzo"];
+
+  async function loadDecor(key: string): Promise<string> {
+    const url = new URL(`../../src/dc-templates/${key}.html`, import.meta.url);
+    return fs.readFile(fileURLToPath(url), "utf8");
+  }
+
+  async function renderDecor(key: string, lead: Lead = verifiedLead()): Promise<string> {
+    return renderTemplate(await loadDecor(key), buildCardView(lead, 2026));
+  }
+
+  it.each(DECOR)("%s: render limpio (sin {{ }} sin resolver ni 'undefined')", async (key) => {
+    const html = await renderDecor(key);
+    expect(html).not.toMatch(/\{\{/);
+    expect(html).not.toContain("undefined");
+  });
+
+  it.each(DECOR)("%s: persona, WhatsApp derivado y colores medidos", async (key) => {
+    const html = await renderDecor(key);
+    expect(html).toContain("Dr. Guillermo Karey Pérez Cortés");
+    expect(html).toContain("wa.me/529515442192");
+    expect(html).toContain("#24376d");
+  });
+
+  it.each(DECOR)("%s: trae su propia Google Font (excepcion aceptada, no self-contained)", async (key) => {
+    expect(await loadDecor(key)).toContain("fonts.googleapis.com");
+  });
+
+  it.each(DECOR)("%s: sin foto ni logo el avatar cae a la inicial", async (key) => {
+    const html = await renderDecor(key);
+    expect(html).toContain("avatar-ini");
+    expect(html).toContain(">T</div>");
+  });
+
+  it.each(DECOR)("%s: con photo_path la foto entra en el avatar (prioridad sobre logo/inicial)", async (key) => {
+    const lead = verifiedLead();
+    lead.brand.photo_path = "foto-karey.jpg";
+    const html = await renderDecor(key, lead);
+    expect(html).toContain('src="foto-karey.jpg"');
+  });
+
+  it.each(DECOR)("%s: trae la capa de motivos con sus marcadores (fondo intercambiable)", async (key) => {
+    const raw = await loadDecor(key);
+    expect(raw).toContain("MOTIF:START");
+    expect(raw).toContain("MOTIF:END");
+  });
+});
+
+describe("motivos por rubro — parseMotifs / swapMotif (fondo intercambiable)", () => {
+  const RUBROS = ["doctor", "nutriologo", "barberia", "estetica", "veterinario", "otro"];
+
+  async function motifsHtml(): Promise<string> {
+    const url = new URL("../../src/dc-templates/_motifs.html", import.meta.url);
+    return fs.readFile(fileURLToPath(url), "utf8");
+  }
+  async function templateHtml(key: string): Promise<string> {
+    const url = new URL(`../../src/dc-templates/${key}.html`, import.meta.url);
+    return fs.readFile(fileURLToPath(url), "utf8");
+  }
+
+  it("parseMotifs extrae un bloque por cada rubro, cada uno con sus 5 sprites", async () => {
+    const motifs = parseMotifs(await motifsHtml());
+    for (const r of RUBROS) {
+      expect(motifs[r]).toBeDefined();
+      expect(motifs[r]).toContain(`MOTIF:START (rubro=${r})`);
+      expect(motifs[r]).toContain("MOTIF:END");
+      const sprites = motifs[r]!.match(/class="m m[1-5]"/g) ?? [];
+      expect(sprites).toHaveLength(5);
+    }
+  });
+
+  it("swapMotif reemplaza el bloque default del template por el del rubro pedido", async () => {
+    const motifs = parseMotifs(await motifsHtml());
+    const seda = await templateHtml("seda"); // default: estetica
+    expect(seda).toContain("MOTIF:START (rubro=estetica)");
+
+    const swapped = swapMotif(seda, motifs.veterinario);
+    expect(swapped).toContain("MOTIF:START (rubro=veterinario)");
+    expect(swapped).not.toContain("MOTIF:START (rubro=estetica)");
+    // solo cambia la capa de motivos: el resto del diseno queda intacto
+    expect(swapped).toContain("{{heroName}}");
+    expect(swapped).toContain("fonts.googleapis.com");
+  });
+
+  it("swapMotif es no-op en disenos sin marcadores (credencial no trae motivos)", async () => {
+    const motifs = parseMotifs(await motifsHtml());
+    const credencial = await templateHtml("credencial");
+    expect(credencial).not.toContain("MOTIF:START");
+    expect(swapMotif(credencial, motifs.doctor)).toBe(credencial);
+  });
+
+  it("swapMotif con motifBlock undefined deja el template intacto", () => {
+    const tpl = "<body><!-- MOTIF:START (rubro=doctor) --><div class=motif></div><!-- MOTIF:END --></body>";
+    expect(swapMotif(tpl, undefined)).toBe(tpl);
+  });
+
+  it("swapMotif inserta el bloque literal aunque el SVG traiga '$' (replacer function, no patron)", () => {
+    const tpl = "a<!-- MOTIF:START (rubro=x) -->OLD<!-- MOTIF:END -->b";
+    const block = "<!-- MOTIF:START (rubro=y) --><path d='M$1 $&'/><!-- MOTIF:END -->";
+    expect(swapMotif(tpl, block)).toBe(`a${block}b`);
   });
 });
 

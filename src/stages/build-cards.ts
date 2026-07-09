@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CARD_LABELS, RUBRO_TEMPLATE_ORDER } from "../config/rubro-map.js";
+import { textColorFor } from "../lib/colors.js";
 import { StatusSchema, type Lead, type Rubro, type Status } from "../lib/schema.js";
 import { renderTemplate } from "../lib/template.js";
 import { readLead, writeArtifact, writeLead } from "../lib/storage.js";
@@ -254,6 +255,52 @@ export function buildJsonLd(lead: Lead): string {
 }
 
 /* ------------------------------------------------------------------ */
+/* Capa de motivos (fondo decorativo intercambiable por rubro)         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Cada diseno nuevo del pool trae un bloque de motivos decorativos entre los
+ * marcadores `<!-- MOTIF:START (rubro=X) -->` y `<!-- MOTIF:END -->`, al inicio
+ * del <body>. `_motifs.html` es la LIBRERIA: un bloque por rubro (mismo wrapper
+ * `.motif` y sprites `.m1`-`.m5`; solo cambia el arte SVG). `build-cards`
+ * reemplaza el bloque que trae cada template por el del rubro del lead, asi
+ * TODOS los disenos que ve el cliente muestran motivos coherentes con su rubro.
+ * El color y la posicion los pone el CSS de cada diseno (currentColor -> paleta
+ * de marca); los bloques no llevan variables de template.
+ *
+ * Los disenos viejos (credencial/clinic/dark/executive/luxury) no traen
+ * marcadores: `swapMotif` los deja intactos (no-op).
+ */
+const MOTIF_BLOCK_RE = /<!--\s*MOTIF:START[\s\S]*?MOTIF:END\s*-->/;
+const MOTIF_PARSE_RE = /<!--\s*MOTIF:START\s*\(rubro=([a-z]+)\)\s*-->[\s\S]*?<!--\s*MOTIF:END\s*-->/gi;
+
+/**
+ * parseMotifs — PURA: extrae de `_motifs.html` (o cualquier HTML con los
+ * marcadores) un mapa rubro -> bloque completo (marcadores incluidos, listo
+ * para pegar). La clave es el `rubro=` del marcador.
+ */
+export function parseMotifs(motifsHtml: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const m of motifsHtml.matchAll(MOTIF_PARSE_RE)) {
+    out[m[1]!.toLowerCase()] = m[0];
+  }
+  return out;
+}
+
+/**
+ * swapMotif — PURA: reemplaza el bloque de motivos del template por
+ * `motifBlock`. Si el template no trae marcadores (disenos viejos) o
+ * `motifBlock` es undefined (no hay bloque para ese rubro), devuelve el
+ * template sin tocar.
+ */
+export function swapMotif(templateHtml: string, motifBlock: string | undefined): string {
+  if (!motifBlock || !MOTIF_BLOCK_RE.test(templateHtml)) return templateHtml;
+  // Replacer como FUNCION (no string): el bloque es SVG crudo y String.replace
+  // interpretaria patrones "$" en un string de reemplazo. Asi entra literal.
+  return templateHtml.replace(MOTIF_BLOCK_RE, () => motifBlock);
+}
+
+/* ------------------------------------------------------------------ */
 /* Guard de status                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -393,9 +440,11 @@ export function buildCardView(
   const hasAttrs = attrs.length > 0;
 
   /* ---------- tema ---------- */
-  // Pares color+texto. El texto legible viene de brand.colorsText (WCAG,
-  // calculado en verify) — aca NO se recalcula; si falta un color se usa el
-  // par de reserva completo para no mezclar texto de un color con fondo de otro.
+  // primary/secondary/accent: SIEMPRE presentes (carga estructural de todo
+  // diseno del pool). Par color+texto; el texto legible viene de
+  // brand.colorsText (WCAG, calculado en verify) — aca NO se recalcula. Si
+  // falta un color se usa el par de reserva completo, para no mezclar el texto
+  // de un color con el fondo de otro.
   const roles = ["primary", "secondary", "accent"] as const;
   const colors: Record<string, string> = {};
   const colorsText: Record<string, string> = {};
@@ -405,6 +454,28 @@ export function buildCardView(
     colorsText[role] = measured
       ? (lead.brand.colorsText?.[role] ?? FALLBACK_THEME[role].text)
       : FALLBACK_THEME[role].text;
+  }
+
+  // background/surface (superficie) + text (tinta): roles OPCIONALES que asigna
+  // el LLM pero PUEDEN faltar (ej. tarjeta blanca => ignoreWhite descarta el
+  // blanco de fondo y `background` viene null). NO llevan par de reserva: si
+  // faltan, cada template cae a su PROPIO valor de diseno via
+  // `var(--rol,<default-del-diseno>)`, preservando su identidad (dark sigue
+  // oscuro, clinic sigue claro). Por eso solo se exponen en `colors` cuando
+  // existen, con un flag `hasX` para el `{{#hasX}}` del template. `text` es
+  // TINTA, no superficie => no lleva colorsText (no se pinta nada encima).
+  const surfaceTheme: Record<string, boolean> = {};
+  for (const role of ["background", "surface", "text"] as const) {
+    const measured = lead.brand.colors[role];
+    surfaceTheme[`has${role[0]!.toUpperCase()}${role.slice(1)}`] = Boolean(measured);
+    if (!measured) continue;
+    colors[role] = measured;
+    if (role !== "text") {
+      // colorsText ya viene de verify; si un data.json viejo no lo trae, se
+      // deriva del hex con la MISMA funcion WCAG que usa verify (no se duplica
+      // la logica). textColorFor es undefined solo si el hex es invalido.
+      colorsText[role] = lead.brand.colorsText?.[role] ?? textColorFor(measured) ?? "#000000";
+    }
   }
 
   // Direccion (diseno credencial): lineas visibles + boton "Como llegar".
@@ -421,6 +492,10 @@ export function buildCardView(
     heroName,
     orgName,
     hasOrgLine,
+    // avatar: cascada foto -> logo -> inicial. `photoPath` tiene prioridad; si
+    // falta, el template cae al logo, y si tampoco hay, a la inicial. Nunca una
+    // cara generada: photo_path/logo_path son material real del negocio.
+    photoPath: lead.brand.photo_path ?? "",
     logoPath: lead.brand.logo_path ?? "",
     initial,
     fontFamily: resolveFontFamily(lead.brand.font_hint),
@@ -462,6 +537,9 @@ export function buildCardView(
     // --- tema ---
     colors,
     colorsText,
+    ...surfaceTheme, // hasBackground / hasSurface / hasText
+
+
 
     // --- meta / extras ---
     vcard: vcard ?? "",
@@ -522,6 +600,21 @@ async function loadViewerTemplate(): Promise<string> {
   return fs.readFile(fileURLToPath(new URL("_viewer.html", DC_TEMPLATES_DIR)), "utf8");
 }
 
+/**
+ * loadMotifs — lee `_motifs.html` (la libreria de motivos) y devuelve el mapa
+ * rubro -> bloque. Si el archivo no existe (pool sin la libreria) devuelve un
+ * mapa vacio: `swapMotif` cae a no-op y cada template conserva su bloque
+ * default. `_motifs.html` empieza con "_" => no entra al pool.
+ */
+async function loadMotifs(): Promise<Record<string, string>> {
+  try {
+    const html = await fs.readFile(fileURLToPath(new URL("_motifs.html", DC_TEMPLATES_DIR)), "utf8");
+    return parseMotifs(html);
+  } catch {
+    return {};
+  }
+}
+
 /** Etiqueta legible + publico objetivo para un diseno del pool en el visor. */
 function labelFor(key: string): { name: string; audience: string } {
   return CARD_LABELS[key] ?? { name: key.charAt(0).toUpperCase() + key.slice(1), audience: "" };
@@ -548,12 +641,19 @@ export async function buildCards(slug: string): Promise<string[]> {
   }
   const orderedPool = orderPoolByRubro(pool, lead.rubro);
 
+  // Fondo decorativo intercambiable: el bloque de motivos del rubro del lead se
+  // inyecta en CADA diseno del pool (fallback al bloque "otro", y si tampoco
+  // esta, cada template conserva su motivo default).
+  const motifs = await loadMotifs();
+  const motifBlock = motifs[lead.rubro] ?? motifs.otro;
+
   const view = buildCardView(lead);
   const writtenPaths: string[] = [];
   const cards: { template: string; path: string }[] = [];
 
   for (const entry of orderedPool) {
-    const template = await loadPoolTemplate(entry.file);
+    const rawTemplate = await loadPoolTemplate(entry.file);
+    const template = swapMotif(rawTemplate, motifBlock);
     const html = renderTemplate(template, view);
     const relPath = path.posix.join(DC_DIR, entry.file);
     const outPath = await writeArtifact(slug, relPath, html);

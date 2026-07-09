@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{metaDescription}}">
+<script type="application/ld+json">{{{jsonLd}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!--
+  CAPA DE MOTIVOS · Buscar los marcadores "MOTIF:START" / "MOTIF:END" al inicio del <body>.
+  Para cambiar el rubro se reemplaza ese bloque COMPLETO por el bloque del rubro deseado
+  (viven en _motifs.html; mismo wrapper <div class="motif"> y sprites .m1 a .m5).
+  Aqui los sprites se esparcen en diagonal como un caminito jugueton;
+  las posiciones de .m1-.m5 se definen en el CSS de ESTE archivo; el arte usa currentColor.
+-->
+<style>
+:root{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
+  --bg:color-mix(in oklab,var(--secondary) 16%,#f6f4ef);
+  --ink:color-mix(in oklab,var(--primary) 80%,#171613);
+  --ink-soft:color-mix(in oklab,var(--primary) 40%,#96938a);
+  --card:#ffffff;
+  --line:color-mix(in oklab,var(--primary) 12%,#e6e2d9);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100dvh}
+a{color:var(--ink);text-decoration:none}
+a:hover{color:color-mix(in oklab,var(--accent) 65%,var(--ink))}
+
+/* ===== capa de motivos: caminito en diagonal ===== */
+.motif{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;color:var(--primary)}
+.m{position:absolute;display:block}
+.m1{width:74px;top:5%;left:-16px;opacity:.15;transform:rotate(-20deg)}
+.m2{width:100px;top:16%;right:-24px;opacity:.14;transform:rotate(14deg)}
+.m3{width:120px;top:46%;left:-38px;opacity:.12;transform:rotate(8deg)}
+.m4{width:88px;bottom:15%;right:-16px;opacity:.14;transform:rotate(-12deg)}
+.m5{width:64px;bottom:3%;left:12%;opacity:.16;transform:rotate(18deg)}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -9px}}
+.m{animation:bob 8s ease-in-out infinite}
+.m2{animation-delay:-2s}.m3{animation-delay:-4s}.m4{animation-delay:-6s}.m5{animation-delay:-3s}
+@media (prefers-reduced-motion:reduce){.m{animation:none}}
+
+.wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;padding:clamp(32px,6vh,56px) 24px 46px;display:flex;flex-direction:column;gap:26px}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.rise{animation:pop .55s cubic-bezier(.2,.8,.3,1.1) both}
+.d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}.d4{animation-delay:.32s}
+
+.identity{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px}
+.avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#fff;border:4px solid #fff;box-shadow:0 8px 22px -10px color-mix(in oklab,var(--primary) 50%,transparent)}
+.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:40px;color:var(--on-primary);background:var(--primary)}
+h1{margin:0;font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(29px,8vw,36px);letter-spacing:-.01em;line-height:1.08}
+.tag{margin:0;font-size:15px;font-weight:600;color:var(--ink-soft);max-width:32ch}
+.org{margin:0;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:color-mix(in oklab,var(--accent) 70%,var(--ink))}
+
+.actions{display:flex;flex-direction:column;gap:11px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:999px;font-size:15px;font-weight:800;transition:transform .18s ease,box-shadow .18s ease}
+.btn:hover{transform:translateY(-2px)}
+.cta{background:var(--primary);color:var(--on-primary);box-shadow:0 12px 26px -14px color-mix(in oklab,var(--primary) 75%,transparent)}
+.cta:hover{color:var(--on-primary)}
+.pill{background:var(--card);border:2px solid color-mix(in oklab,var(--primary) 16%,var(--line));box-shadow:0 4px 0 color-mix(in oklab,var(--primary) 14%,var(--line))}
+.pill:hover{box-shadow:0 6px 0 color-mix(in oklab,var(--primary) 20%,var(--line))}
+.pill .v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcard{align-self:center;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:3px 2px}
+
+.sect{display:flex;flex-direction:column;gap:12px}
+.sect h2{margin:0;text-align:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px}
+.svcs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.svcs li{padding:9px 15px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-size:12.5px;font-weight:700}
+.svcs li:nth-child(n+7){display:none}
+.more-t:checked ~ .svcs li{display:block}
+.more{align-self:center;font-size:12px;font-weight:800;color:color-mix(in oklab,var(--primary) 75%,#000);cursor:pointer;border-bottom:2px solid currentColor;padding-bottom:1px}
+.sect:not(:has(.svcs li:nth-child(7))) .more{display:none}
+.more .hide{display:none}
+.more-t:checked ~ .more .show{display:none}
+.more-t:checked ~ .more .hide{display:inline}
+
+.attrs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.attr{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:13px 15px;display:flex;flex-direction:column;gap:3px;text-align:center}
+.attr b{font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.attr span{font-size:13.5px;font-weight:700}
+.about p{margin:0;font-size:14.5px;font-weight:600;line-height:1.6;text-align:center;color:color-mix(in oklab,var(--ink) 78%,var(--ink-soft))}
+
+.socials{display:flex;justify-content:center;gap:10px}
+.soc{padding:9px 18px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-size:12px;font-weight:800}
+.soc:hover{border-color:var(--primary)}
+footer{text-align:center}
+footer p{margin:0;font-size:11px;font-weight:700;color:var(--ink-soft)}
+@media (min-width:720px){.wrap{max-width:500px}}
+</style>
+</head>
+<body>
+
+<!-- MOTIF:START (rubro=veterinario) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="50" cy="62" rx="16" ry="13"/><ellipse cx="29" cy="42" rx="7" ry="9"/><ellipse cx="43" cy="32" rx="7" ry="9"/><ellipse cx="57" cy="32" rx="7" ry="9"/><ellipse cx="71" cy="42" rx="7" ry="9"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-25 50 50)"><circle cx="27" cy="43" r="8"/><circle cx="27" cy="57" r="8"/><circle cx="73" cy="43" r="8"/><circle cx="73" cy="57" r="8"/><path d="M33 50h34"/></g></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="56" r="25"/><path d="M33 38l-5-20 17 12M67 38l5-20-17 12"/><path d="M8 58h16M10 66h14M76 58h16M76 66h14"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="30"/><path d="M28 30c14 8 14 32 0 40M72 30c-14 8-14 32 0 40"/></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 82C28 64 16 50 16 36a17 17 0 0 1 34-4 17 17 0 0 1 34 4c0 14-12 28-34 46Z"/></svg>
+</div>
+<!-- MOTIF:END -->
+
+<main class="wrap">
+
+  <header class="identity rise">
+    <!-- FOTO CIRCULAR: photoPath es un CAMPO NUEVO propuesto (aun no existe en el view del pipeline).
+         Al agregarlo, esta imagen redonda toma prioridad; mientras tanto cae sola al logo o a la inicial. -->
+    {{#photoPath}}<img class="avatar" src="{{photoPath}}" alt="{{heroName}}">{{/photoPath}}
+    {{^photoPath}}
+      {{#logoPath}}<img class="avatar" src="{{logoPath}}" alt="{{heroName}}">{{/logoPath}}
+      {{^logoPath}}<div class="avatar avatar-ini">{{initial}}</div>{{/logoPath}}
+    {{/photoPath}}
+    <h1>{{heroName}}</h1>
+    {{#tagline}}<p class="tag">{{tagline}}</p>{{/tagline}}
+    {{#hasOrgLine}}<p class="org">{{orgName}}</p>{{/hasOrgLine}}
+  </header>
+
+  <section class="actions rise d1" aria-label="Contacto directo">
+    {{#hasPhone}}
+    <a class="btn cta" href="{{whatsappUrl}}" target="_blank" rel="noopener">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.5.5c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.3 1.1 2.3 1.5 2.7 1.6.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.3.6.4 0 .2 0 .7-.2 1.2Z"/></svg>
+      Escribir por WhatsApp
+    </a>
+    <a class="btn pill" href="{{phoneTelHref}}"><span class="v">Llamar · {{phoneDisplay}}</span></a>
+    {{/hasPhone}}
+    {{#hasEmail}}<a class="btn pill" href="mailto:{{email}}"><span class="v">{{email}}</span></a>{{/hasEmail}}
+    {{#hasAddressLine}}<a class="btn pill" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="v">Cómo llegar</span></a>{{/hasAddressLine}}
+    {{#hasWebsite}}<a class="btn pill" href="{{website}}" target="_blank" rel="noopener"><span class="v">Sitio web</span></a>{{/hasWebsite}}
+    {{#vcard}}<a class="vcard" href="{{vcard}}" download>Guardar contacto</a>{{/vcard}}
+  </section>
+
+  {{#hasAddressLine}}
+  <p class="about rise d2" style="margin:0;text-align:center;font-size:13px;font-weight:600;color:var(--ink-soft)">{{addressLine}}</p>
+  {{/hasAddressLine}}
+
+  {{#hasServices}}
+  <section class="sect rise d2" aria-label="Servicios">
+    <h2>¿En qué ayudamos?</h2>
+    <input type="checkbox" id="more" class="more-t" hidden>
+    <ul class="svcs">
+      {{#services}}<li>{{.}}</li>{{/services}}
+    </ul>
+    <label class="more" for="more"><span class="show">Ver todos +</span><span class="hide">Ver menos −</span></label>
+  </section>
+  {{/hasServices}}
+
+  {{#about}}
+  <section class="sect about rise d2" aria-label="Acerca de">
+    <h2>Acerca de</h2>
+    <p>{{about}}</p>
+  </section>
+  {{/about}}
+
+  {{#hasAttrs}}
+  <section class="sect rise d3" aria-label="Información">
+    <h2>Información útil</h2>
+    <div class="attrs">
+      {{#attrs}}<div class="attr"><b>{{key}}</b><span>{{value}}</span></div>{{/attrs}}
+    </div>
+  </section>
+  {{/hasAttrs}}
+
+  {{#hasSocials}}
+  <nav class="socials rise d3" aria-label="Redes sociales">
+    {{#hasInstagram}}<a class="soc" href="{{instagramUrl}}" target="_blank" rel="noopener">Instagram</a>{{/hasInstagram}}
+    {{#hasFacebook}}<a class="soc" href="{{facebookUrl}}" target="_blank" rel="noopener">Facebook</a>{{/hasFacebook}}
+    {{#hasTiktok}}<a class="soc" href="{{tiktokUrl}}" target="_blank" rel="noopener">TikTok</a>{{/hasTiktok}}
+  </nav>
+  {{/hasSocials}}
+
+  <footer class="rise d4"><p>© {{year}} · {{heroName}}</p></footer>
+
+</main>
+</body>
+</html>

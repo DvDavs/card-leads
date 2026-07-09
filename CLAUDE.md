@@ -86,6 +86,7 @@ Campos principales:
 | `brand.colors` | Hex por ROL: `primary`/`secondary`/`accent` (los que usan las cards hoy) + `background`/`surface`/`text` (asignados pero aún sin usar en templates). El hex sale de `palette` (medido); el ROL lo asigna el LLM con visión, validado contra la paleta. Todos editables en `verify`. |
 | `brand.colorsText` | Color de texto legible (`#ffffff`/`#000000`, WCAG) **derivado** de cada hex de `colors` que sea SUPERFICIE (`primary`…`surface`); `text` es tinta y no lo lleva. Se recalcula, nunca se edita a mano. |
 | `brand.has_logo`, `brand.font_hint` | Sí los aporta el LLM (`font_hint` es pista: "serif"/"sans"/"display", no exacto). |
+| `brand.logo_path`, `brand.photo_path` | Rutas (relativas al lead o data URI) al logo y a una foto real. Alimentan el avatar circular del pool decorativo con cascada `photo_path` → `logo_path` → inicial. Opcionales; **nunca** una cara/foto generada, solo material real del negocio. |
 | `content.services` | Lista de servicios detectados/confirmados. |
 | `generated` | URLs/paths de artefactos generados: `dc_url` (visor swipeable, `dc/index.html`), `cards` (lista `{template, path}`, una por diseño rellenado en `dc/`), `linktree_url` (legado, pre digital-cards), `web_url`, `proposal_path`, `outreach_message`. |
 | `meta.needs` | Huecos pendientes para el checkpoint humano (recalculado en cada etapa, no es un diff acumulado). |
@@ -104,7 +105,7 @@ falta correr nada a mano.
 | `ingest` | (nuevo) | `ingested` | no | Crea `leads/<slug>/`, copia las fotos como `card_front.<ext>`/`card_back.<ext>`, escribe `data.json` con los campos de negocio vacíos. `rubro` default `"otro"` si no se pasa (queda anotado en `meta.needs`). |
 | `extract` | `ingested` | `extracted` | sí (Gemini) | (1) **Mide** la paleta con `extractPalette` (`colors.ts`, píxeles). (2) Manda las fotos + la paleta al proveedor de visión: el LLM llena `business`/`contact`/`socials`/`content.services` Y **asigna roles de color** eligiendo hex de la paleta. (3) `resolveAssignedColors` valida (hex ∈ paleta); si el LLM no asignó nada válido cae a la heurística `extractBrandColors`. Los hex NUNCA los inventa el LLM. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (queda `ingested` para reintentar). |
 | `verify` | `extracted` | `verified` | no | Checkpoint humano interactivo por terminal (`readline`). Recorre primero los campos de riesgo, después los generales; al confirmar (`s`) valida contra `LeadSchema` estricto y recién ahí escribe disco. `n`/Ctrl+C no escribe nada. |
-| `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; `_viewer.html` se salta) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código. |
+| `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; los que empiezan con `_` se saltan) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Antes de rellenar, **swap de motivos por rubro**: `swapMotif` reemplaza el bloque `MOTIF:START…MOTIF:END` que trae cada diseño decorativo por el del `lead.rubro` (leído de `_motifs.html` vía `parseMotifs`/`loadMotifs`), así todos los diseños que ve el cliente muestran motivos coherentes con su rubro; los diseños sin marcadores quedan intactos (no-op). Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código. |
 | `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
 | `deploy` | — | `deployed` | — | **Stub**, lanza `"no implementado"`. |
 | `proposal` | — | `proposal_ready` | — | **Stub**, lanza `"no implementado"`. |
@@ -116,25 +117,41 @@ implementado")`, sin lógica todavía.
 
 ## `src/dc-templates/` — pool de diseños de digital card
 
-Cada `.html` de esta carpeta (menos `_viewer.html`) es un diseño completo,
-standalone, que `build-cards` rellena con `buildCardView` y escribe en
-`leads/<slug>/dc/<nombre>.html`. Hoy hay cinco: `clinic`, `dark`, `executive`,
-`luxury` (con público objetivo propio — ver `CARD_LABELS` en
-`src/config/rubro-map.ts`) y `credencial` (el diseño original del linktree,
-el único self-contained sin fuentes remotas). `_viewer.html` es el visor:
-arma un carrusel de `<iframe>` (cada card queda intacta como archivo
-standalone) con swipe (Pointer Events + `setPointerCapture` recién al
-confirmar gesto horizontal, para no robarle el tap a los botones de adentro
-de la card), flechas, dots y `document.startViewTransition()` para el
-crossfade del chip de etiqueta. `@view-transition{navigation:auto}` (CSS) NO
-se usa a propósito: es para navegaciones MPA vía la Navigation API y no
-puede cruzar el borde de un iframe.
+Cada `.html` de esta carpeta (menos los que empiezan con `_`) es un diseño
+completo, standalone, que `build-cards` rellena con `buildCardView` y escribe
+en `leads/<slug>/dc/<nombre>.html`. Hoy hay **11**: los base `clinic`, `dark`,
+`executive`, `luxury` y `credencial` (el original del linktree, el único
+self-contained sin fuentes remotas), más el **pool decorativo** `celeste`,
+`vitrina`, `rotulo`, `seda`, `redondo`, `lienzo` (público objetivo por diseño
+en `CARD_LABELS`, `src/config/rubro-map.ts`). El pool decorativo agrega dos
+capas nuevas: avatar circular con cascada foto → logo → inicial (campo
+`photoPath`) y una capa de motivos decorativos intercambiable por rubro (ver
+abajo). `_viewer.html` es el visor: arma un carrusel de `<iframe>` (cada card
+queda intacta como archivo standalone) con swipe (Pointer Events +
+`setPointerCapture` recién al confirmar gesto horizontal, para no robarle el
+tap a los botones de adentro de la card), flechas, dots y
+`document.startViewTransition()` para el crossfade del chip de etiqueta.
+`@view-transition{navigation:auto}` (CSS) NO se usa a propósito: es para
+navegaciones MPA vía la Navigation API y no puede cruzar el borde de un iframe.
 
-**Excepción de self-contained:** `clinic`/`dark`/`executive`/`luxury` traen
-`<link>` a Google Fonts (Anton, Newsreader, Cormorant Garamond, etc.) —
-decisión explícita del usuario para preservar la identidad tipográfica de
-cada diseño. Es la ÚNICA excepción a la regla self-contained del resto del
-repo; `credencial` (heredera del linktree) sigue sin fuentes remotas.
+**Capa de motivos (`_motifs.html`, fondos intercambiables por rubro).**
+`_motifs.html` (prefijo `_` ⇒ fuera del pool) es la LIBRERÍA: un bloque de
+arte SVG por rubro (`doctor`, `nutriologo`, `barberia`, `estetica`,
+`veterinario`, `otro`), cada uno con el wrapper `.motif` y los sprites
+`.m1`–`.m5`. Cada diseño decorativo trae un bloque default entre los
+marcadores `<!-- MOTIF:START (rubro=X) -->` y `<!-- MOTIF:END -->` al inicio
+del `<body>`. En `build-cards`, `swapMotif` (puro) lo reemplaza por el bloque
+del `lead.rubro` (fallback a `otro`); el color y la posición los pone el CSS
+de cada diseño (`currentColor` → paleta de marca), los bloques no llevan
+variables de template. El diseñador lo pensó como swap manual (copiar/pegar);
+en el pipeline es **automático por rubro**.
+
+**Excepción de self-contained:** todos los diseños salvo `credencial` traen
+`<link>` a Google Fonts (Anton, Newsreader, Cormorant Garamond, Oswald,
+Fredoka, Instrument Serif, etc.) — decisión explícita del usuario para
+preservar la identidad tipográfica de cada diseño. Es la ÚNICA excepción a la
+regla self-contained del resto del repo; `credencial` (heredera del linktree)
+sigue sin fuentes remotas.
 
 `buildCardView` (en `build-cards.ts`) es un objeto SUPERSET: expone tanto los
 campos del diseño `credencial` (`name`, `personName`, `links`, `address`

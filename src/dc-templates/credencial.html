@@ -21,6 +21,12 @@
         --secondary: {{{colors.secondary}}};
         --accent: {{{colors.accent}}};
         --accent-text: {{{colorsText.accent}}};
+        /* Superficie MEDIDA de la tarjeta (opcional): tine SOLO el fondo de
+           pagina; la tarjeta sigue blanca y la tinta fija, para conservar el
+           look limpio/confiable. Ausente (tarjeta blanca) => var() cae a
+           #e9ecf1 y el fondo queda como el original. */
+        {{#hasBackground}}--card-bg: {{{colors.background}}};{{/hasBackground}}
+        {{#hasSurface}}--card-surface: {{{colors.surface}}};{{/hasSurface}}
         --font-display: {{{fontFamily}}};
         --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         --ink: #1f2430;
@@ -32,7 +38,7 @@
       html { -webkit-text-size-adjust: 100%; }
       body {
         font-family: var(--font-body);
-        background: #e9ecf1;
+        background: color-mix(in oklab, var(--card-bg, var(--card-surface, #e9ecf1)) 12%, #e9ecf1);
         color: var(--ink);
         min-height: 100svh;
         padding: 1.25rem 1rem 2rem;

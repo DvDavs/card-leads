@@ -65,6 +65,13 @@ export const CARD_LABELS: Record<string, { name: string; audience: string }> = {
   executive: { name: "Executive", audience: "Abogados · Consultores" },
   luxury: { name: "Luxury", audience: "Hoteles · Inmobiliarias" },
   credencial: { name: "Credencial", audience: "General" },
+  // Pool decorativo (motivos intercambiables por rubro, avatar circular).
+  celeste: { name: "Celeste", audience: "Salud y consultorios" },
+  vitrina: { name: "Vitrina", audience: "Nutrición y bienestar" },
+  rotulo: { name: "Rótulo", audience: "Barberías y oficios" },
+  seda: { name: "Seda", audience: "Estética y belleza" },
+  redondo: { name: "Redondo", audience: "Veterinarias y cercanía" },
+  lienzo: { name: "Lienzo", audience: "General (default)" },
 };
 
 /**

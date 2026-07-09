@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+body{margin:0;background:#e8e6e1;font-family:system-ui,sans-serif}
+a{color:#35315e}a:hover{color:#1c1940}
+</style>
+</helmet>
+<section style="padding:40px">
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+    <h1 style="margin:0;font-size:22px;letter-spacing:-0.02em;color:#232323">Pool nuevo · 6 diseños de digital card</h1>
+    <p style="margin:0;font-size:13px;color:#71716b">Cada uno renderizado con datos y paleta de un rubro distinto. Fuente: dc-templates/*.html + _motifs.html</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+    <sc-for list="{{ cards }}" as="card" hint-placeholder-count="6">
+      <div id="{{ card.anchor }}" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:#232323;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">{{ card.anchor }}</span>
+          <span style="font-size:13px;font-weight:600;color:#232323">{{ card.title }}</span>
+          <span style="font-size:12px;color:#8a8a84">{{ card.rubro }}</span>
+        </div>
+        <iframe srcDoc="{{ card.html }}" title="{{ card.title }}" style="width:390px;height:800px;border:none;border-radius:24px;background:#fff;box-shadow:0 20px 50px -24px rgba(0,0,0,0.35)"></iframe>
+      </div>
+    </sc-for>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { cards: [] };
+
+  componentDidMount() { this.load(); }
+
+  renderTpl(tpl, view) {
+    const tokRe = /\{\{\{\s*([^{}]+?)\s*\}\}\}|\{\{\s*([#^\/&]?)\s*([^{}]+?)\s*\}\}/g;
+    const tokens = []; let last = 0, m;
+    while ((m = tokRe.exec(tpl))) {
+      if (m.index > last) tokens.push({ t: 'text', v: tpl.slice(last, m.index) });
+      if (m[1] != null) tokens.push({ t: 'raw', v: m[1] });
+      else {
+        const sig = m[2], name = m[3];
+        if (sig === '#') tokens.push({ t: 'open', v: name });
+        else if (sig === '^') tokens.push({ t: 'inv', v: name });
+        else if (sig === '/') tokens.push({ t: 'close', v: name });
+        else if (sig === '&') tokens.push({ t: 'raw', v: name });
+        else tokens.push({ t: 'var', v: name });
+      }
+      last = tokRe.lastIndex;
+    }
+    tokens.push({ t: 'text', v: tpl.slice(last) });
+    const parse = (pos) => {
+      const nodes = [];
+      while (pos < tokens.length) {
+        const tk = tokens[pos];
+        if (tk.t === 'close') return [nodes, pos];
+        if (tk.t === 'open' || tk.t === 'inv') {
+          const [kids, np] = parse(pos + 1);
+          nodes.push({ t: tk.t, v: tk.v, kids }); pos = np + 1;
+        } else { nodes.push(tk); pos++; }
+      }
+      return [nodes, pos];
+    };
+    const [tree] = parse(0);
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const lookup = (stack, path) => {
+      if (path === '.') return stack[stack.length - 1];
+      const parts = path.split('.');
+      for (let s = stack.length - 1; s >= 0; s--) {
+        let v = stack[s];
+        if (v && typeof v === 'object' && parts[0] in v) {
+          for (const p of parts) { v = v == null ? undefined : v[p]; }
+          return v;
+        }
+      }
+      return undefined;
+    };
+    const run = (nodes, stack) => {
+      let out = '';
+      for (const n of nodes) {
+        if (n.t === 'text') out += n.v;
+        else if (n.t === 'var') { const v = lookup(stack, n.v); if (v != null && v !== false) out += esc(v); }
+        else if (n.t === 'raw') { const v = lookup(stack, n.v); if (v != null && v !== false) out += v; }
+        else if (n.t === 'open') {
+          const v = lookup(stack, n.v);
+          if (Array.isArray(v)) { for (const it of v) out += run(n.kids, stack.concat([it])); }
+          else if (v) out += run(n.kids, (typeof v === 'object') ? stack.concat([v]) : stack);
+        } else if (n.t === 'inv') {
+          const v = lookup(stack, n.v);
+          if (!v || (Array.isArray(v) && !v.length)) out += run(n.kids, stack);
+        }
+      }
+      return out;
+    };
+    return run(tree, [view]);
+  }
+
+  makeView(o) {
+    const services = o.services || [];
+    const attrs = o.attrs || [];
+    return Object.assign({
+      slug: o.slug || 'demo', name: o.name || o.heroName,
+      heroName: o.heroName, personName: o.personName || '', tagline: o.tagline || '',
+      orgName: o.orgName || '', hasOrgLine: !!o.orgName, logoPath: '', initial: (o.heroName || 'A').replace(/^Dr[a]?\.\s*/i, '').trim()[0].toUpperCase(),
+      hasPhone: !!o.phone, phoneDisplay: o.phone || '', phoneTelHref: o.phone ? 'tel:+52' + o.phone : '',
+      whatsappUrl: o.phone ? 'https://wa.me/52' + o.phone : '',
+      hasEmail: !!o.email, email: o.email || '',
+      hasWebsite: !!o.website, website: o.website || '',
+      hasAddressLine: !!o.address, addressLine: o.address || '',
+      mapsUrl: o.address ? 'https://maps.google.com/?q=' + encodeURIComponent(o.address) : '',
+      hasSocials: !!(o.ig || o.fb || o.tk),
+      hasInstagram: !!o.ig, instagramUrl: o.ig ? 'https://instagram.com/' + o.ig : '',
+      hasFacebook: !!o.fb, facebookUrl: o.fb ? 'https://facebook.com/' + o.fb : '',
+      hasTiktok: !!o.tk, tiktokUrl: o.tk ? 'https://tiktok.com/@' + o.tk : '',
+      hasServices: services.length > 0, services,
+      servicesNumbered: services.map((name, i) => ({ n: String(i + 1).padStart(2, '0'), name })),
+      hasAttrs: attrs.length > 0, attrs,
+      colors: o.colors, colorsText: o.colorsText,
+      pageTitle: o.heroName + ' · Tarjeta digital', metaDescription: o.tagline || o.heroName,
+      jsonLd: '{"@context":"https://schema.org","@type":"LocalBusiness","name":"' + o.heroName.replace(/"/g, '') + '"}',
+      year: 2026, vcard: 'data:text/vcard;charset=utf-8,BEGIN%3AVCARD%0AVERSION%3A3.0%0AEND%3AVCARD',
+      about: o.about || ''
+    });
+  }
+
+  samples() {
+    return [
+      { file: 'celeste', rubro: 'doctor', data: {
+        heroName: 'Dr. Eliseo Antonio Solano Zárate', personName: 'Dr. Eliseo Antonio Solano Zárate',
+        tagline: 'Pediatra, cirugía y endoscopia pediátrica', phone: '9512442555',
+        address: 'Torre Médica Universidad, Av. Universidad 100, piso 4, consultorio 401, Oaxaca',
+        fb: 'CirugiaPediatricaOaxaca', ig: 'PediatriaOaxaca',
+        services: ['Atención integral del niño', 'Cirugía laparoscópica', 'Hernias inguinales y umbilicales', 'Testículos no descendidos', 'Circuncisiones', 'Apendicitis', 'Estenosis de píloro', 'Reflujo gastroesofágico', 'Atención del recién nacido', 'Crecimiento y desarrollo', 'Infecciones respiratorias', 'Infecciones digestivas', 'Infecciones urinarias', 'Sangrado rectal', 'Vómito'],
+        colors: { primary: '#35315e', secondary: '#a9acb4', accent: '#6b7fb3' },
+        colorsText: { primary: '#ffffff', secondary: '#000000', accent: '#ffffff' } } },
+      { file: 'vitrina', rubro: 'nutriologo', data: {
+        heroName: 'Lic. Mariana Cuevas', tagline: 'Nutrición clínica y planes personalizados', orgName: 'Nutrik Estudio',
+        phone: '5522334455', email: 'hola@nutrik.mx', address: 'Av. Reforma 210, int. 3, CDMX',
+        ig: 'nutrik.mx', tk: 'nutrik.mx',
+        services: ['Plan de alimentación', 'Control de peso', 'Nutrición deportiva', 'Nutrición infantil', 'Diabetes y presión', 'Embarazo y lactancia', 'Seguimiento mensual', 'Composición corporal'],
+        attrs: [{ key: 'Horario', value: 'Lun a Vie · 9–19 h' }, { key: 'Cédula', value: '12345678' }, { key: 'Modalidad', value: 'Presencial y en línea' }, { key: 'Primera cita', value: '60 min' }],
+        about: 'Acompañamiento cercano y realista: sin dietas imposibles, con hábitos que sí se sostienen.',
+        colors: { primary: '#4a5d23', secondary: '#e0a83c', accent: '#c2571b' },
+        colorsText: { primary: '#ffffff', secondary: '#000000', accent: '#ffffff' } } },
+      { file: 'rotulo', rubro: 'barberia', data: {
+        heroName: 'La Cuadra Barber Shop', tagline: 'Cortes clásicos y fades desde 2015',
+        phone: '8112233445', address: 'Calle Hidalgo 88, Centro, Monterrey', ig: 'lacuadra.barber', fb: 'LaCuadraBarber',
+        services: ['Corte clásico', 'Fade', 'Barba y toalla caliente', 'Ritual completo', 'Corte niño', 'Diseño de cejas', 'Tinte', 'Membresía mensual'],
+        attrs: [{ key: 'Horario', value: 'Mar a Dom · 11–21 h' }, { key: 'Pago', value: 'Efectivo y tarjeta' }],
+        colors: { primary: '#16324f', secondary: '#c0392b', accent: '#d9b380' },
+        colorsText: { primary: '#ffffff', secondary: '#ffffff', accent: '#000000' } } },
+      { file: 'seda', rubro: 'estetica', data: {
+        heroName: 'Valeria Ruán', tagline: 'Cosmetología facial y cuidado de la piel', orgName: 'Estudio Ruán',
+        phone: '3311224466', email: 'citas@estudioruan.mx', address: 'Av. Chapultepec 340, Guadalajara', ig: 'estudio.ruan',
+        services: ['Limpieza facial profunda', 'Hidratación intensiva', 'Peeling suave', 'Dermaplaning', 'Masaje facial', 'Lifting de pestañas', 'Laminado de cejas', 'Cuidado post-tratamiento'],
+        attrs: [{ key: 'Horario', value: 'Lun a Sáb · 10–19 h' }, { key: 'Reservas', value: 'Solo con cita' }],
+        colors: { primary: '#8a4f5b', secondary: '#e7cfd2', accent: '#b98b52' },
+        colorsText: { primary: '#ffffff', secondary: '#000000', accent: '#ffffff' } } },
+      { file: 'redondo', rubro: 'veterinario', data: {
+        heroName: 'Veterinaria Patitas', tagline: 'Medicina preventiva y urgencias para tu mascota',
+        phone: '2299887766', address: 'Blvd. Ruiz Cortines 1520, Veracruz', fb: 'VetPatitas', ig: 'vet.patitas', tk: 'vet.patitas',
+        services: ['Consulta general', 'Vacunación', 'Desparasitación', 'Esterilización', 'Cirugía menor', 'Estética canina', 'Urgencias', 'Hospitalización', 'Rayos X'],
+        attrs: [{ key: 'Horario', value: 'Todos los días · 9–21 h' }, { key: 'Urgencias', value: '24 horas' }],
+        colors: { primary: '#1f7a6d', secondary: '#f4a261', accent: '#e76f51' },
+        colorsText: { primary: '#ffffff', secondary: '#000000', accent: '#ffffff' } } },
+      { file: 'lienzo', rubro: 'otro', data: {
+        heroName: 'Taller Norte', tagline: 'Carpintería y muebles a medida', personName: 'Rodrigo Peña',
+        phone: '6644556677', email: 'contacto@tallernorte.mx', website: 'https://tallernorte.mx',
+        address: 'Parque Industrial Nordika, nave 7, Tijuana', ig: 'taller.norte',
+        services: ['Muebles a medida', 'Cocinas integrales', 'Closets y vestidores', 'Puertas', 'Restauración', 'Instalación'],
+        attrs: [{ key: 'Horario', value: 'Lun a Vie · 8–18 h' }, { key: 'Cotización', value: 'Sin costo' }],
+        colors: { primary: '#3d3a35', secondary: '#b7b7ac', accent: '#cc5f38' },
+        colorsText: { primary: '#ffffff', secondary: '#000000', accent: '#ffffff' } } }
+    ];
+  }
+
+  async load() {
+    const defs = this.samples();
+    const letters = 'abcdef';
+    const cards = [];
+    for (let i = 0; i < defs.length; i++) {
+      const d = defs[i];
+      try {
+        const res = await fetch('dc-templates/' + d.file + '.html');
+        const tpl = await res.text();
+        cards.push({
+          anchor: '1' + letters[i],
+          title: d.file + '.html',
+          rubro: 'rubro: ' + d.rubro + ' · ' + (d.data.heroName),
+          html: this.renderTpl(tpl, this.makeView(d.data))
+        });
+      } catch (e) {
+        cards.push({ anchor: '1' + letters[i], title: d.file + '.html', rubro: 'error al cargar', html: '<p style="font-family:sans-serif;padding:20px">' + String(e) + '</p>' });
+      }
+      this.setState({ cards: cards.slice() });
+    }
+  }
+
+  renderVals() {
+    return { cards: this.state.cards };
+  }
+}
+</script>
+</body>
+</html>
