@@ -1,6 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { textColorFor } from "../lib/colors.js";
+import { SURFACE_ROLES, textColorFor } from "../lib/colors.js";
 import { parseLead, RubroSchema, type Lead, type Rubro } from "../lib/schema.js";
 import { readLead, writeLead } from "../lib/storage.js";
 
@@ -40,6 +40,9 @@ export type LeadFieldPath =
   | "brand.colors.primary"
   | "brand.colors.secondary"
   | "brand.colors.accent"
+  | "brand.colors.background"
+  | "brand.colors.surface"
+  | "brand.colors.text"
   | "content.services";
 
 /** Util (sin vacio tras trim), o undefined. Misma semantica que en extract. */
@@ -138,6 +141,12 @@ export function applyCorrection(
       return withColors(lead, { secondary: normStr(value) });
     case "brand.colors.accent":
       return withColors(lead, { accent: normStr(value) });
+    case "brand.colors.background":
+      return withColors(lead, { background: normStr(value) });
+    case "brand.colors.surface":
+      return withColors(lead, { surface: normStr(value) });
+    case "brand.colors.text":
+      return withColors(lead, { text: normStr(value) });
 
     case "content.services":
       return { ...lead, content: { ...lead.content, services: normList(value) } };
@@ -177,16 +186,17 @@ function remainingNeeds(lead: Lead): string[] {
  * recomputeColorsText — recalcula el mapa `colorsText` a partir de los hex de
  * `colors`. El humano edita los hex a mano en verify; el textColor es derivado,
  * asi que se re-deriva aca para que nunca quede desfasado del color (si el hex no
- * es un #rrggbb valido, ese rol se omite). Se corre al finalizar.
+ * es un #rrggbb valido, ese rol se omite). Solo roles de SUPERFICIE (se pinta
+ * texto encima); `text` es tinta y no lleva colorsText. Se corre al finalizar.
  */
 function recomputeColorsText(colors: Lead["brand"]["colors"]): Lead["brand"]["colorsText"] {
-  const out: Lead["brand"]["colorsText"] = {};
-  const p = colors.primary ? textColorFor(colors.primary) : undefined;
-  const s = colors.secondary ? textColorFor(colors.secondary) : undefined;
-  const a = colors.accent ? textColorFor(colors.accent) : undefined;
-  if (p) out.primary = p;
-  if (s) out.secondary = s;
-  if (a) out.accent = a;
+  const out: NonNullable<Lead["brand"]["colorsText"]> = {};
+  for (const role of SURFACE_ROLES) {
+    const hex = colors[role];
+    if (!hex) continue;
+    const t = textColorFor(hex);
+    if (t) out[role] = t;
+  }
   return out;
 }
 
@@ -225,6 +235,9 @@ const RISKY_FIELDS: FieldDef[] = [
   { path: "brand.colors.primary", label: "Color primario", risky: true, color: true },
   { path: "brand.colors.secondary", label: "Color secundario", risky: true, color: true },
   { path: "brand.colors.accent", label: "Color de acento", risky: true, color: true },
+  { path: "brand.colors.background", label: "Color de fondo", risky: true, color: true },
+  { path: "brand.colors.surface", label: "Color de superficie", risky: true, color: true },
+  { path: "brand.colors.text", label: "Color de texto (tinta)", risky: true, color: true },
 ];
 
 const NAME: FieldDef = { path: "business.name", label: "Nombre del negocio", risky: false };
@@ -260,6 +273,12 @@ function currentString(lead: Lead, path: LeadFieldPath): string | undefined {
       return lead.brand.colors.secondary;
     case "brand.colors.accent":
       return lead.brand.colors.accent;
+    case "brand.colors.background":
+      return lead.brand.colors.background;
+    case "brand.colors.surface":
+      return lead.brand.colors.surface;
+    case "brand.colors.text":
+      return lead.brand.colors.text;
     default:
       return undefined;
   }
@@ -272,11 +291,14 @@ async function promptStringField(rl: Rl, lead: Lead, def: FieldDef): Promise<Lea
   const mark = def.risky ? "  ⚠ VERIFICAR CONTRA LA TARJETA" : "";
   const cur = val(currentString(lead, def.path));
   console.log(`\n─ ${def.label}${mark}`);
-  if (def.color && cur) {
-    // Los colores ya se MIDEN de la foto (colorthief), no se adivina el nombre.
-    // Mostramos el textColor legible que se guardara junto al hex.
-    const t = textColorFor(cur);
-    console.log(`  actual: ${cur}${t ? `  (texto legible encima: ${t})` : ""}`);
+  if (def.color) {
+    // Los hex se MIDEN de la foto (colorthief) y el ROL lo asigna el LLM. Mostramos
+    // el textColor legible que se guardara junto al hex y la paleta medida, para
+    // que el humano confirme la asignacion o elija otro hex real de la lista.
+    const t = cur ? textColorFor(cur) : undefined;
+    console.log(`  actual: ${cur ?? "(vacio)"}${t ? `  (texto legible encima: ${t})` : ""}`);
+    const pal = lead.brand.palette ?? [];
+    if (pal.length) console.log(`  paleta medida (elegi uno o escribi otro hex): ${pal.join(", ")}`);
   } else {
     console.log(`  actual: ${cur ?? "(vacio)"}`);
   }
@@ -344,6 +366,9 @@ function printSummary(lead: Lead): void {
   console.log(`  Direccion: ${g(lead.contact.address)}`);
   console.log(`  Redes:     FB=${g(lead.socials.facebook)}  IG=${g(lead.socials.instagram)}  TT=${g(lead.socials.tiktok)}`);
   console.log(`  Colores:   primary=${g(c.primary)}  secondary=${g(c.secondary)}  accent=${g(c.accent)}`);
+  console.log(`             background=${g(c.background)}  surface=${g(c.surface)}  text=${g(c.text)}`);
+  const pal = lead.brand.palette ?? [];
+  if (pal.length) console.log(`  Paleta:    ${pal.join(", ")}`);
   console.log(`  Servicios: ${lead.content.services.length ? lead.content.services.join(", ") : "(vacio)"}`);
 }
 
@@ -394,7 +419,7 @@ export async function verify(slug: string): Promise<Lead | null> {
     const ok = (await rl.question("\n¿Confirmas? Se guarda y avanza a 'verified' (s/n): "))
       .trim()
       .toLowerCase();
-    if (!["s", "si", "sí", "y", "yes"].includes(ok)) {
+    if (!["", "s", "si", "sí", "y", "yes"].includes(ok)) {
       console.log("Cancelado. No se escribio nada; el lead sigue en 'extracted'.");
       return null;
     }

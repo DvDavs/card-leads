@@ -194,4 +194,31 @@ describe("applyExtraction", () => {
     expect(lead.brand.colors.primary).toBeUndefined();
     expect(lead.meta.needs.join(" | ")).toContain("revisar colores en verify");
   });
+
+  it("escribe los roles AMPLIADOS (background/text) y guarda la paleta medida", () => {
+    const brandColors = {
+      primary: { hex: "#24376d", textColor: "#ffffff" },
+      background: { hex: "#fcfbf9", textColor: "#000000" },
+      text: { hex: "#111111", textColor: "#ffffff" },
+    };
+    const palette = ["#24376d", "#fcfbf9", "#111111"];
+    const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE), brandColors, palette);
+    expect(lead.brand.colors.background).toBe("#fcfbf9");
+    expect(lead.brand.colors.text).toBe("#111111");
+    expect(lead.brand.colorsText?.background).toBe("#000000");
+    // 'text' es tinta (no superficie): el tipo de colorsText ni siquiera tiene la
+    // clave. El cast comprueba en runtime que no se colo por otra via.
+    expect((lead.brand.colorsText as Record<string, string | undefined>).text).toBeUndefined();
+    // la paleta cruda queda persistida para verify y re-corridas
+    expect(lead.brand.palette).toEqual(palette);
+    expect(() => parseLead(lead)).not.toThrow();
+  });
+
+  it("los colores salen del param brandColors, NO de ex.colors (se resuelven en extract)", () => {
+    // el LLM mando colors en la extraccion, pero applyExtraction no los lee:
+    // la asignacion ya viene resuelta/validada en brandColors (default {} aca).
+    const withColors = { ...SAMPLE, colors: { primary: "#123456" } };
+    const lead = applyExtraction(ingestedLead(), parseOk(withColors));
+    expect(lead.brand.colors.primary).toBeUndefined();
+  });
 });

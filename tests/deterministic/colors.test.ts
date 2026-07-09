@@ -1,6 +1,11 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { extractBrandColors, textColorFor } from "../../src/lib/colors.js";
+import {
+  extractBrandColors,
+  extractPalette,
+  resolveAssignedColors,
+  textColorFor,
+} from "../../src/lib/colors.js";
 
 /**
  * Tests deterministas de la medicion de color (colorthief lee pixeles reales, no
@@ -95,6 +100,70 @@ describe("extractBrandColors — tarjeta oscura (heuristica de peso de marca)", 
     for (const hex of light) {
       expect(lightnessOf(hex)).toBeGreaterThan(lightnessOf(colors.primary!.hex));
     }
+  });
+});
+
+describe("extractPalette", () => {
+  it("devuelve una lista de hex plausibles (no vacia, sin blanco de fondo)", async () => {
+    const palette = await extractPalette(FIXTURE);
+    expect(palette.length).toBeGreaterThan(0);
+    expect(palette.length).toBeLessThanOrEqual(8);
+    for (const hex of palette) {
+      expect(hex).toMatch(HEX6); // ya en minusculas
+      expect(hex).not.toBe("#ffffff");
+      const n = parseInt(hex.slice(1), 16);
+      const sum = ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255);
+      expect(sum).toBeLessThan(720); // ni casi-blanco
+    }
+  });
+
+  it("incluye los colores de marca del fixture (azul y naranja)", async () => {
+    const palette = new Set(await extractPalette(FIXTURE));
+    expect(palette.has("#f97316")).toBe(true);
+    expect(palette.has("#1d4ed8")).toBe(true);
+  });
+
+  it("no repite hex (deduplicada) y es determinista", async () => {
+    const a = await extractPalette(FIXTURE);
+    const b = await extractPalette(FIXTURE);
+    expect(a).toEqual(b);
+    expect(new Set(a).size).toBe(a.length);
+  });
+});
+
+describe("resolveAssignedColors — la baranda (LLM elige, no inventa)", () => {
+  const PALETTE = ["#1d4ed8", "#f97316", "#111111"];
+
+  it("acepta un rol cuyo hex ESTA en la paleta y le calcula el textColor", () => {
+    const out = resolveAssignedColors({ primary: "#1d4ed8", accent: "#f97316" }, PALETTE);
+    expect(out.primary).toEqual({ hex: "#1d4ed8", textColor: "#ffffff" }); // azul oscuro
+    expect(out.accent).toEqual({ hex: "#f97316", textColor: expect.stringMatching(HEX6) });
+  });
+
+  it("DESCARTA un hex que el LLM invento fuera de la paleta", () => {
+    const out = resolveAssignedColors({ primary: "#abcdef" }, PALETTE);
+    expect(out.primary).toBeUndefined();
+    expect(Object.keys(out)).toHaveLength(0);
+  });
+
+  it("empareja sin importar mayusculas ni el '#'", () => {
+    const out = resolveAssignedColors({ primary: "1D4ED8" }, PALETTE);
+    expect(out.primary?.hex).toBe("#1d4ed8");
+  });
+
+  it("ignora roles en null/undefined/vacio", () => {
+    const out = resolveAssignedColors({ primary: null, secondary: undefined, accent: "" }, PALETTE);
+    expect(Object.keys(out)).toHaveLength(0);
+  });
+
+  it("asigna el rol 'text' (tinta) si esta en la paleta", () => {
+    const out = resolveAssignedColors({ text: "#111111" }, PALETTE);
+    expect(out.text?.hex).toBe("#111111");
+  });
+
+  it("sin paleta no acepta ningun color (todo se cae a la heuristica arriba)", () => {
+    const out = resolveAssignedColors({ primary: "#1d4ed8" }, []);
+    expect(Object.keys(out)).toHaveLength(0);
   });
 });
 

@@ -41,9 +41,18 @@ que se le muestra al negocio como propuesta comercial.
   - Texto de la tarjeta (nombre, teléfonos, redes, servicios) → LLM
     (Gemini), porque es lectura/interpretación de una foto real.
   - Colores de marca → **medición de píxeles** con `colorthief` + `sharp`
-    (`src/lib/colors.ts`), NO el LLM. El LLM estimaba colores muy mal (le
-    decía "negro" a un verde). Ver más abajo, es una decisión ya tomada y
+    (`src/lib/colors.ts`), NO el LLM. El LLM ESTIMABA hex muy mal (le decía
+    "negro" a un verde), porque el color no es tarea de lenguaje. Los hex
+    siempre salen de la medición. Ver más abajo, es una decisión ya tomada y
     probada.
+  - Asignación de rol de color (¿cuál hex medido es `primary`/`secondary`/
+    `accent`/`background`/`surface`/`text`?) → **LLM con visión**, eligiendo de
+    la paleta MEDIDA (`extractPalette` → prompt de `extract`). El LLM nunca
+    inventa un hex: `resolveAssignedColors` (`colors.ts`) descarta cualquier hex
+    que no esté en la paleta (la baranda). Reemplaza a la heurística `brandWeight`
+    para captar la identidad de la tarjeta; `brandWeight` queda como FALLBACK si
+    el LLM falla o no hay paleta. Esto respeta el principio rector: medir es
+    determinista (código), asignar el rol es interpretativo (LLM).
   - Relleno de templates (digital cards en `leads/<slug>/dc/*.html`) →
     templating puro (`src/lib/template.ts`), sin LLM.
 - **Checkpoint humano obligatorio (`verify`).** El modelo barato
@@ -73,8 +82,9 @@ Campos principales:
 | `business` | `name` (string, puede quedar vacío hasta `extract`), `person_name`, `tagline`, `attrs` (libre por rubro). |
 | `contact` | `phones` (**lista**, no un solo string — un consultorio puede tener varios), `whatsapp` (uno solo), `email`, `address`, `website`. |
 | `socials` | `facebook`, `instagram`, `tiktok`, `other`. |
-| `brand.colors` | `primary`/`secondary`/`accent` en hex, **medidos** de la foto (no estimados por el modelo). |
-| `brand.colorsText` | Color de texto legible (`#ffffff`/`#000000`, WCAG) **derivado** de cada hex de `colors`; se recalcula, nunca se edita a mano. |
+| `brand.palette` | Lista de hex **medidos** de la foto (`extractPalette`, hasta 8). Es la fuente de candidatos que se le pasa al LLM para asignar roles; opcional (data.json viejos no la tienen). |
+| `brand.colors` | Hex por ROL: `primary`/`secondary`/`accent` (los que usan las cards hoy) + `background`/`surface`/`text` (asignados pero aún sin usar en templates). El hex sale de `palette` (medido); el ROL lo asigna el LLM con visión, validado contra la paleta. Todos editables en `verify`. |
+| `brand.colorsText` | Color de texto legible (`#ffffff`/`#000000`, WCAG) **derivado** de cada hex de `colors` que sea SUPERFICIE (`primary`…`surface`); `text` es tinta y no lo lleva. Se recalcula, nunca se edita a mano. |
 | `brand.has_logo`, `brand.font_hint` | Sí los aporta el LLM (`font_hint` es pista: "serif"/"sans"/"display", no exacto). |
 | `content.services` | Lista de servicios detectados/confirmados. |
 | `generated` | URLs/paths de artefactos generados: `dc_url` (visor swipeable, `dc/index.html`), `cards` (lista `{template, path}`, una por diseño rellenado en `dc/`), `linktree_url` (legado, pre digital-cards), `web_url`, `proposal_path`, `outreach_message`. |
@@ -92,7 +102,7 @@ falta correr nada a mano.
 | Etapa | Exige status | Deja status | LLM | Qué hace |
 |---|---|---|---|---|
 | `ingest` | (nuevo) | `ingested` | no | Crea `leads/<slug>/`, copia las fotos como `card_front.<ext>`/`card_back.<ext>`, escribe `data.json` con los campos de negocio vacíos. `rubro` default `"otro"` si no se pasa (queda anotado en `meta.needs`). |
-| `extract` | `ingested` | `extracted` | sí (Gemini) | Manda las fotos al proveedor de visión, valida la respuesta y llena `business`/`contact`/`socials`/`content.services`. Los **colores se miden aparte** con `extractBrandColors` (`colors.ts`), nunca por el LLM. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (el lead queda `ingested` para reintentar). |
+| `extract` | `ingested` | `extracted` | sí (Gemini) | (1) **Mide** la paleta con `extractPalette` (`colors.ts`, píxeles). (2) Manda las fotos + la paleta al proveedor de visión: el LLM llena `business`/`contact`/`socials`/`content.services` Y **asigna roles de color** eligiendo hex de la paleta. (3) `resolveAssignedColors` valida (hex ∈ paleta); si el LLM no asignó nada válido cae a la heurística `extractBrandColors`. Los hex NUNCA los inventa el LLM. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (queda `ingested` para reintentar). |
 | `verify` | `extracted` | `verified` | no | Checkpoint humano interactivo por terminal (`readline`). Recorre primero los campos de riesgo, después los generales; al confirmar (`s`) valida contra `LeadSchema` estricto y recién ahí escribe disco. `n`/Ctrl+C no escribe nada. |
 | `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; `_viewer.html` se salta) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código. |
 | `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
@@ -136,15 +146,22 @@ muestra vacío: su `{{#hasX}}` correspondiente simplemente no renderiza.
 ## `src/lib/` — piezas de soporte
 
 - **`colors.ts`** — mide colores de marca con `colorthief`+`sharp` en vez de
-  pedírselos al LLM. `brandWeight()` puntúa cada color candidato por
-  saturación + área + oscuridad, penalizando fuerte los colores muy claros
-  (papel/fondo) para que no ganen `primary`. Umbrales documentados como
-  constantes tuneables en el propio archivo (`LIGHT_HARD_L`, `LIGHT_SOFT_L`,
-  `DARK_REF_L`, `AREA_REF`, `MIN_ROLE_DIST`). `secondary`/`accent` se eligen
-  garantizando distancia mínima en RGB contra lo ya elegido, para no repetir
-  tres tonos casi iguales. Si colorthief/sharp fallan, no crashea el
-  pipeline: `extract.ts` atrapa el error y deja los colores vacíos
-  (`meta.needs` lo anota).
+  pedírselos al LLM. Separa MEDICIÓN de SELECCIÓN de rol:
+  - `extractPalette()` — MIDE: devuelve la paleta rica (hasta `MAX_PALETTE`=8
+    hex, deduplicada, sin blanco de fondo). Es lo que se le pasa al LLM.
+  - `resolveAssignedColors(asignados, paleta)` — LA BARANDA (pura): toma la
+    asignación rol→hex del LLM y solo acepta un rol si su hex EXISTE en la
+    paleta medida (normalizado); descarta hex inventados. Calcula `textColor`
+    (WCAG) para los roles de superficie. `BRAND_ROLES`/`SURFACE_ROLES` son la
+    fuente de verdad de los roles.
+  - `extractBrandColors()` + `brandWeight()` — FALLBACK heurístico (se usa si el
+    LLM no asignó nada válido o no hubo paleta). Puntúa cada candidato por
+    saturación + área + oscuridad, penalizando los muy claros (papel/fondo) para
+    que no ganen `primary`. Umbrales tuneables en el archivo (`LIGHT_HARD_L`,
+    `LIGHT_SOFT_L`, `DARK_REF_L`, `AREA_REF`, `MIN_ROLE_DIST`); `secondary`/
+    `accent` con distancia RGB mínima para no repetir tonos casi iguales.
+  Si colorthief/sharp fallan, no crashea el pipeline: `extract.ts` atrapa el
+  error y deja los colores vacíos (`meta.needs` lo anota).
 - **`storage.ts`** — todo el I/O de disco de un lead. Raíz configurable por
   `LEADS_DIR` (env), usado por los tests para aislar en un directorio
   temporal. `readLead`/`writeLead` siempre validan contra `LeadSchema`

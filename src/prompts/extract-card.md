@@ -34,6 +34,14 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
     "has_logo": boolean,
     "font_hint": "serif" | "sans" | "display" | null
   },
+  "colors": {
+    "primary": string | null,
+    "secondary": string | null,
+    "accent": string | null,
+    "background": string | null,
+    "surface": string | null,
+    "text": string | null
+  },
   "content": { "services": string[] }
 }
 ```
@@ -50,8 +58,13 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
   (ej. `+521234567890`) solo si el codigo de pais es claro; si no, dejalo como se ve.
 - `rubro`: elige el que mejor describe el negocio SEGUN lo que ves. Si no queda
   claro, usa `"otro"`.
-- Los COLORES no se piden: se miden de los pixeles con una libreria aparte
-  (colorthief). No estimes colores ni los devuelvas.
+- `colors`: los hex NO se estiman ni se inventan. Al final del prompt recibis una
+  "Paleta de colores medida" (hex reales de la tarjeta). Asigna cada rol eligiendo
+  UN hex EXACTO de esa lista, usando la imagen para decidir cual corresponde a
+  cada rol (`primary` = color de marca dominante, `background` = fondo, `text` =
+  tinta del texto, etc.). Si un rol no tiene buen candidato en la lista, ponlo en
+  `null`. PROHIBIDO devolver un hex que no este en la lista. Si NO se incluye
+  ninguna paleta, devuelve todos los roles de `colors` en `null`.
 - `brand.has_logo`: `true` solo si hay un logo/isotipo real (no si es solo texto).
 - `content.services`: lista los servicios que la tarjeta enumere explicitamente.
   Si no enumera ninguno, devuelve `[]` (lista vacia). No inventes servicios.

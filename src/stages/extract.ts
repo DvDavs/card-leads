@@ -1,5 +1,12 @@
 import path from "node:path";
-import { extractBrandColors, type ExtractedBrandColors } from "../lib/colors.js";
+import {
+  BRAND_ROLES,
+  SURFACE_ROLES,
+  extractBrandColors,
+  extractPalette,
+  resolveAssignedColors,
+  type ExtractedBrandColors,
+} from "../lib/colors.js";
 import { loadEnv } from "../lib/env.js";
 import type { Extraction } from "../lib/llm/extraction.js";
 import { getProvider, resolveProviderName } from "../lib/llm/index.js";
@@ -69,6 +76,7 @@ export function applyExtraction(
   lead: Lead,
   ex: Extraction,
   brandColors: ExtractedBrandColors = {},
+  palette: string[] = [],
 ): Lead {
   const originalRubro = lead.rubro;
   const b = ex.business ?? {};
@@ -100,21 +108,27 @@ export function applyExtraction(
     ...(val(s.tiktok) ? { tiktok: val(s.tiktok)! } : {}),
   };
 
-  // colores MEDIDOS por colorthief: hex en `colors`, textColor legible en el mapa
-  // paralelo `colorsText`. colorthief es la autoridad, asi que se REEMPLAZA (no se
-  // fusiona con lo previo): al llegar aca el lead recien ingerido los trae vacios.
+  // colores por ROL: el hex sale de `palette` (medida por colorthief) y la
+  // ASIGNACION del rol la trae `brandColors`, ya validada (LLM eligiendo de la
+  // paleta, o la heuristica de fallback). Es la autoridad, asi que se REEMPLAZA
+  // (no se fusiona): al llegar aca el lead recien ingerido los trae vacios.
+  // colorsText (texto legible) solo para roles de superficie; `text` es tinta.
+  const colorsOut: Lead["brand"]["colors"] = {};
+  for (const role of BRAND_ROLES) {
+    const bc = brandColors[role];
+    if (bc) colorsOut[role] = bc.hex;
+  }
+  const colorsTextOut: NonNullable<Lead["brand"]["colorsText"]> = {};
+  for (const role of SURFACE_ROLES) {
+    const bc = brandColors[role];
+    if (bc?.textColor) colorsTextOut[role] = bc.textColor;
+  }
+
   const brandOut: Lead["brand"] = {
     ...lead.brand,
-    colors: {
-      ...(brandColors.primary ? { primary: brandColors.primary.hex } : {}),
-      ...(brandColors.secondary ? { secondary: brandColors.secondary.hex } : {}),
-      ...(brandColors.accent ? { accent: brandColors.accent.hex } : {}),
-    },
-    colorsText: {
-      ...(brandColors.primary ? { primary: brandColors.primary.textColor } : {}),
-      ...(brandColors.secondary ? { secondary: brandColors.secondary.textColor } : {}),
-      ...(brandColors.accent ? { accent: brandColors.accent.textColor } : {}),
-    },
+    ...(palette.length ? { palette } : {}),
+    colors: colorsOut,
+    colorsText: colorsTextOut,
     has_logo: typeof brand.has_logo === "boolean" ? brand.has_logo : lead.brand.has_logo,
     ...(val(brand.font_hint) ? { font_hint: val(brand.font_hint)! } : {}),
   };
@@ -173,21 +187,23 @@ export async function extract(slug: string): Promise<Lead> {
   const front = path.join(dir, lead.source.card_front);
   const back = lead.source.card_back ? path.join(dir, lead.source.card_back) : undefined;
 
-  const result = await provider.extractCard(front, back);
-
-  // Colores: medidos de los pixeles con colorthief, NO por el LLM. Esto NUNCA
-  // debe crashear el pipeline: si la imagen es rara y colorthief/sharp lanza, se
-  // atrapa, los colores quedan vacios y computeNeeds lo marca como pendiente.
-  let brandColors: ExtractedBrandColors = {};
+  // 1) MEDIR la paleta (colorthief, deterministico). Se mide ANTES de llamar al
+  // modelo porque se le pasa como contexto para que ASIGNE roles de color. Nunca
+  // crashea el pipeline: si la imagen es rara y colorthief/sharp lanza, se atrapa
+  // y la paleta queda vacia (el modelo no asigna colores y se cae a la heuristica).
+  let palette: string[] = [];
   try {
-    brandColors = await extractBrandColors(front, back);
+    palette = await extractPalette(front, back);
   } catch (err) {
     console.warn(
-      `extract: colorthief no pudo medir colores (${
+      `extract: colorthief no pudo medir la paleta (${
         err instanceof Error ? err.message : String(err)
-      }). Se dejan vacios para cargar a mano en verify.`,
+      }). Se sigue sin colores medidos.`,
     );
   }
+
+  // 2) LLM: extrae el texto Y asigna roles de color eligiendo de la paleta medida.
+  const result = await provider.extractCard(front, back, palette);
 
   if (!result.ok) {
     // No se escribe basura: solo se registra el error y el status queda en
@@ -202,8 +218,26 @@ export async function extract(slug: string): Promise<Lead> {
     );
   }
 
+  // 3) COLORES: manda la asignacion del LLM, validada contra la paleta (baranda:
+  // solo hex realmente medidos, nunca inventados). Si el LLM no asigno ningun
+  // color valido (o no hubo paleta), se cae a la heuristica de peso de marca sobre
+  // los pixeles. Nunca crashea el pipeline: si tambien falla, quedan vacios y
+  // computeNeeds lo marca como pendiente para cargar a mano en verify.
+  let brandColors: ExtractedBrandColors = resolveAssignedColors(result.data.colors ?? {}, palette);
+  if (Object.keys(brandColors).length === 0) {
+    try {
+      brandColors = await extractBrandColors(front, back);
+    } catch (err) {
+      console.warn(
+        `extract: fallback de color (heuristica) fallo (${
+          err instanceof Error ? err.message : String(err)
+        }). Se dejan vacios para cargar a mano en verify.`,
+      );
+    }
+  }
+
   const extracted: Lead = {
-    ...applyExtraction(lead, result.data, brandColors),
+    ...applyExtraction(lead, result.data, brandColors, palette),
     status: "extracted",
   };
   await writeLead(extracted);
