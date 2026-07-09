@@ -14,12 +14,37 @@ export interface BrandColor {
   textColor: string; // "#ffffff" | "#000000" — el legible sobre `hex`
 }
 
-/** Los tres roles de marca que consume el resto del pipeline. */
-export interface ExtractedBrandColors {
-  primary?: BrandColor;
-  secondary?: BrandColor;
-  accent?: BrandColor;
-}
+/**
+ * Roles de color de marca. `primary/secondary/accent` son los que consumen hoy
+ * las digital cards; `background/surface/text` se agregaron para que el LLM
+ * pueda asignar tambien el fondo, la superficie y la tinta de la tarjeta (los
+ * templates aun no los usan — quedan listos para un pase de diseno posterior).
+ */
+export const BRAND_ROLES = [
+  "primary",
+  "secondary",
+  "accent",
+  "background",
+  "surface",
+  "text",
+] as const;
+export type BrandRole = (typeof BRAND_ROLES)[number];
+
+/**
+ * Roles cuyo hex es una SUPERFICIE: se pinta texto encima, asi que tienen un
+ * `colorsText` legible (WCAG). `text` queda fuera: es tinta, no superficie.
+ */
+export const SURFACE_ROLES = [
+  "primary",
+  "secondary",
+  "accent",
+  "background",
+  "surface",
+] as const;
+export type SurfaceRole = (typeof SURFACE_ROLES)[number];
+
+/** Los roles de marca ya medidos/asignados que consume el pipeline. */
+export type ExtractedBrandColors = Partial<Record<BrandRole, BrandColor>>;
 
 /** Roles semanticos de colorthief que consideramos candidatos de marca. */
 const ROLES: SwatchRole[] = [
@@ -44,6 +69,8 @@ const DARK_REF_L = 60;
 const AREA_REF = 0.3;
 /** Distancia RGB minima entre los tres roles: evita 3 tonos casi iguales (caso Valentina). */
 const MIN_ROLE_DIST = 45;
+/** Cuantos colores devuelve `extractPalette` como maximo (candidatos para el LLM). */
+const MAX_PALETTE = 8;
 
 // Pesos del score de "peso de marca". Calibrados contra tarjetas reales:
 //   Valentina (verde pino desaturado) → primary = el oscuro dominante #393b37
@@ -178,6 +205,80 @@ export async function extractBrandColors(
     ...(secondary ? { secondary: toBrandColor(secondary) } : {}),
     ...(accent ? { accent: toBrandColor(accent) } : {}),
   };
+}
+
+/**
+ * extractPalette — mide una PALETA RICA de la(s) foto(s): una lista de los hex
+ * mas presentes en la tarjeta (fondo blanco descartado), ordenada por presencia
+ * y deduplicada. NO decide roles: solo mide. La ASIGNACION de roles (cual es
+ * primary/secondary/accent/background/...) la hace el LLM con vision, eligiendo
+ * de esta lista (ver `resolveAssignedColors` para la baranda que valida que el
+ * LLM no invente hex fuera de ella).
+ *
+ * A diferencia de `extractBrandColors` (heuristica de 3 roles), esta junta TANTO
+ * los swatches semanticos como la paleta cruda, para darle al LLM el abanico
+ * completo de tonos reales (incluidos los claros/superficie).
+ *
+ * LANZA si colorthief/sharp no pueden leer la imagen; el caller (extract) atrapa
+ * y sigue sin colores.
+ */
+export async function extractPalette(frontPath: string, backPath?: string): Promise<string[]> {
+  const paths = [frontPath, ...(backPath ? [backPath] : [])];
+  const swatchMaps = await Promise.all(paths.map((p) => getSwatches(p, { ignoreWhite: true })));
+  const paletteLists = await Promise.all(paths.map((p) => getPalette(p, { ignoreWhite: true })));
+
+  // Dedup por hex, quedandose con la mayor presencia (proportion) de cada tono.
+  const byHex = new Map<string, Color>();
+  const add = (c: Color | null | undefined) => {
+    if (!c) return;
+    const h = c.hex().toLowerCase();
+    const prev = byHex.get(h);
+    if (!prev || (c.proportion ?? 0) > (prev.proportion ?? 0)) byHex.set(h, c);
+  };
+  const merged = mergeSwatches(swatchMaps);
+  for (const role of ROLES) add(merged[role]?.color);
+  for (const list of paletteLists) for (const c of list ?? []) add(c);
+
+  return [...byHex.values()]
+    .sort((a, b) => (b.proportion ?? 0) - (a.proportion ?? 0))
+    .slice(0, MAX_PALETTE)
+    .map((c) => c.hex().toLowerCase());
+}
+
+/** Normaliza "#rrggbb"/"rrggbb" a "#rrggbb" en minusculas, o null si no es hex de 6. */
+function normalizeHex(hex: string): string | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  return m ? `#${m[1]!.toLowerCase()}` : null;
+}
+
+/**
+ * resolveAssignedColors — LA BARANDA. Toma la asignacion de roles que devolvio el
+ * LLM (rol -> hex) y la valida contra la `palette` medida: un rol solo se acepta
+ * si su hex EXISTE en la paleta (comparacion normalizada). Asi el LLM puede
+ * ELEGIR que color va en cada rol usando la vision, pero NUNCA inventar un hex
+ * que no este realmente en la tarjeta (que es justo lo que hacia mal cuando se le
+ * pedia estimar colores). Un rol con hex invalido o ausente simplemente se omite.
+ *
+ * A cada rol de superficie se le calcula el `textColor` legible (WCAG); `text`
+ * es tinta y se guarda sin textColor (no se pinta nada encima de la tinta).
+ * Funcion PURA y determinista.
+ */
+export function resolveAssignedColors(
+  assigned: Partial<Record<BrandRole, string | null | undefined>>,
+  palette: string[],
+): ExtractedBrandColors {
+  const allowed = new Set(
+    palette.map((h) => normalizeHex(h)).filter((h): h is string => h !== null),
+  );
+  const out: ExtractedBrandColors = {};
+  for (const role of BRAND_ROLES) {
+    const raw = assigned[role];
+    if (!raw) continue;
+    const hex = normalizeHex(raw);
+    if (!hex || !allowed.has(hex)) continue;
+    out[role] = { hex, textColor: textColorFor(hex) ?? "#000000" };
+  }
+  return out;
 }
 
 /** Parsea "#rrggbb" o "rrggbb" a componentes 0–255, o null si no es hex de 6. */

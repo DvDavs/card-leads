@@ -194,4 +194,90 @@ describe("applyExtraction", () => {
     expect(lead.brand.colors.primary).toBeUndefined();
     expect(lead.meta.needs.join(" | ")).toContain("revisar colores en verify");
   });
+
+  it("escribe los roles AMPLIADOS (background/text) y guarda la paleta medida", () => {
+    const brandColors = {
+      primary: { hex: "#24376d", textColor: "#ffffff" },
+      background: { hex: "#fcfbf9", textColor: "#000000" },
+      text: { hex: "#111111", textColor: "#ffffff" },
+    };
+    const palette = ["#24376d", "#fcfbf9", "#111111"];
+    const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE), brandColors, palette);
+    expect(lead.brand.colors.background).toBe("#fcfbf9");
+    expect(lead.brand.colors.text).toBe("#111111");
+    expect(lead.brand.colorsText?.background).toBe("#000000");
+    // 'text' es tinta (no superficie): el tipo de colorsText ni siquiera tiene la
+    // clave. El cast comprueba en runtime que no se colo por otra via.
+    expect((lead.brand.colorsText as Record<string, string | undefined>).text).toBeUndefined();
+    // la paleta cruda queda persistida para verify y re-corridas
+    expect(lead.brand.palette).toEqual(palette);
+    expect(() => parseLead(lead)).not.toThrow();
+  });
+
+  it("los colores salen del param brandColors, NO de ex.colors (se resuelven en extract)", () => {
+    // el LLM mando colors en la extraccion, pero applyExtraction no los lee:
+    // la asignacion ya viene resuelta/validada en brandColors (default {} aca).
+    const withColors = { ...SAMPLE, colors: { primary: "#123456" } };
+    const lead = applyExtraction(ingestedLead(), parseOk(withColors));
+    expect(lead.brand.colors.primary).toBeUndefined();
+  });
+
+  describe("servicios por defecto (rubroConfig), cuando la tarjeta no los lista", () => {
+    it("cae al default del rubro si el modelo no vio servicios", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario" }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.content.services).toEqual(["Consulta", "Vacunacion", "Urgencias"]);
+    });
+
+    it("usa el rubro ya corregido por el modelo (no el original) para elegir el default", () => {
+      // ingreso como "otro" pero el modelo detecta veterinario y no ve servicios:
+      // el default debe salir del rubro FINAL, no del que traia el lead.
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "otro" }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.rubro).toBe("veterinario");
+      expect(lead.content.services).toEqual(["Consulta", "Vacunacion", "Urgencias"]);
+    });
+
+    it("NO pisa servicios reales leidos de la tarjeta con el default", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario" }),
+        parseOk({ rubro: "veterinario", content: { services: ["Peluqueria canina"] } }),
+      );
+      expect(lead.content.services).toEqual(["Peluqueria canina"]);
+    });
+
+    it("NO pisa servicios ya cargados en el lead (de una corrida previa) con el default", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario", content: { services: ["Servicio ya cargado"] } }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.content.services).toEqual(["Servicio ya cargado"]);
+    });
+
+    it("rubro 'otro' no tiene default: queda vacio y se anota 'faltan servicios'", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "otro" }),
+        parseOk({ rubro: "otro", content: { services: [] } }),
+      );
+      expect(lead.content.services).toEqual([]);
+      expect(lead.meta.needs.join(" | ")).toContain("faltan servicios");
+    });
+
+    it("anota en meta.needs que los servicios son sugeridos por rubro (no de la tarjeta)", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario" }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.meta.needs.join(" | ")).toContain("servicios sugeridos por rubro");
+    });
+
+    it("no anota el aviso de 'sugeridos' cuando los servicios SI vinieron de la tarjeta", () => {
+      const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE));
+      expect(lead.meta.needs.join(" | ")).not.toContain("servicios sugeridos por rubro");
+    });
+  });
 });

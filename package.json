@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "CLI pipeline: business card photos -> linktree + web.",
+  "description": "CLI pipeline: business card photos -> digital cards + web.",
   "bin": {
     "card-leads": "src/cli.ts"
   },
@@ -11,7 +11,7 @@
     "cli": "tsx src/cli.ts",
     "ingest": "tsx src/cli.ts ingest",
     "extract": "tsx src/cli.ts extract",
-    "build-linktree": "tsx src/cli.ts build-linktree",
+    "build-cards": "tsx src/cli.ts build-cards",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

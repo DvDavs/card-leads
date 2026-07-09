@@ -13,10 +13,14 @@ export interface VisionProvider {
   name: string;
   /**
    * Lee la(s) foto(s) de la tarjeta y devuelve la extraccion YA validada.
-   * @param front ruta absoluta a la foto del frente (requerida)
-   * @param back  ruta absoluta a la foto del reverso (opcional)
+   * @param front   ruta absoluta a la foto del frente (requerida)
+   * @param back    ruta absoluta a la foto del reverso (opcional)
+   * @param palette hex de marca MEDIDOS (colorthief) que se le pasan al modelo
+   *                para que asigne roles de color eligiendo de esta lista. Si
+   *                viene vacia, el modelo no asigna colores (el caller cae a la
+   *                heuristica).
    */
-  extractCard(front: string, back?: string): Promise<ExtractionResult>;
+  extractCard(front: string, back?: string, palette?: string[]): Promise<ExtractionResult>;
 }
 
 export type ProviderName = "openai" | "gemini";

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{metaDescription}}">
+<script type="application/ld+json">{{{jsonLd}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spectral:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de tu
+     marca" OFF en el visor). */
+  --primary:#1f2733;
+  --secondary:#b08d4a;
+  --accent:#8b94a3;
+  --on-primary:#FFFFFF;
+  --bg:color-mix(in oklab,var(--card-bg,var(--card-surface,#f6f5f2)) 10%,#f6f5f2);
+  --ink:color-mix(in oklab,var(--primary) 88%,#000);
+  --ink-soft:color-mix(in oklab,var(--primary) 38%,#8f8f8f);
+  --line:color-mix(in oklab,var(--primary) 14%,#dedcd6);
+  --gold:color-mix(in oklab,var(--secondary) 74%,#4d3c17);
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Superficie MEDIDA (opcional): tine el fondo con un 10% del
+   color real; ausente => var() cae al default del diseno arriba. El rol
+   `text` no se usa como ink (polaridad no portable a un diseno claro): el
+   ink se deriva de `primary`. */
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
+  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Archivo',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100dvh}
+a{color:var(--ink);text-decoration:none}
+a:hover{color:var(--gold)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.rise{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+.d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}.d4{animation-delay:.32s}
+.wrap{max-width:440px;margin:0 auto;padding:clamp(36px,7vh,64px) 26px 48px;display:flex;flex-direction:column;gap:34px}
+.identity{display:flex;flex-direction:column;gap:16px;border-bottom:1px solid var(--line);padding-bottom:28px}
+.rowtop{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.serial{font-size:10.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-soft)}
+.logo{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#fff;border:1px solid var(--line)}
+h1{margin:0;font-size:clamp(32px,8.5vw,40px);font-weight:700;letter-spacing:-.035em;line-height:1.04}
+.role{display:flex;flex-direction:column;gap:4px}
+.role .tag{margin:0;font-family:'Spectral',serif;font-style:italic;font-weight:300;font-size:18px;color:var(--gold)}
+.role .org{margin:0;font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.actions{display:flex;flex-direction:column}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:17px 20px;margin-bottom:16px;background:var(--primary);color:var(--on-primary);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;transition:background .22s ease,transform .22s ease}
+.cta:hover{background:color-mix(in oklab,var(--primary) 85%,#000);color:var(--on-primary);transform:translateY(-1px)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 2px;border-bottom:1px solid var(--line);font-size:14.5px;font-weight:500;transition:padding .22s ease,color .22s ease}
+.row:hover{padding-left:8px}
+.row .k{font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);flex:none;width:88px}
+.row .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.row .ar{flex:none;color:var(--gold)}
+.sect{display:flex;flex-direction:column;gap:14px}
+.sect h2{margin:0;font-size:10.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft)}
+.svcs{display:flex;flex-direction:column}
+.svc{display:flex;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px dotted var(--line);font-family:'Spectral',serif;font-size:16.5px;font-weight:400}
+.svc i{font-style:normal;font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--gold)}
+.attrs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.attr{background:var(--bg);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.attr b{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+.attr span{font-size:13.5px;font-weight:500}
+.socials{display:flex;gap:22px}
+.soc{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.soc:hover{color:var(--gold)}
+.mark{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:18px}
+.mark p{margin:0;font-size:11px;letter-spacing:.06em;color:var(--ink-soft)}
+.mark i{width:22px;height:2px;background:var(--secondary)}
+@media (min-width:720px){.wrap{max-width:500px}}
+@media (min-width:1024px){.wrap{max-width:640px;gap:40px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="identity rise">
+    <div class="rowtop">
+      <span class="serial">Tarjeta digital</span>
+      {{#logoPath}}<img class="logo" src="{{logoPath}}" alt="{{heroName}}">{{/logoPath}}
+    </div>
+    <h1>{{heroName}}</h1>
+    <div class="role">
+      {{#tagline}}<p class="tag">{{tagline}}</p>{{/tagline}}
+      {{#hasOrgLine}}<p class="org">{{orgName}}</p>{{/hasOrgLine}}
+    </div>
+  </header>
+
+  <section class="actions rise d1" aria-label="Contacto directo">
+    {{#hasPhone}}
+    <a class="cta" href="{{whatsappUrl}}" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.5.5c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.3 1.1 2.3 1.5 2.7 1.6.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.3.6.4 0 .2 0 .7-.2 1.2Z"/></svg>
+      Escribir por WhatsApp
+    </a>
+    <a class="row" href="{{phoneTelHref}}"><span class="k">Tel</span><span class="v">{{phoneDisplay}}</span><span class="ar">→</span></a>
+    {{/hasPhone}}
+    {{#hasEmail}}
+    <a class="row" href="mailto:{{email}}"><span class="k">Correo</span><span class="v">{{email}}</span><span class="ar">→</span></a>
+    {{/hasEmail}}
+    {{#hasAddressLine}}
+    <a class="row" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="k">Oficina</span><span class="v">{{addressLine}}</span><span class="ar">→</span></a>
+    {{/hasAddressLine}}
+    {{#hasWebsite}}
+    <a class="row" href="{{website}}" target="_blank" rel="noopener"><span class="k">Web</span><span class="v">Visitar sitio</span><span class="ar">→</span></a>
+    {{/hasWebsite}}
+  </section>
+
+  {{#hasServices}}
+  <section class="sect rise d2" aria-label="Práctica">
+    <h2>Práctica</h2>
+    <div class="svcs">
+      {{#servicesNumbered}}<div class="svc"><i>{{n}}</i>{{name}}</div>{{/servicesNumbered}}
+    </div>
+  </section>
+  {{/hasServices}}
+
+  {{#hasAttrs}}
+  <section class="sect rise d3" aria-label="Información">
+    <h2>Información</h2>
+    <div class="attrs">
+      {{#attrs}}
+      <div class="attr"><b>{{key}}</b><span>{{value}}</span></div>
+      {{/attrs}}
+    </div>
+  </section>
+  {{/hasAttrs}}
+
+  {{#hasSocials}}
+  <nav class="socials rise d3" aria-label="Redes sociales">
+    {{#hasInstagram}}<a class="soc" href="{{instagramUrl}}" target="_blank" rel="noopener">Instagram</a>{{/hasInstagram}}
+    {{#hasFacebook}}<a class="soc" href="{{facebookUrl}}" target="_blank" rel="noopener">Facebook</a>{{/hasFacebook}}
+    {{#hasTiktok}}<a class="soc" href="{{tiktokUrl}}" target="_blank" rel="noopener">TikTok</a>{{/hasTiktok}}
+  </nav>
+  {{/hasSocials}}
+
+  <footer class="mark rise d4">
+    <p>{{heroName}}{{#hasOrgLine}} · {{orgName}}{{/hasOrgLine}}</p>
+    <i aria-hidden="true"></i>
+  </footer>
+
+</main>
+</body>
+</html>

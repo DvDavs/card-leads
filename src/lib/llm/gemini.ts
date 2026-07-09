@@ -43,6 +43,26 @@ async function imagePart(p: string): Promise<InlineDataPart> {
   return { inline_data: { mime_type: mimeOf(p), data: buf.toString("base64") } };
 }
 
+/**
+ * withPalette — anexa al prompt de extraccion el bloque de asignacion de color.
+ * Le da al modelo la paleta MEDIDA y le pide asignar cada rol eligiendo un hex
+ * EXACTO de esa lista. Si la paleta viene vacia (colorthief no midio nada), no
+ * anexa nada: el modelo no asigna colores y el caller usa la heuristica.
+ */
+function withPalette(prompt: string, palette?: string[]): string {
+  if (!palette || palette.length === 0) return prompt;
+  return (
+    prompt +
+    `\n\n## Paleta de colores medida\n` +
+    `Estos son los colores REALES de la tarjeta, medidos de los pixeles:\n` +
+    `${palette.join(", ")}\n` +
+    `Llena el objeto "colors" asignando a cada rol UN hex EXACTO de esta lista ` +
+    `(copialo tal cual, en minusculas). Usa la imagen para decidir cual va en cada rol. ` +
+    `PROHIBIDO devolver un hex que no este en la lista. Si un rol no tiene buen ` +
+    `candidato en la lista, ponlo en null.`
+  );
+}
+
 /** Lee una env var numerica; devuelve undefined si falta o no es numero. */
 function numEnv(name: string): number | undefined {
   const v = process.env[name];
@@ -54,14 +74,17 @@ function numEnv(name: string): number | undefined {
 export function geminiProvider(): VisionProvider {
   return {
     name: "gemini",
-    async extractCard(front: string, back?: string): Promise<ExtractionResult> {
+    async extractCard(front: string, back?: string, palette?: string[]): Promise<ExtractionResult> {
       const apiKey = process.env.GEMINI_API_KEY?.trim();
       if (!apiKey) {
         throw new Error("llm/gemini: falta GEMINI_API_KEY en el entorno (.env)");
       }
 
       const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
-      const prompt = await loadExtractPrompt();
+      // La paleta MEDIDA (colorthief) se anexa al prompt para que el modelo asigne
+      // roles de color eligiendo hex de esa lista (nunca inventa uno). Si no hay
+      // paleta, no se pide asignacion: el caller cae a la heuristica.
+      const prompt = withPalette(await loadExtractPrompt(), palette);
 
       const parts: Array<{ text: string } | InlineDataPart> = [
         { text: prompt },

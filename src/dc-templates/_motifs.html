@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  _motifs.html · LIBRERIA DE MOTIVOS POR RUBRO (no entra al pool: prefijo _)
+  ==========================================================================
+  Cada bloque de abajo es un motivo completo, listo para pegar en cualquier
+  diseño del pool (celeste, vitrina, rotulo, seda, redondo, lienzo).
+
+  COMO CAMBIAR EL RUBRO DE UN DISEÑO:
+  1. Abrir el .html del diseño y ubicar los marcadores MOTIF:START / MOTIF:END.
+  2. Borrar ese bloque completo (de START a END inclusive).
+  3. Copiar de este archivo el bloque del rubro deseado (de START a END) y pegarlo
+     en el mismo lugar. Nada más: el wrapper <div class="motif"> y las clases
+     .m1-.m5 son idénticos en todos los bloques; el CSS del diseño ya sabe
+     posicionarlos y teñirlos (currentColor → paleta de la marca).
+
+  Convención de sprites (aplica a los 6 rubros):
+    .m1 = pieza protagonista (la más grande) · .m2-.m5 = piezas de apoyo.
+  Todos los SVG: viewBox 0 0 100 100, trazo currentColor, sin colores fijos.
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Librería de motivos por rubro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;background:#f4f3ef;color:#232323;padding:32px 20px 60px}
+h1{font-size:20px;margin:0 0 4px}
+p.note{margin:0 0 28px;font-size:13px;color:#777;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;max-width:1100px}
+.card{background:#fff;border:1px solid #e2e0d8;border-radius:14px;padding:18px}
+.card h2{margin:0 0 12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8a8a84}
+/* solo para esta galería: los diseños reales posicionan .m1-.m5 con su propio CSS */
+.card .motif{position:relative;display:flex;flex-wrap:wrap;gap:14px;align-items:center;color:#4a4f7a}
+.card .m{width:64px;height:64px}
+.card .m1{width:84px;height:84px}
+</style>
+</head>
+<body>
+<h1>Librería de motivos por rubro</h1>
+<p class="note">Copiar el bloque completo (MOTIF:START → MOTIF:END) y pegarlo en el diseño destino, reemplazando el bloque existente. El posicionamiento y el color los pone cada diseño.</p>
+
+<div class="grid">
+
+<div class="card"><h2>doctor</h2>
+<!-- MOTIF:START (rubro=doctor) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M28 14v20a18 18 0 0 0 36 0V14"/><path d="M46 52v14a15 15 0 0 0 30 0v-9"/><circle cx="76" cy="47" r="10"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M40 20h20v20h20v20H60v20H40V60H20V40h20z"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 55h18l8-24 12 44 10-30 6 10h38"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 20v66"/><circle cx="50" cy="13" r="5"/><path d="M50 32c-13 0-13 13 0 13s13 13 0 13-13 13 0 13"/></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(35 50 50)"><rect x="37" y="18" width="26" height="64" rx="13"/><path d="M37 50h26"/></g></svg>
+</div>
+<!-- MOTIF:END -->
+</div>
+
+<div class="card"><h2>nutriologo</h2>
+<!-- MOTIF:START (rubro=nutriologo) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="34"/><circle cx="50" cy="50" r="26"/><path d="M50 24v52M24 50h52M32 32l36 36M68 32 32 68"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 30c-16-10-32 2-30 20 2 20 14 34 30 34s28-14 30-34c2-18-14-30-30-20Z"/><path d="M50 30c0-8 4-12 10-14"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 84C22 66 22 34 50 14c28 20 28 52 0 70Z"/><path d="M50 22v56"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 12C64 34 76 48 76 62a26 26 0 1 1-52 0c0-14 12-28 26-50Z"/></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 80C40 60 55 40 80 20"/><path d="M38 62c-2-10 2-18 12-20 2 10-2 18-12 20Z"/><path d="M56 44c-2-10 2-18 12-20 2 10-2 18-12 20Z"/></svg>
+</div>
+<!-- MOTIF:END -->
+</div>
+
+<div class="card"><h2>barberia</h2>
+<!-- MOTIF:START (rubro=barberia) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="28" cy="30" r="10"/><circle cx="28" cy="70" r="10"/><path d="M36 64 82 22M36 36l46 42"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="38" y="20" width="24" height="60" rx="12"/><path d="M38 36l24-8M38 50l24-8M38 64l24-8M34 20h32M34 80h32"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="22" y="34" width="56" height="12" rx="4"/><path d="M30 46v16M40 46v20M50 46v16M60 46v20M70 46v16"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-40 50 50)"><rect x="18" y="42" width="34" height="16" rx="5"/><path d="M52 42h26l6 8-6 8H52"/></g></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 52c-8-12-22-12-30-2-4 5-10 6-14 2 6 14 24 16 34 6 4-4 6-4 10 0 10 10 28 8 34-6-4 4-10 3-14-2-8-10-22-10-30 2Z"/></svg>
+</div>
+<!-- MOTIF:END -->
+</div>
+
+<div class="card"><h2>estetica</h2>
+<!-- MOTIF:START (rubro=estetica) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="8"/><ellipse cx="50" cy="26" rx="9" ry="14"/><ellipse cx="50" cy="26" rx="9" ry="14" transform="rotate(60 50 50)"/><ellipse cx="50" cy="26" rx="9" ry="14" transform="rotate(120 50 50)"/><ellipse cx="50" cy="26" rx="9" ry="14" transform="rotate(180 50 50)"/><ellipse cx="50" cy="26" rx="9" ry="14" transform="rotate(240 50 50)"/><ellipse cx="50" cy="26" rx="9" ry="14" transform="rotate(300 50 50)"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M50 18C70 34 72 62 50 82 28 62 30 34 50 18Z"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="38" r="22"/><circle cx="50" cy="38" r="15"/><path d="M50 60v24M42 84h16"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M50 14c4 20 12 28 32 36-20 8-28 16-32 36-4-20-12-28-32-36 20-8 28-16 32-36Z"/></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M50 86C34 66 34 36 50 14c16 22 16 52 0 72Z"/><path d="M50 22v56"/></svg>
+</div>
+<!-- MOTIF:END -->
+</div>
+
+<div class="card"><h2>veterinario</h2>
+<!-- MOTIF:START (rubro=veterinario) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="50" cy="62" rx="16" ry="13"/><ellipse cx="29" cy="42" rx="7" ry="9"/><ellipse cx="43" cy="32" rx="7" ry="9"/><ellipse cx="57" cy="32" rx="7" ry="9"/><ellipse cx="71" cy="42" rx="7" ry="9"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-25 50 50)"><circle cx="27" cy="43" r="8"/><circle cx="27" cy="57" r="8"/><circle cx="73" cy="43" r="8"/><circle cx="73" cy="57" r="8"/><path d="M33 50h34"/></g></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="56" r="25"/><path d="M33 38l-5-20 17 12M67 38l5-20-17 12"/><path d="M8 58h16M10 66h14M76 58h16M76 66h14"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="30"/><path d="M28 30c14 8 14 32 0 40M72 30c-14 8-14 32 0 40"/></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 82C28 64 16 50 16 36a17 17 0 0 1 34-4 17 17 0 0 1 34 4c0 14-12 28-34 46Z"/></svg>
+</div>
+<!-- MOTIF:END -->
+</div>
+
+<div class="card"><h2>otro (default)</h2>
+<!-- MOTIF:START (rubro=otro) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="12"/><circle cx="50" cy="50" r="24"/><circle cx="50" cy="50" r="36"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 36c11-10 22-10 33 0s22 10 33 0M8 52c11-10 22-10 33 0s22 10 33 0M8 68c11-10 22-10 33 0s22 10 33 0"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 66a32 32 0 0 1 64 0Z"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><g fill="currentColor" stroke="none"><circle cx="30" cy="30" r="3.5"/><circle cx="50" cy="30" r="3.5"/><circle cx="70" cy="30" r="3.5"/><circle cx="30" cy="50" r="3.5"/><circle cx="50" cy="50" r="3.5"/><circle cx="70" cy="50" r="3.5"/><circle cx="30" cy="70" r="3.5"/><circle cx="50" cy="70" r="3.5"/><circle cx="70" cy="70" r="3.5"/></g></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M50 16v68M16 50h68M26 26l48 48M74 26 26 74"/></svg>
+</div>
+<!-- MOTIF:END -->
+</div>
+
+</div>
+</body>
+</html>

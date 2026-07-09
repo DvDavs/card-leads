@@ -11,7 +11,7 @@ export function openaiProvider(): VisionProvider {
   return {
     name: "openai",
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async extractCard(_front: string, _back?: string): Promise<ExtractionResult> {
+    async extractCard(_front: string, _back?: string, _palette?: string[]): Promise<ExtractionResult> {
       throw new Error(
         "llm/openai: no implementado todavia. Usa LLM_PROVIDER=gemini " +
           "(gpt-4o-mini queda para una siguiente iteracion).",

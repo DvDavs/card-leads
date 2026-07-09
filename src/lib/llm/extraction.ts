@@ -44,12 +44,26 @@ export const ExtractionSchema = z.object({
       tiktok: str,
     })
     .nullish(),
-  // Los COLORES ya no los pide el modelo: se miden de los pixeles con colorthief
-  // (ver lib/colors). El LLM solo aporta has_logo y font_hint.
+  // Los hex se MIDEN de los pixeles con colorthief (ver lib/colors); el modelo NO
+  // los estima. Aca el LLM solo aporta has_logo y font_hint.
   brand: z
     .object({
       has_logo: z.boolean().nullish(),
       font_hint: str,
+    })
+    .nullish(),
+  // colors: ASIGNACION de roles. Al modelo se le pasa la paleta MEDIDA y elige,
+  // con vision, que hex de esa lista va en cada rol. No inventa hex: la baranda
+  // `resolveAssignedColors` descarta cualquier hex que no este en la paleta. Todo
+  // .nullish(): un rol sin buen candidato en la paleta queda null.
+  colors: z
+    .object({
+      primary: str,
+      secondary: str,
+      accent: str,
+      background: str,
+      surface: str,
+      text: str,
     })
     .nullish(),
   content: z

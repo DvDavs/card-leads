@@ -1,12 +1,13 @@
 # card-leads
 
 Pipeline CLI (TypeScript / Node) que convierte fotos de tarjetas de presentacion
-en un linktree + web. Cada etapa es un comando independiente; el estado vive en
-un `data.json` por lead dentro de `leads/<slug>/`.
+en una digital card (dc) -- varios disenos listos con un visor swipeable -- y,
+a futuro, una web publicada. Cada etapa es un comando independiente; el estado
+vive en un `data.json` por lead dentro de `leads/<slug>/`.
 
 ## Estado actual
 
-Rebanada vertical implementada: **`ingest` -> `build-linktree`**. El resto de
+Rebanada vertical implementada: **`ingest` -> `build-cards`**. El resto de
 las etapas son stubs que lanzan `"no implementado"`. LLM, deploy y Telegram
 todavia no estan.
 
@@ -25,13 +26,15 @@ npm run cli -- ingest ./ruta/frente.jpg ./ruta/reverso.jpg --rubro doctor --slug
 #   - slug: si falta, se deriva del nombre del archivo del frente
 #   - rubro: si falta, "otro" (queda anotado en meta.needs)
 
-# 2) construir el linktree desde data.json -> leads/<slug>/linktree.html
-npm run cli -- build-linktree dr-perez
+# 2) rellenar TODOS los disenos del pool -> leads/<slug>/dc/*.html + dc/index.html
+npm run cli -- build-cards dr-perez
 ```
 
 Salida de `ingest`: `status="ingested"`, campos de negocio vacios y `meta.needs`
-con lo que falta (el LLM aun no llena nada). `build-linktree` rellena el template
-generico y deja `status="linktree_built"`.
+con lo que falta (el LLM aun no llena nada). `build-cards` rellena cada
+`.html` de `src/dc-templates/` con los datos del lead, arma el visor
+swipeable (`dc/index.html`) y deja `status="linktree_built"` (nombre de
+status heredado del linktree original, por compatibilidad).
 
 ## Estructura
 
@@ -46,11 +49,13 @@ src/
     storage.ts      leer/escribir data.json y la carpeta del lead
     llm/            interfaz de proveedor + stubs (openai, gemini)
   prompts/          prompts de vision/copy/propuesta (borradores)
-  templates/        HTML con {{variables}} (generico = linktree)
-  config/rubro-map  rubro -> template + servicios/ideas base
+  dc-templates/     pool de disenos de digital card (clinic/dark/executive/
+                    luxury/credencial) + _viewer.html (visor swipeable)
+  templates/        HTML con {{variables}} para build-web (stub), por rubro
+  config/rubro-map  rubro -> template web + servicios/ideas base + CARD_LABELS
 leads/              datos de terceros (gitignored)
 tests/
-  deterministic/    slug, template, schema
+  deterministic/    slug, template, schema, build-cards, ...
   evals/            golden de LLM (pendiente)
 ```
 
@@ -67,3 +72,7 @@ npm run typecheck # tsc --noEmit
   en runtime y tipos en compile-time no pueden divergir.
 - `LEADS_DIR` (env) permite apuntar la raiz de leads a otra carpeta (tests).
 - Sin paso de build: se ejecuta el TS directo con `tsx`.
+- Las digital cards son self-contained (sin JS, sin dependencias de build) con
+  UNA excepcion: los disenos `clinic`/`dark`/`executive`/`luxury` cargan
+  Google Fonts via `<link>` para preservar su identidad tipografica; el
+  diseno `credencial` sigue sin fuentes remotas.
