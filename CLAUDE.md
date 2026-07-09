@@ -147,6 +147,28 @@ tap a los botones de adentro de la card), flechas, dots y
 `@view-transition{navigation:auto}` (CSS) NO se usa a propósito: es para
 navegaciones MPA vía la Navigation API y no puede cruzar el borde de un iframe.
 
+**Toggle "Ver con los colores de tu marca" (colores originales ⇄ colores de
+marca, en runtime, sin rebuild).** Cada card configurable declara DOS
+paletas en su CSS: `:root { ... }` con la paleta ORIGINAL del diseño (hex
+hardcodeado; es el default, toggle apagado) y `:root[data-brand] { ... }`
+con la paleta de MARCA (los `{{{colors.*}}}`/`{{{colorsText.*}}}` que antes
+vivían directo en `:root`). Los neutros derivados (`--bg`/`--ink`/`--line`,
+que en casi todos los diseños son `color-mix(..., var(--primary) ...)`) NO
+se duplican: al sobreescribir `--primary` en `[data-brand]` recalculan
+solos. `build-cards` inyecta en cada card, en build time, un `<script>`
+idéntico (`BRAND_TOGGLE_SNIPPET`/`injectBrandToggle`, puro) que escucha
+`postMessage({type:'dc-brand', on})` y hace
+`document.documentElement.toggleAttribute('data-brand', on)`; al cargar
+avisa `{type:'dc-brand-ready'}` al padre para que el visor le conteste el
+estado actual (cubre los iframes que cargan lazy al hacer swipe, sin
+parpadeo). El control vive en `_viewer.html` (`.brand-toggle`, zona superior
+del `.hud`, antes vacía): arranca APAGADO (colores originales) y al
+prenderlo muestra una advertencia fija — los colores de marca los mide una
+IA desde la foto de la tarjeta y pueden fallar. Es 100% cliente: no rehorna
+nada en `data.json` ni en disco. Diseño nuevo que quiera soportar el toggle
+= declarar su paleta original en `:root` + un `:root[data-brand]` con los
+`{{{colors.*}}}` (ver `LEEME-nuevos.md`); el listener se inyecta solo.
+
 **Capa de motivos (`_motifs.html`, fondos intercambiables por rubro).**
 `_motifs.html` (prefijo `_` ⇒ fuera del pool) es la LIBRERÍA: un bloque de
 arte SVG por rubro (`doctor`, `nutriologo`, `barberia`, `estetica`,
@@ -161,16 +183,25 @@ en el pipeline es **automático por rubro**.
 
 **Diseños Guelaguetza (Oaxaca) — arte fijo + assets propios.** `guelaguetza-*`
 son un caso aparte del pool decorativo: paleta y arte de color son **FIJOS**
-(hardcodeados en su `:root`), ignoran a propósito `colors`/`colorsText` del
-lead. Se ofrecen en TODOS los rubros (como el resto del pool) y son
-**estáticos por rubro**: solo cambian los DATOS del lead y la capa de motivos
-(`_motifs.html`, teñida con un color fijo de su paleta). Traen imágenes reales
-(`assets/guelaguetza/*.png`) referenciadas por ruta RELATIVA — recursos
-EXCLUSIVOS de estos diseños, ningún otro los usa. Por eso `build-cards` espeja
-`src/dc-templates/assets/` en `leads/<slug>/dc/assets/` (`copyTreeIntoLead` en
-`storage.ts`), para que esas rutas resuelvan dentro del iframe del visor. Son
-la única excepción a la regla self-contained en cuanto a IMÁGENES (el resto
-usa SVG inline / data URI); los assets se copian una vez por lead.
+(hardcodeados en su `:root`) — esa paleta fija ES su "original" para el
+toggle de marca. Se ofrecen en TODOS los rubros (como el resto del pool) y
+son **estáticos por rubro**: solo cambian los DATOS del lead y la capa de
+motivos (`_motifs.html`, teñida con un color fijo de su paleta). Traen
+imágenes reales (`assets/guelaguetza/*.png`) referenciadas por ruta RELATIVA
+— recursos EXCLUSIVOS de estos diseños, ningún otro los usa. Por eso
+`build-cards` espeja `src/dc-templates/assets/` en `leads/<slug>/dc/assets/`
+(`copyTreeIntoLead` en `storage.ts`), para que esas rutas resuelvan dentro
+del iframe del visor. Son la única excepción a la regla self-contained en
+cuanto a IMÁGENES (el resto usa SVG inline / data URI); los assets se copian
+una vez por lead. **Toggle de marca:** a diferencia del resto del pool, el
+`:root` base de estos tres NO trae placeholders — es la paleta Oaxaca
+completa, siempre hardcodeada. Solo el rol "primario" de cada uno
+(`--uva`/`--magenta`/`--oro`, según el diseño) tiene un `:root[data-brand]`
+que lo mapea a `colors.primary` (+ su `-text` a `colorsText.primary`, para no
+perder contraste). El resto del arte —confeti, picado, PNG— es fijo y NO se
+recolorea por CSS: con el toggle prendido el chrome (CTA, avatar, links) usa
+la marca pero las imágenes siguen en paleta Oaxaca; es una mezcla aceptada a
+propósito, no un bug.
 
 **Excepción de self-contained:** todos los diseños salvo `credencial` traen
 `<link>` a Google Fonts (Anton, Newsreader, Cormorant Garamond, Oswald,

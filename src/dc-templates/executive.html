@@ -11,21 +11,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spectral:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
 :root{
-  --primary:{{{colors.primary}}};
-  --secondary:{{{colors.secondary}}};
-  --accent:{{{colors.accent}}};
-  --on-primary:{{{colorsText.primary}}};
-  /* Superficie MEDIDA (opcional): tine el fondo con un 10% del color real;
-     ausente => var() cae a #f6f5f2 (fondo original, claro y sobrio). El rol
-     `text` no se usa como ink (polaridad no portable a un diseno claro): el ink
-     se deriva de `primary`. */
-  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
-  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+  /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de tu
+     marca" OFF en el visor). */
+  --primary:#1f2733;
+  --secondary:#b08d4a;
+  --accent:#8b94a3;
+  --on-primary:#FFFFFF;
   --bg:color-mix(in oklab,var(--card-bg,var(--card-surface,#f6f5f2)) 10%,#f6f5f2);
   --ink:color-mix(in oklab,var(--primary) 88%,#000);
   --ink-soft:color-mix(in oklab,var(--primary) 38%,#8f8f8f);
   --line:color-mix(in oklab,var(--primary) 14%,#dedcd6);
   --gold:color-mix(in oklab,var(--secondary) 74%,#4d3c17);
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Superficie MEDIDA (opcional): tine el fondo con un 10% del
+   color real; ausente => var() cae al default del diseno arriba. El rol
+   `text` no se usa como ink (polaridad no portable a un diseno claro): el
+   ink se deriva de `primary`. */
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
+  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}

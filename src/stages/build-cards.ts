@@ -308,6 +308,35 @@ export function swapMotif(templateHtml: string, motifBlock: string | undefined):
   return templateHtml.replace(MOTIF_BLOCK_RE, () => motifBlock);
 }
 
+/**
+ * BRAND_TOGGLE_SNIPPET — listener del toggle "Ver con los colores de tu
+ * marca" (_viewer.html). Identico en las 14 cards y sin datos del lead, asi
+ * que se inyecta en build time en vez de repetirlo a mano en cada template
+ * (misma regla que el resto del pool: agregar diseno = tirar un .html, sin
+ * tocar codigo). Cada card declara su paleta ORIGINAL en `:root` y su paleta
+ * de MARCA en `:root[data-brand]`; este script solo prende/apaga ese
+ * atributo segun lo que le mande el visor por postMessage, y avisa al cargar
+ * (`dc-brand-ready`) para que el visor le reenvie el estado actual — cubre
+ * los iframes que cargan lazy al hacer swipe.
+ */
+const BRAND_TOGGLE_SNIPPET = `<script>(function(){
+  function apply(on){document.documentElement.toggleAttribute('data-brand',!!on);}
+  addEventListener('message',function(e){var d=e.data;if(d&&d.type==='dc-brand')apply(!!d.on);});
+  try{parent.postMessage({type:'dc-brand-ready'},'*');}catch(_){}
+})();</script>`;
+
+/**
+ * injectBrandToggle — PURA: inserta `BRAND_TOGGLE_SNIPPET` justo antes de
+ * `</body>`. Fallback a append si el template no trae `</body>` (no deberia
+ * pasar, todas las cards del pool son HTML completo), para no perder el
+ * listener en silencio.
+ */
+export function injectBrandToggle(html: string): string {
+  return /<\/body>/i.test(html)
+    ? html.replace(/<\/body>/i, `${BRAND_TOGGLE_SNIPPET}</body>`)
+    : html + BRAND_TOGGLE_SNIPPET;
+}
+
 /* ------------------------------------------------------------------ */
 /* Guard de status                                                     */
 /* ------------------------------------------------------------------ */
@@ -663,7 +692,8 @@ export async function buildCards(slug: string): Promise<string[]> {
   for (const entry of orderedPool) {
     const rawTemplate = await loadPoolTemplate(entry.file);
     const template = swapMotif(rawTemplate, motifBlock);
-    const html = renderTemplate(template, view);
+    const rendered = renderTemplate(template, view);
+    const html = injectBrandToggle(rendered);
     const relPath = path.posix.join(DC_DIR, entry.file);
     const outPath = await writeArtifact(slug, relPath, html);
     writtenPaths.push(outPath);

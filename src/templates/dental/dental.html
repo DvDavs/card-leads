@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en"><head><script id="aura-preview-performance-controller">
+  (function() {
+    if (window.__auraPreviewPerformanceController) return;
+    const nativeRequestAnimationFrame = window.requestAnimationFrame
+      ? window.requestAnimationFrame.bind(window)
+      : function(callback) { return window.setTimeout(function() { callback(Date.now()); }, 16); };
+    const nativeCancelAnimationFrame = window.cancelAnimationFrame
+      ? window.cancelAnimationFrame.bind(window)
+      : window.clearTimeout.bind(window);
+    const nativeSetInterval = window.setInterval.bind(window);
+    let paused = false;
+    let nextFrameId = 1;
+    const frameRecords = new Map();
+    const pausedFrameCallbacks = new Map();
+    const style = document.createElement('style');
+    style.id = 'aura-preview-performance-style';
+    style.textContent = [
+      'html[data-aura-preview-paused="true"] *,',
+      'html[data-aura-preview-paused="true"] *::before,',
+      'html[data-aura-preview-paused="true"] *::after {',
+      '  animation-play-state: paused !important;',
+      '  transition-duration: 0s !important;',
+      '  scroll-behavior: auto !important;',
+      '}'
+    ].join('\n');
+    document.head.appendChild(style);
+    window.requestAnimationFrame = function(callback) {
+      const frameId = nextFrameId++;
+      if (paused) {
+        pausedFrameCallbacks.set(frameId, callback);
+        frameRecords.set(frameId, { paused: true });
+        return frameId;
+      }
+      const nativeFrameId = nativeRequestAnimationFrame(function(timestamp) {
+        frameRecords.delete(frameId);
+        callback(timestamp);
+      });
+      frameRecords.set(frameId, { nativeFrameId: nativeFrameId });
+      return frameId;
+    };
+    window.cancelAnimationFrame = function(frameId) {
+      const record = frameRecords.get(frameId);
+      pausedFrameCallbacks.delete(frameId);
+      if (record && typeof record.nativeFrameId !== 'undefined') {
+        nativeCancelAnimationFrame(record.nativeFrameId);
+      }
+      frameRecords.delete(frameId);
+    };
+    window.setInterval = function(callback, delay) {
+      const args = Array.prototype.slice.call(arguments, 2);
+      return nativeSetInterval(function() {
+        if (paused) return;
+        callback.apply(this, args);
+      }, delay);
+    };
+    const flushPausedFrames = function() {
+      const callbacks = Array.from(pausedFrameCallbacks.entries());
+      pausedFrameCallbacks.clear();
+      callbacks.forEach(function(entry) {
+        const frameId = entry[0];
+        const callback = entry[1];
+        const nativeFrameId = nativeRequestAnimationFrame(function(timestamp) {
+          frameRecords.delete(frameId);
+          callback(timestamp);
+        });
+        frameRecords.set(frameId, { nativeFrameId: nativeFrameId });
+      });
+    };
+    const setPaused = function(nextPaused) {
+      const shouldPause = Boolean(nextPaused);
+      if (paused === shouldPause) return;
+      paused = shouldPause;
+      document.documentElement.toggleAttribute('data-aura-preview-paused', paused);
+      if (!paused) {
+        flushPausedFrames();
+      }
+    };
+    window.__auraPreviewPerformanceController = {
+      setPaused: setPaused,
+      get paused() {
+        return paused;
+      }
+    };
+    window.addEventListener('message', function(event) {
+      if (event.source !== window.parent) return;
+      if (!event.data || event.data.type !== 'aura-preview-performance-mode') return;
+      setPaused(event.data.paused);
+    });
+  })();
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    Clínica Odontológica 24h — Urgência Premium | Instituto Mineiro de
+    Odontologia
+  </title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #050505;
+    }
+    .electric-card {
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    .electric-border {
+      background: linear-gradient(180deg, rgba(59, 130, 246, 1) 0%, rgba(59, 130, 246, 0) 100%);
+    }
+    .stars {
+      background-image:
+        radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 130px 80px, #ffffff, rgba(0,0,0,0));
+      background-size: 200px 200px;
+      opacity: 0.2;
+    }
+    .grid-bg {
+      background-image: linear-gradient(to right, #ffffff05 1px, transparent 1px),
+      linear-gradient(to bottom, #ffffff05 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+  <meta name="disabled-font-classes" content="font-roboto,font-instrument-serif,font-merriweather,font-jakarta,font-work-sans,font-pt-serif,font-space-mono,font-nunito,font-bricolage,font-rajdhani,font-google-sans-flex,font-vt323,font-geist-mono,font-aboreto,font-urbanist,font-quicksand,font-honk,font-cardo,font-cormorant,font-bodoni-moda,font-dm-sans,font-poppins,font-montserrat,font-playfair,font-newsreader,font-space-grotesk,font-manrope">
+  <style>
+    @keyframes fadeInUpBlur{0%{opacity:0;transform:translateY(20px);filter:blur(10px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}.animate-entry{animation:fadeInUpBlur 1s cubic-bezier(0.2,0.8,0.2,1) both}.delay-75{animation-delay:75ms}.delay-100{animation-delay:100ms}.delay-150{animation-delay:150ms}.delay-200{animation-delay:200ms}.delay-300{animation-delay:300ms}.delay-500{animation-delay:500ms}.delay-700{animation-delay:700ms}
+  </style>
+  <style class="">
+    /*
+    Sequence animation intro. Usage:
+    1) Insert this code in the <head>
+    2) Add to Tailwind Classes: [animation:animationIn_0.8s_ease-out_0.1s_both]
+    */
+    @keyframes animationIn {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+        filter: blur(8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0px);
+      }
+    }
+  </style>
+  <script>
+    /*
+    Sequence animation on scroll when visible. Requires Animation Keyframe. Usage:
+    1) Insert this code in the <head> along with the Animation Keyframe code.
+    2) Add to Tailwind Classes: [animation:animationIn_0.8s_ease-out_0.1s_both] animate-on-scroll
+    */
+    (function () {
+// Inject CSS for paused/running states
+      const style = document.createElement("style");
+      style.textContent = `
+/* Default: paused */
+.animate-on-scroll { animation-play-state: paused !important; }
+/* Activated by JS */
+.animate-on-scroll.animate { animation-play-state: running !important; }
+`;
+      document.head.appendChild(style);
+      const once = true;
+      if (!window.__inViewIO) {
+        window.__inViewIO = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("animate");
+              if (once) window.__inViewIO.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.2, rootMargin: "0px 0px -10% 0px" });
+      }
+      window.initInViewAnimations = function (selector = ".animate-on-scroll") {
+        document.querySelectorAll(selector).forEach((el) => {
+          window.__inViewIO.observe(el); // observing twice is a no-op
+        });
+      };
+      document.addEventListener("DOMContentLoaded", () => initInViewAnimations());
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --burgundy:#7A1E3A;
+      --wine:#4A1024;
+      --rose:#FBE8EC;
+      --beige:#F7F1EA;
+      --white:#FFFFFF;
+      --charcoal:#1F2933;
+      --muted:#6B7280;
+      --wa:#25D366;
+    }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--beige) !important;color:var(--charcoal) !important;}
+    .font-heading{font-family:"Playfair Display",ui-serif,Georgia,Cambria,"Times New Roman",Times,serif;letter-spacing:-0.02em;}
+    .shadow-soft{box-shadow:0 14px 44px rgba(31,41,51,.10);}
+    .shadow-soft-lg{box-shadow:0 28px 88px rgba(31,41,51,.14);}
+    .glass{background:rgba(255,255,255,.78);backdrop-filter:blur(14px);}
+    .ring-med{box-shadow:0 0 0 1px rgba(122,30,58,.14) inset;}
+    .btn-primary{background:linear-gradient(135deg,var(--burgundy),var(--wine));color:#fff;}
+    .btn-primary:hover{filter:brightness(1.05);}
+  </style>
+  <style id="storydesign-parallax-style">
+    .parallax-layer{will-change:transform;transform:translate3d(0,0,0);}
+    .parallax-float{animation:storyFloat 7s ease-in-out infinite;}
+    @keyframes storyFloat{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-10px,0)}100%{transform:translate3d(0,0,0)}}
+    @media (prefers-reduced-motion: reduce){
+      .parallax-layer{transform:none !important;}
+      .parallax-float{animation:none !important;}
+    }
+  </style>
+  <script id="storydesign-parallax-script">
+    (function(){
+      function initStoryParallax(){
+        var els = Array.prototype.slice.call(document.querySelectorAll('[data-parallax]'));
+        if(!els.length) return;
+        var ticking=false;
+        function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+        function update(){
+          ticking=false;
+          var wh = window.innerHeight || 0;
+          els.forEach(function(el){
+            var speed = parseFloat(el.getAttribute('data-parallax'));
+            if(isNaN(speed)) speed = 0.12;
+            var scaleAttr = el.getAttribute('data-parallax-scale');
+            var scale = scaleAttr ? parseFloat(scaleAttr) : 1;
+            if(isNaN(scale)) scale = 1;
+            var rect = el.getBoundingClientRect();
+            var progress = (rect.top + rect.height/2 - wh/2) / (wh/2);
+            progress = clamp(progress, -1.25, 1.25);
+            var y = -progress * speed * 40;
+            el.style.transform = 'translate3d(0,'+y.toFixed(2)+'px,0) scale('+scale+')';
+          });
+        }
+        function onScroll(){
+          if(!ticking){
+            ticking=true;
+            window.requestAnimationFrame(update);
+          }
+        }
+        window.addEventListener('scroll', onScroll, {passive:true});
+        window.addEventListener('resize', onScroll, {passive:true});
+        update();
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initStoryParallax);
+      else initStoryParallax();
+    })();
+  </script>
+  <style id="premium-motion">
+    @keyframes fadeUp{0%{opacity:0;transform:translateY(30px) scale(0.98);filter:blur(4px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}.animate-fade-up{animation:fadeUp 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards;opacity:0}.delay-100{animation-delay:0.1s}.delay-200{animation-delay:0.2s}.delay-300{animation-delay:0.3s}.delay-400{animation-delay:0.4s}.delay-500{animation-delay:0.5s}@keyframes zoomOut{0%{transform:scale(1.15)}100%{transform:scale(1)}}.animate-bg-zoom{animation:zoomOut 12s cubic-bezier(0.2,0.8,0.2,1) forwards}.glass-panel{background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.hover-lift{transition:transform 0.4s cubic-bezier(0.2,0.8,0.2,1),box-shadow 0.4s ease}.hover-lift:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(31,41,51,0.12)}@keyframes pulseWa{0%{box-shadow:0 0 0 0 rgba(37,211,102,0.5)}70%{box-shadow:0 0 0 20px rgba(37,211,102,0)}100%{box-shadow:0 0 0 0 rgba(37,211,102,0)}}.animate-pulse-wa{animation:pulseWa 2s infinite}
+  </style>
+  <style id="hero-slider-styles">
+    @keyframes heroSlideFade {
+      0% { opacity: 1; transform: scale(1.033); }
+      40% { opacity: 1; transform: scale(1.166); }
+      50% { opacity: 0; transform: scale(1.2); }
+      90% { opacity: 0; transform: scale(1.0); }
+      100% { opacity: 1; transform: scale(1.033); }
+    }
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      animation: heroSlideFade 16s linear infinite;
+      will-change: transform, opacity;
+    }
+    .hero-slide:nth-child(2) {
+      animation-delay: -8s;
+    }
+  </style>
+  <meta name="aura-font-heading-class" content="font-geist">
+  <meta name="aura-font-body-class" content="font-geist">
+  <meta name="aura-font-heading-label" content="Geist">
+  <meta name="aura-font-body-label" content="Geist">
+  <style id="custom-nav-anim-style">
+    .nav-hide-anim {
+      animation: hideNav 0.7s ease-in-out forwards;
+    }
+    .nav-hide-anim #nav-logo-container,
+    .nav-hide-anim .nav-content-fade {
+      animation: fadeOut 0.3s ease forwards;
+    }
+    .nav-show-anim {
+      animation: showNav 0.4s ease-out forwards;
+    }
+    .nav-show-anim #nav-logo-container,
+    .nav-show-anim .nav-content-fade {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+    @keyframes hideNav {
+      0%, 45% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-100%); opacity: 0; }
+    }
+    @keyframes showNav {
+      0% { transform: translateY(-100%); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+  </style>
+  <script src="https://www.aura.build/FxFilter.js"></script>
+  <style id="custom-load-sequence">
+    @keyframes seqBg { 0% { opacity: 0; transform: scale(1.05); filter: blur(5px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+    @keyframes seqText { 0% { opacity: 0; transform: translateY(20px); filter: blur(4px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+    @keyframes seqNav { 0% { opacity: 0; transform: translateX(-30px); filter: blur(4px); } 100% { opacity: 1; transform: translateX(0); filter: blur(0); } }
+    .seq-bg { opacity: 0; animation: seqBg 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+    .seq-h1 { opacity: 0; animation: seqText 1s cubic-bezier(0.2,0.8,0.2,1) 0.6s forwards; }
+    .seq-p  { opacity: 0; animation: seqText 1s cubic-bezier(0.2,0.8,0.2,1) 0.8s forwards; }
+    .seq-btn { opacity: 0; animation: seqText 1s cubic-bezier(0.2,0.8,0.2,1) 1.0s forwards; }
+    .seq-nav { opacity: 0; animation: seqNav 1s cubic-bezier(0.2,0.8,0.2,1) 1.4s forwards; }
+    .seq-nav-1 { opacity: 0; animation: seqNav 0.8s cubic-bezier(0.2,0.8,0.2,1) 1.5s forwards; }
+    .seq-nav-2 { opacity: 0; animation: seqNav 0.8s cubic-bezier(0.2,0.8,0.2,1) 1.6s forwards; }
+    .seq-nav-3 { opacity: 0; animation: seqNav 0.8s cubic-bezier(0.2,0.8,0.2,1) 1.7s forwards; }
+  </style>
+  <link id="all-fonts-link-font-geist" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap"><style id="all-fonts-style-font-geist">
+    .font-geist { font-family: 'Geist', sans-serif !important; }
+  </style><link id="all-fonts-link-font-sora" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap"><style id="all-fonts-style-font-sora">
+    .font-sora { font-family: 'Sora', sans-serif !important; }
+  </style><style id="border-gradient-shared-style">
+    [style*="--border-gradient"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: var(--border-radius-before, inherit);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(--border-gradient);
+      pointer-events: none;
+    }</style><!-- aura-ga4-start -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2M6V79H761"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2M6V79H761');
+  </script>
+  <!-- aura-ga4-end -->
+</head>
+<body class="min-h-screen overflow-x-hidden selection:bg-[#1D75A6]/20 bg-[#F5F7FA] relative antialiased text-slate-900">
+<script>
+  (function(){var p=document.getElementById('page-preloader');if(!p)return;if(sessionStorage.getItem('imo_preloader_shown')){p.style.display='none';p.remove();}else{sessionStorage.setItem('imo_preloader_shown','true');window.addEventListener('load',function(){setTimeout(function(){p.style.opacity='0';p.style.visibility='hidden';setTimeout(function(){p.remove();},700);},250);});}})();
+</script>
+
+<!-- Background Gradients -->
+<div class="fixed z-0 pointer-events-none inset-0">
+  <div class="absolute inset-0 bg-[radial-gradient(1100px_700px_at_18%_8%,rgba(251,232,236,.95),transparent_62%),radial-gradient(900px_620px_at_85%_18%,rgba(122,30,58,.14),transparent_60%),radial-gradient(900px_620px_at_50%_95%,rgba(74,16,36,.12),transparent_60%)] parallax-layer" data-parallax="0.22"></div>
+  <div class="absolute inset-0 opacity-[0.28] parallax-layer" style="background-size: 28px 28px;" data-parallax="0.12"></div>
+</div>
+
+<!-- Navigation -->
+<nav class="fixed top-0 z-50 w-full pt-4 px-3 sm:px-6 transition-all duration-300" style="position: fixed;">
+  <div class="sm:px-6 sm:py-3 flex seq-nav bg-white/70 max-w-7xl border-white/60 border rounded-full mr-auto ml-auto pt-2.5 pr-4 pb-2.5 pl-4 shadow-[0_8px_32px_rgba(31,41,51,0.06)] backdrop-blur-2xl gap-x-4 gap-y-4 items-center justify-between">
+    <a href="#inicio" class="flex items-center gap-3 seq-nav-1">
+      <div class="leading-tight nav-content-fade">
+        <div class="text-[14px] sm:text-[15px] font-semibold text-[#1F2933]/70 tracking-tight font-geist">
+          Instituto Mineiro de Odontologia
+        </div>
+        <style>
+          div:has(> #nav-brand-logo) {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+          }
+        </style>
+        <img id="nav-brand-logo" src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/02853990-3f32-480e-8b4f-ac5818c8660c_320w.png" alt="Logotipo Instituto Mineiro de Odontologia 24h" class="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow-sm -order-1 transition-transform hover:scale-105">
+      </div>
+    </a>
+
+    <div class="hidden lg:flex items-center gap-1 text-[14px] text-slate-600 nav-content-fade seq-nav-2">
+      <a href="#servicos" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-[#0B2F4A] font-geist">
+        Serviços
+      </a>
+      <a href="#sobre" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-[#0B2F4A] font-geist whitespace-nowrap">
+        Quem Somos
+      </a>
+      <a href="#depoimentos" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-[#0B2F4A] font-geist">
+        Depoimentos
+      </a>
+      <a href="#faq" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-[#0B2F4A] font-geist">
+        Dúvidas
+      </a>
+      <a href="#contato" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-[#0B2F4A] font-geist">
+        Contato
+      </a>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3 nav-content-fade seq-nav-3">
+      <a href="tel:+5511999999999" class="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-full ring-1 transition-all duration-300 shadow-[0_2px_8px_rgba(31,41,51,0.04)] bg-white/80 ring-slate-200/60 text-slate-900 hover:bg-white hover:scale-105 whitespace-nowrap">
+        <i data-lucide="phone" class="w-4 h-4 text-[#7A1E3A]"></i>
+        <span class="text-[13px] font-medium font-geist">
+              (11) 99999-9999
+            </span>
+      </a>
+      <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia." class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#25D366] font-medium shadow-[0_4px_12px_rgba(37,211,102,0.25)] hover:scale-105 hover:brightness-110 transition-all text-white whitespace-nowrap">
+        <i data-lucide="message-circle" class="w-4 h-4"></i>
+        <span class="text-[14px] font-medium font-geist">WhatsApp 24h</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Content -->
+<div class="absolute top-0 left-0 w-full h-[155vh] lg:h-[130vh] pointer-events-none z-0 overflow-hidden parallax-layer [mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)]" data-parallax="0.25">
+  <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(74,16,36,0.5),rgba(31,41,51,0.4))] z-10"></div>
+  <div class="absolute inset-0 w-full h-full z-0">
+    <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/b9e804d3-2538-41bc-9f76-6879a8fc6b8a_1600w.png" class="hero-slide contrast-125 saturate-110" alt="Recepção Instituto Mineiro de Odontologia">
+    <img src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=100&w=2000" class="hero-slide contrast-125 saturate-110" alt="Consultório Odontológico Premium">
+  </div>
+  <div class="absolute inset-0 z-10 pointer-events-none opacity-20 parallax-layer" data-parallax="0.1" style="background-image: radial-gradient(circle, rgba(255, 255, 255, 0.8) 1px, transparent 1px); background-size: 80px 80px; animation: 20s linear 0s infinite normal none running storyFloat;"></div>
+</div>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-20 relative flex flex-col justify-center min-h-[95vh] z-10">
+  <!-- Left Column -->
+  <div class="flex flex-col items-start max-w-3xl w-full">
+    <!-- Tag -->
+
+    <!-- Headline -->
+    <h1 class="text-[40px] sm:text-6xl lg:text-[72px] leading-[1.05] font-semibold text-gray-200 tracking-tight font-geist mb-6 drop-shadow-md seq-h1" style="mask-image: linear-gradient(180deg, transparent, black 35%, black 80%, transparent); -webkit-mask-image: linear-gradient(180deg, transparent, black 35%, black 80%, transparent);">
+      Atendimento odontológico 24h
+    </h1>
+
+    <!-- Subhead -->
+    <p class="text-[17px] sm:text-xl leading-relaxed font-semibold text-gray-200/95 font-geist max-w-2xl mb-10 drop-shadow-md seq-p">
+      Cuidado imediato, estrutura completa e profissionais preparados para
+      atender você todos os dias, inclusive finais de semana e feriados.
+    </p>
+
+    <!-- Buttons -->
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-14 items-stretch sm:items-center w-full seq-btn">
+      <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia." class="group relative z-0 inline-flex w-full sm:w-auto items-center justify-center gap-2.5 overflow-hidden rounded-2xl px-8 py-4 text-[16px] font-medium shadow-[0_8px_30px_rgba(37,211,102,0.3)] transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_40px_-10px_rgba(37,211,102,0.8)] focus:outline-none text-white">
+        <style>
+          @keyframes beam-spin { to { transform: rotate(360deg); } }
+          @keyframes dots-move {
+            0% { background-position: 0 0; }
+            100% { background-position: 24px 24px; }
+          }
+        </style>
+
+        <!-- Full Border Beam (Single Beam) -->
+        <div class="absolute inset-0 overflow-hidden rounded-2xl p-[1px]">
+          <div class="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#ffffff_360deg)]" style="animation: beam-spin 3s linear infinite;"></div>
+          <div class="absolute inset-[1px] rounded-[15px] bg-[#25D366]"></div>
+        </div>
+
+        <!-- Inner Background & Effects -->
+        <div class="absolute inset-[2px] overflow-hidden rounded-[14px] bg-[#25D366]">
+          <!-- Light Gradient Background -->
+          <div class="absolute inset-0 bg-gradient-to-b to-transparent from-white/20"></div>
+
+          <!-- Animated Dots Pattern -->
+          <div class="absolute inset-0 opacity-30 mix-blend-overlay" style="background-image: radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px); background-size: 12px 12px; animation: dots-move 8s linear infinite"></div>
+
+          <!-- Glow on Hover -->
+          <div class="pointer-events-none absolute bottom-0 left-1/2 h-1/2 w-2/3 -translate-x-1/2 rounded-full blur-2xl transition-colors duration-500 group-hover:bg-white/40 bg-white/20"></div>
+        </div>
+
+        <!-- Content -->
+        <i data-lucide="message-circle" class="w-5 h-5"></i>
+        <span class="relative z-10 font-light font-geist">
+              Chamar no WhatsApp
+            </span>
+        <i data-lucide="arrow-right" class="w-4 h-4 opacity-70 group-hover:translate-x-0.5 transition-transform"></i>
+      </a>
+
+      <a href="tel:+5511999999999" class="inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl px-8 py-4 text-[16px] font-semibold text-[#4A1024] shadow-soft-lg hover:scale-105 transition-all duration-300 bg-white">
+        <i data-lucide="phone" class="w-5 h-5"></i>
+        <span class="font-light font-geist">Ligar agora</span>
+      </a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl animate-fade-up delay-400"></div>
+  </div>
+
+  <!-- Right Column (Card with Lightning) -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-20 opacity-80 animate-bounce pointer-events-none">
+        <span class="text-white/80 text-[10px] uppercase tracking-[0.2em] font-light font-geist">
+          Ver mais
+        </span>
+    <i data-lucide="chevron-down" class="w-6 h-6 text-white/80"></i>
+  </div>
+</main>
+
+<!-- Desktop App Showcase Section -->
+<section class="sm:px-6 sm:py-16 [--fx-filter:blur(16px)_liquid-glass(2.5,10)_saturate(1.25)_noise(0.5,1,0)] max-w-7xl mx-auto px-4 py-12 relative">
+  <div class="text-center mb-10 sm:mb-12">
+    <h2 class="animate-on-scroll blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none sm:text-4xl lg:text-5xl text-3xl font-bold text-gray-100 tracking-tight font-sora opacity-0 mb-3 translate-y-6" style="mask-image: linear-gradient(90deg, transparent, black 25%, black 70%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 25%, black 70%, transparent);">
+      Confiança Clínica e Resposta Rápida
+    </h2>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div class="group rounded-3xl ring-1 p-6 shadow-soft animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none hover:-translate-y-[6px] hover:shadow-[0_24px_60px_-20px_rgba(122,30,58,0.25)] hover:duration-500 bg-white ring-slate-200">
+      <div class="flex items-start gap-3">
+            <span class="inline-flex w-11 h-11 rounded-2xl bg-[#FBE8EC] ring-1 ring-[#7A1E3A]/15 items-center justify-center">
+              <i data-lucide="clock" class="w-5 h-5 text-[#7A1E3A]"></i>
+            </span>
+        <div class="">
+          <div class="tracking-tight text-xl text-[#1F2933] font-geist font-medium">
+            Plantão 24h
+          </div>
+          <p class="mt-1 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Atendimento todos os dias, inclusive fins de semana e feriados.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group rounded-3xl ring-1 p-6 shadow-soft animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-100 hover:-translate-y-[6px] hover:shadow-[0_24px_60px_-20px_rgba(122,30,58,0.25)] hover:duration-500 bg-white ring-slate-200">
+      <div class="flex items-start gap-3">
+            <span class="inline-flex w-11 h-11 rounded-2xl bg-[#FBE8EC] ring-1 ring-[#7A1E3A]/15 items-center justify-center">
+              <i data-lucide="credit-card" class="w-5 h-5 text-[#7A1E3A]"></i>
+            </span>
+        <div class="">
+          <div class="tracking-tight text-xl text-[#1F2933] font-geist font-medium">
+            Particular e convênios
+          </div>
+          <p class="mt-1 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Orientação para reembolso e opções de pagamento no plantão.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group rounded-3xl ring-1 p-6 shadow-soft animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-200 hover:-translate-y-[6px] hover:shadow-[0_24px_60px_-20px_rgba(122,30,58,0.25)] hover:duration-500 bg-white ring-slate-200">
+      <div class="flex items-start gap-3">
+            <span class="inline-flex w-11 h-11 rounded-2xl bg-[#FBE8EC] ring-1 ring-[#7A1E3A]/15 items-center justify-center">
+              <i data-lucide="badge-check" class="w-5 h-5 text-[#7A1E3A]"></i>
+            </span>
+        <div class="">
+          <div class="tracking-tight text-xl text-[#1F2933] font-geist font-medium">
+            +100 mil urgências
+          </div>
+          <p class="mt-1 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Experiência e conduta segura nos casos mais comuns do plantão.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group rounded-3xl ring-1 p-6 shadow-soft animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-300 hover:-translate-y-[6px] hover:shadow-[0_24px_60px_-20px_rgba(122,30,58,0.25)] hover:duration-500 bg-white ring-slate-200">
+      <div class="flex items-start gap-3">
+            <span class="inline-flex w-11 h-11 rounded-2xl bg-[#FBE8EC] ring-1 ring-[#7A1E3A]/15 items-center justify-center">
+              <i data-lucide="shield-check" class="w-5 h-5 text-[#7A1E3A]"></i>
+            </span>
+        <div class="">
+          <div class="tracking-tight text-xl text-[#1F2933] font-geist font-medium">
+            Estrutura segura
+          </div>
+          <p class="mt-1 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Biossegurança, tecnologia e ambiente premium de clínica privada.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+</section>
+
+<!-- Features Section -->
+<section id="sobre" class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+  <div class="rounded-[32px] ring-1 shadow-soft-lg overflow-hidden animate-on-scroll opacity-0 translate-y-12 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none bg-white ring-slate-200">
+    <div class="grid grid-cols-1 lg:grid-cols-12">
+      <div class="lg:col-span-5 relative">
+        <div class="absolute inset-0 bg-[radial-gradient(700px_420px_at_15%_15%,rgba(221,243,250,.95),transparent_60%),radial-gradient(700px_420px_at_90%_40%,rgba(29,117,166,.20),transparent_55%)] parallax-layer" data-parallax="0.14" data-parallax-scale="1.03"></div>
+        <div class="relative p-7 sm:p-10">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FBE8EC] text-[#4A1024] text-sm ring-1 ring-[#7A1E3A]/15 font-light font-geist">
+            <i data-lucide="building-2" class="w-4 h-4 text-rose-800"></i>
+            Sobre a clínica
+          </div>
+          <h2 class="mt-5 text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+            Um centro de referência em urgência odontológica
+          </h2>
+          <p class="mt-4 leading-relaxed text-[15px] sm:text-[16px] font-light text-slate-700 font-geist">
+            Atendemos situações que não podem esperar: dor intensa,
+            infecções, fraturas e traumas. Nossa proposta é simples: escuta
+            clínica, diagnóstico rápido e tratamento com segurança — sem
+            excessos, com transparência.
+          </p>
+          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="p-4 rounded-2xl ring-1 bg-white/70 ring-slate-200">
+              <div class="flex items-center gap-2 text-[#0B2F4A]">
+                <i data-lucide="heart-handshake" class="w-4 h-4 text-rose-800"></i>
+                <span class="text-sm font-light font-geist">
+                      Cuidado humanizado
+                    </span>
+              </div>
+              <div class="mt-1 text-xs font-light text-slate-600 font-geist">
+                Você entende o que está acontecendo e o próximo passo.
+              </div>
+            </div>
+            <div class="p-4 rounded-2xl ring-1 bg-white/70 ring-slate-200">
+              <div class="flex items-center gap-2 text-[#0B2F4A]">
+                <i data-lucide="badge-check" class="w-4 h-4 text-rose-800"></i>
+                <span class="text-sm font-light font-geist">
+                      Conduta profissional
+                    </span>
+              </div>
+              <div class="mt-1 text-xs font-light text-slate-600 font-geist">
+                Diagnóstico e procedimentos com rigor técnico.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lg:col-span-7 relative parallax-layer" data-parallax="0.1">
+        <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1600" alt="Ambiente clínico odontológico moderno" class="w-full h-full object-cover min-h-[320px]">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0B2F4A]/55 via-transparent to-transparent"></div>
+        <div class="absolute bottom-6 left-6 right-6">
+          <div class="glass rounded-3xl ring-1 p-5 shadow-soft ring-white/30">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="flex items-center gap-2 text-slate-800">
+                <i data-lucide="clock" class="w-4 h-4 text-rose-800"></i>
+                <span class="text-sm font-light font-geist">24/7</span>
+              </div>
+              <div class="flex items-center gap-2 text-slate-800">
+                <i data-lucide="scan" class="w-4 h-4 text-rose-800"></i>
+                <span class="text-sm font-light font-geist">
+                      Raio‑X digital
+                    </span>
+              </div>
+              <div class="flex items-center gap-2 text-slate-800">
+                <i data-lucide="shield-check" class="w-4 h-4 text-rose-800"></i>
+                <span class="text-sm font-light font-geist">
+                      Biossegurança
+                    </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16" id="servicos">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+        Serviços de urgência
+      </h2>
+      <p class="mt-3 max-w-2xl font-light text-slate-600 font-geist">
+        Atendimento direcionado ao que mais aparece em plantão odontológico
+        — com avaliação, explicação objetiva e plano seguro para resolver a
+        dor e estabilizar o quadro.
+      </p>
+    </div>
+    <div class="flex gap-3">
+      <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20um%20atendimento%20de%20urg%C3%AAncia%20odontol%C3%B3gica." class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+        <i data-lucide="message-circle" class="w-4 h-4"></i>
+        WhatsApp
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="flame" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">
+          Dor de dente intensa
+        </h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Avaliação imediata para identificar a causa e aliviar a dor com
+        segurança.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-100 bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="bandage" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">Trauma dental</h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Quedas e batidas: estabilização, exames e conduta rápida para
+        preservar o dente.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-200 bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="scissors" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">Dente quebrado</h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Restauração provisória ou definitiva conforme o caso, com foco
+        estético e funcional.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-300 bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="syringe" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">Infecções</h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Conduta para controlar dor, inflamação e risco de agravamento.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="activity" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">
+          Canal de urgência
+        </h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Quando indicado, tratamos a origem da dor com técnica e
+        previsibilidade.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-100 bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="droplet" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">Abscesso</h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Avaliação e abordagem segura para reduzir dor e pressão, com
+        orientação clara.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-200 bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">
+          Inchaço e inflamação
+        </h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Investigação da causa e conduta para estabilizar o quadro com
+        segurança.
+      </p>
+    </div>
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none delay-300 bg-white ring-slate-200">
+      <div class="flex items-center gap-2 text-[#0B2F4A]">
+        <i data-lucide="wrench" class="w-4 h-4 text-rose-800"></i>
+        <h3 class="tracking-tight font-light font-geist">
+          Procedimentos urgentes
+        </h3>
+      </div>
+      <p class="mt-2 text-sm font-light text-slate-600 font-geist">
+        Cimentação provisória, ajustes, curativos e estabilizações quando
+        necessário.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16" id="faq">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="lg:col-span-5">
+      <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+        Dúvidas frequentes
+      </h2>
+      <p class="mt-3 font-light text-slate-600 font-geist">
+        Perguntas comuns em situações de urgência odontológica. Se preferir,
+        fale direto com a equipe de plantão.
+      </p>
+      <div class="mt-6 flex gap-3">
+        <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Tenho%20uma%20d%C3%BAvida%20sobre%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia." class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          Tirar dúvida no WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <div class="lg:col-span-7 parallax-layer animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none" data-parallax="0.08">
+      <div class="space-y-3" data-accordion="">
+        <details class="group rounded-3xl ring-1 shadow-soft p-6 open:shadow-soft-lg bg-white ring-slate-200">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                <span class="text-[#0B2F4A] font-light font-geist">
+                  O atendimento é realmente 24 horas?
+                </span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Sim. O plantão funciona 24/7 para urgências odontológicas. Em
+            horários de menor fluxo, o atendimento pode ocorrer por escala —
+            por isso, recomendamos contato prévio por WhatsApp ou telefone
+            para agilizar a chegada.
+          </p>
+        </details>
+
+        <details class="group rounded-3xl ring-1 shadow-soft p-6 bg-white ring-slate-200">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                <span class="text-[#0B2F4A] font-light font-geist">
+                  Em quais casos devo procurar uma emergência?
+                </span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Dor intensa que não cede, trauma (queda/batida), dente quebrado
+            com dor, inchaço, suspeita de infecção/abscesso, sangramento
+            persistente e situações que impedem mastigar ou dormir são
+            motivos comuns para procurar plantão.
+          </p>
+        </details>
+
+        <details class="group rounded-3xl ring-1 shadow-soft p-6 bg-white ring-slate-200">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                <span class="text-[#0B2F4A] font-light font-geist">
+                  Vocês fazem raio‑X no local?
+                </span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Sim, quando indicado clinicamente. O raio‑X digital ajuda a
+            definir a origem do problema e a conduta mais segura para
+            aliviar a dor e estabilizar o quadro.
+          </p>
+        </details>
+
+        <details class="group rounded-3xl ring-1 shadow-soft p-6 bg-white ring-slate-200">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                <span class="text-[#0B2F4A] font-light font-geist">
+                  Aceitam convênios ou reembolso?
+                </span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            Atendemos particular e orientamos sobre documentação para
+            reembolso quando aplicável. Fale com a equipe para confirmar o
+            fluxo e as informações necessárias.
+          </p>
+        </details>
+
+        <details class="group rounded-3xl ring-1 shadow-soft p-6 bg-white ring-slate-200">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                <span class="text-[#0B2F4A] font-light font-geist">
+                  Quais formas de pagamento vocês aceitam?
+                </span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-sm leading-relaxed font-light text-slate-600 font-geist">
+            PIX, cartão de débito e crédito. Caso precise de parcelamento,
+            nossa equipe informa as opções disponíveis no momento do
+            atendimento.
+          </p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16">
+  <div class="rounded-[32px] bg-[linear-gradient(135deg,#4A1024,#7A1E3A)] shadow-soft-lg overflow-hidden relative ring-1 ring-[#7A1E3A]/20 animate-on-scroll opacity-0 scale-[0.98] blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:scale-100 [&amp;.animate]:blur-none">
+    <div class="absolute inset-0 opacity-35 parallax-layer" style="background-image:radial-gradient(900px 420px at 15% 20%, rgba(251,232,236,.55), transparent 62%), radial-gradient(800px 420px at 85% 30%, rgba(255,255,255,.22), transparent 62%);" data-parallax="0.15"></div>
+    <div class="relative p-8 sm:p-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-7">
+      <div class="">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full ring-1 text-sm font-light bg-white/15 ring-white/20 text-white/90 font-geist">
+          <i data-lucide="siren" class="w-4 h-4"></i>
+          Se é urgente, não espere
+        </div>
+        <h2 class="sm:text-5xl animate-on-scroll blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none text-3xl font-semibold text-gray-100 tracking-tight font-geist opacity-0 mt-5 translate-y-6" style="mask-image: linear-gradient(60deg, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(60deg, transparent, black 15%, black 85%, transparent);">
+          Precisa de Atendimento Agora?
+        </h2>
+        <p class="mt-3 max-w-2xl text-[15px] sm:text-[16px] font-light text-white/85 font-geist">
+          Chame no WhatsApp e descreva o que está sentindo. Nossa equipe
+          orienta os próximos passos e organiza seu atendimento com
+          prioridade.
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia%20agora." class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all w-full sm:w-auto font-light text-white font-geist">
+          <i data-lucide="message-circle" class="w-5 h-5"></i>
+          Falar no WhatsApp
+        </a>
+        <a href="tel:+5511999999999" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-[#4A1024] shadow-soft transition-colors w-full sm:w-auto font-light bg-white hover:bg-white/90 font-geist">
+          <i data-lucide="phone-call" class="w-5 h-5"></i>
+          Ligar agora
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+  <div class="rounded-[32px] ring-1 shadow-soft-lg overflow-hidden bg-white ring-slate-200">
+    <div class="p-8 sm:p-12">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+          Dúvidas Frequentes
+        </h2>
+        <p class="mt-3 max-w-2xl mx-auto font-light text-slate-600 font-geist">
+          Esclareça rapidamente as principais dúvidas sobre atendimento de
+          urgência. Se preferir, fale agora com a equipe do plantão.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">
+            Aceitam plano de saúde odontológico?
+          </h3>
+          <p class="text-sm font-light text-slate-600 font-geist">
+            Atendemos pacientes particulares e orientamos sobre reembolso
+            para convênios quando aplicável. Confirme o fluxo pelo WhatsApp.
+          </p>
+        </div>
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">
+            Como funciona o atendimento de urgência?
+          </h3>
+          <p class="text-sm font-light text-slate-600 font-geist">
+            Triagem rápida, exame e conduta focada em aliviar a dor e
+            estabilizar o quadro com segurança e explicação clara.
+          </p>
+        </div>
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">
+            Quais são as formas de pagamento?
+          </h3>
+          <p class="text-sm font-light text-slate-600 font-geist">
+            PIX, cartão de débito e crédito. Caso precise de parcelamento,
+            informamos as opções disponíveis no plantão.
+          </p>
+        </div>
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">
+            Como iniciar meu atendimento agora?
+          </h3>
+          <p class="text-sm font-light text-slate-600 font-geist">
+            Chame no WhatsApp e descreva sintomas. Organizamos a chegada e
+            orientamos os próximos passos.
+          </p>
+        </div>
+      </div>
+      <div class="mt-8 flex justify-center">
+        <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Tenho%20uma%20d%C3%BAvida%20sobre%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia." class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+          <i data-lucide="message-circle" class="w-5 h-5"></i>
+          Tirar dúvida no WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16" id="depoimentos">
+  <div class="rounded-[32px] ring-1 shadow-soft-lg overflow-hidden p-8 sm:p-12 bg-white ring-slate-200">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
+      <div>
+        <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+          Depoimentos
+        </h2>
+        <p class="mt-3 max-w-2xl font-light text-slate-600 font-geist">
+          Avaliações de pacientes atendidos em urgência. Clareza,
+          acolhimento e resolução com segurança.
+        </p>
+      </div>
+      <div class="inline-flex items-center gap-1 text-[#7A1E3A] bg-[#FBE8EC] px-5 py-2.5 rounded-full ring-1 ring-[#7A1E3A]/15 shadow-sm">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <span class="ml-2 text-sm text-[#0B2F4A] font-light font-geist">
+              5.0 no atendimento
+            </span>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-8 animate-on-scroll opacity-0 -translate-x-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-x-0 [&amp;.animate]:blur-none ring-slate-200">
+        <p class="text-[16px] leading-relaxed font-light text-slate-800 font-geist">
+          “Cheguei com dor muito forte e fui atendida rápido. Explicaram
+          tudo com calma e resolveram o problema com muita segurança.”
+        </p>
+        <div class="mt-6 flex items-center justify-between gap-3">
+          <div class="text-sm text-[#1F2933] font-light font-geist">
+            Paciente verificada
+          </div>
+          <div class="text-xs font-light text-slate-600 font-geist">
+            São Paulo • Urgência
+          </div>
+        </div>
+      </div>
+      <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-8 animate-on-scroll opacity-0 translate-x-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-x-0 [&amp;.animate]:blur-none delay-100 ring-slate-200">
+        <p class="text-[16px] leading-relaxed font-light text-slate-800 font-geist">
+          “Atendimento humano e profissional. Fizeram a triagem, raio‑X e me
+          orientaram sobre cada passo. Recomendo.”
+        </p>
+        <div class="mt-6 flex items-center justify-between gap-3">
+          <div class="text-sm text-[#1F2933] font-light font-geist">
+            Paciente verificado
+          </div>
+          <div class="text-xs font-light text-slate-600 font-geist">
+            Grande SP • Plantão
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<footer id="contato" class="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
+  <div class="rounded-[28px] ring-1 shadow-soft-lg overflow-hidden bg-white ring-slate-200">
+    <div class="grid grid-cols-1 lg:grid-cols-12">
+      <div class="lg:col-span-6 p-7 sm:p-10">
+        <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+          Contato e localização
+        </h2>
+        <p class="mt-3 font-light text-slate-600 font-geist">
+          Atendimento 24/7 para urgências odontológicas. Para agilizar,
+          chame no WhatsApp e informe sintomas, localização e horário.
+        </p>
+
+        <div class="mt-7 space-y-4">
+          <div class="flex items-start gap-3">
+                <span class="inline-flex w-10 h-10 rounded-2xl bg-[#DDF3FA] items-center justify-center ring-1 ring-[#1D75A6]/20">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-rose-800"></i>
+                </span>
+            <div class="">
+              <div class="text-sm text-[#0B2F4A] font-light font-geist">
+                Endereço
+              </div>
+              <div class="text-sm font-light text-slate-600 font-geist">
+                Avenida do Contorno, 4747 -13º andar - Sala 1308. Serra -
+                Belo Horizonte - MG | CEP 30110-921
+              </div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+                <span class="inline-flex w-10 h-10 rounded-2xl bg-[#DDF3FA] items-center justify-center ring-1 ring-[#1D75A6]/20">
+                  <i data-lucide="phone" class="w-4 h-4 text-rose-800"></i>
+                </span>
+            <div>
+              <div class="text-sm text-[#0B2F4A] font-light font-geist">
+                Telefone do plantão
+              </div>
+              <a class="text-sm hover:text-[#7A1E3A] font-light text-slate-700 font-geist" href="tel:+5511999999999">
+                (11) 99999-9999
+              </a>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+                <span class="inline-flex w-10 h-10 rounded-2xl bg-[#DDF3FA] items-center justify-center ring-1 ring-[#1D75A6]/20">
+                  <i data-lucide="message-circle" class="w-4 h-4 text-[#25D366]"></i>
+                </span>
+            <div>
+              <div class="text-sm text-[#0B2F4A] font-light font-geist">
+                WhatsApp 24h
+              </div>
+              <a class="text-sm hover:text-[#7A1E3A] font-light text-slate-700 font-geist" href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia.">
+                Chamar no WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia%20agora." class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            WhatsApp
+          </a>
+          <a href="tel:+5511999999999" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[linear-gradient(135deg,#7A1E3A,#4A1024)] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+            <i data-lucide="phone-call" class="w-4 h-4"></i>
+            Ligar agora
+          </a>
+        </div>
+
+        <div class="mt-10 rounded-3xl bg-[#FBE8EC] ring-1 ring-[#7A1E3A]/15 p-6">
+          <div class="tracking-tight text-[#0B2F4A] font-light font-geist">
+            Solicitar contato
+          </div>
+          <p class="mt-1 text-sm font-light text-slate-600 font-geist">
+            Deixe seu WhatsApp com DDD. Retornamos assim que possível no
+            plantão.
+          </p>
+          <form class="mt-4 flex gap-2" onsubmit="event.preventDefault(); window.location.href='https://wa.me/5511999999999?text=Ol%C3%A1%21%20Gostaria%20de%20retorno%20do%20plant%C3%A3o.%20Meu%20n%C3%BAmero%20%C3%A9%20'+encodeURIComponent(this.phone.value);">
+            <input name="phone" type="tel" required="" placeholder="Seu WhatsApp (DDD + número)" class="w-full px-4 py-3 rounded-2xl ring-1 focus:outline-none focus:ring-2 focus:ring-[#1D75A6]/40 text-sm bg-white ring-slate-200">
+            <button type="submit" class="px-6 py-3 rounded-2xl bg-[linear-gradient(135deg,#7A1E3A,#4A1024)] shadow-soft hover:brightness-110 transition-all text-sm whitespace-nowrap font-light text-white font-geist">
+              Enviar
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="lg:col-span-6 bg-[#F5F7FA] ring-1 ring-slate-200/60">
+        <div class="p-4 sm:p-6 h-full flex flex-col">
+          <div class="rounded-3xl overflow-hidden ring-1 shadow-soft flex-1 min-h-[300px] ring-slate-200 bg-white">
+            <div class="h-full w-full">
+              <iframe title="Mapa" class="w-full h-full" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Avenida%20do%20Contorno,%204747%20-%2013%C2%BA%20andar%20-%20Sala%201308,%20Serra%20-%20Belo%20Horizonte%20-%20MG,%2030110-921&output=embed"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t px-7 sm:px-10 py-7 border-slate-200">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="text-xs text-slate-500 font-light font-geist">
+          © 2026 Instituto Mineiro de Odontologia. Responsável Técnico:
+          Dr(a). Nome Sobrenome — CRO/MG 12345.
+        </div>
+        <div class="flex items-center gap-4 text-xs text-slate-500">
+          <a href="#" class="font-light hover:text-slate-700 font-geist">
+            Política de Privacidade
+          </a>
+          <a href="#" class="font-light hover:text-slate-700 font-geist">
+            Termos
+          </a>
+          <a href="#" class="font-light hover:text-slate-700 font-geist">
+            Instagram (em breve)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  lucide.createIcons();
+</script>
+
+<a href="https://wa.me/5511999999999?text=Ol%C3%A1%21%20Preciso%20de%20atendimento%20odontol%C3%B3gico%20de%20urg%C3%AAncia." class="fixed bottom-6 right-6 z-[100] flex items-center justify-center w-[60px] h-[60px] bg-[#25D366] rounded-full shadow-[0_8px_30px_rgba(37,211,102,0.4)] animate-pulse-wa hover:scale-110 transition-transform text-white" aria-label="WhatsApp">
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path>
+  </svg>
+</a>
+
+<textarea class="-edit" style="font-size: 20px; font-weight: 600; font-family: &quot;Playfair Display&quot;, ui-serif, Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif; color: rgb(31, 41, 51); line-height: 28px; text-align: start; text-transform: none; letter-spacing: -0.5px; position: absolute; left: 828.7px; top: 1180.4px; width: 209.7px; height: 28px; box-sizing: border-box; padding: 0px; margin: 0px; border: none; outline: none; background: transparent; resize: none; overflow: auto; z-index: 2147483647;"></textarea>
+<script id="smart-nav-script">
+  (function() {
+    function initSmartNav() {
+      let lastScrollY = window.scrollY;
+      const nav = document.querySelector('nav');
+      if (!nav) return;
+
+      let isNavClick = false;
+      let clickTimeout;
+
+      const navLinks = nav.querySelectorAll('a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          isNavClick = true;
+          clearTimeout(clickTimeout);
+          clickTimeout = setTimeout(() => {
+            isNavClick = false;
+          }, 1500);
+        });
+      });
+
+      window.addEventListener('scroll', () => {
+        if (isNavClick) {
+          lastScrollY = window.scrollY;
+          return;
+        }
+
+        if (window.scrollY > 120) {
+          if (window.scrollY > lastScrollY) {
+            if (!nav.classList.contains('nav-hide-anim')) {
+              nav.classList.remove('nav-show-anim');
+              nav.classList.add('nav-hide-anim');
+            }
+          } else {
+            if (nav.classList.contains('nav-hide-anim')) {
+              nav.classList.remove('nav-hide-anim');
+              nav.classList.add('nav-show-anim');
+            }
+          }
+        } else {
+          if (nav.classList.contains('nav-hide-anim')) {
+            nav.classList.remove('nav-hide-anim');
+            nav.classList.add('nav-show-anim');
+          }
+        }
+        lastScrollY = window.scrollY;
+      }, { passive: true });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSmartNav);
+    } else {
+      initSmartNav();
+    }
+  })();
+</script>
+
+</body></html>

@@ -11,17 +11,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --primary:{{{colors.primary}}};
-  --secondary:{{{colors.secondary}}};
-  --accent:{{{colors.accent}}};
-  /* Superficie MEDIDA de la tarjeta (opcional). Este diseno es OSCURO por
-     identidad: la base se CLAVA a un 74% de casi-negro, asi que aunque la
-     tarjeta traiga un color claro no puede volver el fondo claro — solo le
-     presta su TONO. Ausente (tarjeta blanca) => var() cae a #0b0b0d/#141417 y
-     el fondo queda igual que el original. `text` NO se usa como tinta: el ink
-     debe seguir claro para contrastar sobre el fondo oscuro. */
-  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
-  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+  /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de tu
+     marca" OFF en el visor). */
+  --primary:#15151a;
+  --secondary:#d9662c;
+  --accent:#8a8f98;
   --dark-base:color-mix(in oklab,var(--card-bg,var(--card-surface,#0b0b0d)) 26%,#0b0b0d);
   --panel-base:color-mix(in oklab,var(--card-surface,var(--card-bg,#141417)) 26%,#141417);
   --bg:color-mix(in oklab,var(--primary) 42%,var(--dark-base));
@@ -30,6 +24,19 @@
   --ink-soft:color-mix(in srgb,#f2f0ec 55%,transparent);
   --line:color-mix(in srgb,#ffffff 10%,transparent);
   --hot:color-mix(in oklab,var(--secondary) 90%,#fff);
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Este diseno es OSCURO por identidad: la base se CLAVA a un
+   74% de casi-negro, asi que aunque la tarjeta traiga un color claro no
+   puede volver el fondo claro — solo le presta su TONO. `text` NO se usa
+   como tinta: el ink debe seguir claro para contrastar sobre el fondo
+   oscuro. */
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}

@@ -5,6 +5,7 @@ import {
   assertBuildableStatus,
   buildCardView,
   buildMapsUrl,
+  injectBrandToggle,
   parseMotifs,
   socialUrl,
   swapMotif,
@@ -675,9 +676,19 @@ describe("render de los disenos Guelaguetza (paleta fija + assets propios)", () 
     expect(html).toContain("wa.me/529515442192");
   });
 
-  it.each(GUELA)("%s: IGNORA la paleta medida del lead (arte de color fijo, estatico por rubro)", async (key) => {
+  it.each(GUELA)("%s: la paleta FIJA de :root no cambia con el lead (arte de color fijo, estatico por rubro)", async (key) => {
     const html = await renderGuela(key);
-    expect(html).not.toContain("#24376d"); // el primary medido no entra en el diseno
+    const idx = html.indexOf(":root[data-brand]");
+    expect(idx).toBeGreaterThan(-1);
+    const rootBlock = html.slice(0, idx);
+    expect(rootBlock).not.toContain("#24376d"); // el primary medido no entra en la paleta fija (default, toggle OFF)
+  });
+
+  it.each(GUELA)("%s: :root[data-brand] SI mapea el primary medido (toggle 'colores de tu marca' ON)", async (key) => {
+    const html = await renderGuela(key);
+    const idx = html.indexOf(":root[data-brand]");
+    const brandBlock = html.slice(idx);
+    expect(brandBlock).toContain("#24376d"); // el primary medido del fixture
   });
 
   it.each(GUELA)("%s: referencia sus assets exclusivos por ruta relativa (dc/assets/)", async (key) => {
@@ -773,5 +784,99 @@ describe("render del visor (_viewer.html)", () => {
     expect(html).toContain('src="dark.html"');
     expect(html).toContain("data-name=\"Clinic\"");
     expect(html).toContain("startViewTransition");
+  });
+
+  it("trae el toggle 'Ver con los colores de tu marca' (icono compacto + toast) y hace broadcast por postMessage", async () => {
+    const url = new URL("../../src/dc-templates/_viewer.html", import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    const html = renderTemplate(template, {
+      cards: [{ file: "clinic.html", name: "Clinic", audience: "Salud · Médicos" }],
+    });
+    expect(html).toContain('id="brandBtn"');
+    expect(html).toContain('aria-pressed="false"'); // default: toggle OFF (colores originales)
+    expect(html).toContain('aria-label="Ver con los colores de tu marca"');
+    expect(html).toContain('id="brandToast"');
+    expect(html).toContain("dc-brand-ready");
+    expect(html).toContain("postMessage({ type: \"dc-brand\"");
+  });
+
+  it("los dots se ventanean (maximo 3 visibles: DOT_WINDOW_RADIUS=1) para pools grandes", async () => {
+    const url = new URL("../../src/dc-templates/_viewer.html", import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    const html = renderTemplate(template, {
+      cards: [{ file: "clinic.html", name: "Clinic", audience: "" }],
+    });
+    expect(html).toContain("DOT_WINDOW_RADIUS = 1");
+    expect(html).toContain("classList.toggle(\"edge\"");
+  });
+});
+
+/**
+ * Toggle "Ver con los colores de tu marca": cada card configurable declara
+ * DOS paletas — `:root` (ORIGINAL del diseno, hardcodeada, default con el
+ * toggle OFF) y `:root[data-brand]` (paleta MEDIDA del lead, activada en
+ * runtime por el visor via postMessage). Se testea la separacion de bloques
+ * por indexOf/slice: el hex original debe estar SOLO antes de
+ * ":root[data-brand]"; el hex medido debe estar SOLO en/despues de ese
+ * bloque. injectBrandToggle (el listener que activa el atributo) se testea
+ * aparte como funcion pura, igual que swapMotif.
+ */
+describe("toggle de marca — :root trae la paleta ORIGINAL, :root[data-brand] la paleta MEDIDA", () => {
+  const ORIGINAL_PRIMARY: Record<string, string> = {
+    clinic: "#344563",
+    dark: "#15151a",
+    executive: "#1f2733",
+    luxury: "#2c2a26",
+    credencial: "#484c6f",
+    celeste: "#35315e",
+    lienzo: "#3d3a35",
+    redondo: "#1f7a6d",
+    rotulo: "#16324f",
+    seda: "#8a4f5b",
+    vitrina: "#4a5d23",
+  };
+
+  async function renderAny(key: string): Promise<string> {
+    const url = new URL(`../../src/dc-templates/${key}.html`, import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    return renderTemplate(template, buildCardView(verifiedLead(), 2026));
+  }
+
+  it.each(Object.keys(ORIGINAL_PRIMARY))(
+    "%s: :root (antes del bloque de marca) trae el primary ORIGINAL hardcodeado",
+    async (key) => {
+      const html = await renderAny(key);
+      const idx = html.indexOf(":root[data-brand]");
+      expect(idx).toBeGreaterThan(-1);
+      const rootBlock = html.slice(0, idx);
+      expect(rootBlock).toContain(ORIGINAL_PRIMARY[key]!);
+    },
+  );
+
+  it.each(Object.keys(ORIGINAL_PRIMARY))(
+    "%s: :root[data-brand] trae el primary MEDIDO del lead (#24376d en el fixture)",
+    async (key) => {
+      const html = await renderAny(key);
+      const idx = html.indexOf(":root[data-brand]");
+      const brandBlock = html.slice(idx);
+      expect(brandBlock).toContain("#24376d");
+    },
+  );
+});
+
+describe("injectBrandToggle — listener del toggle de marca (funcion pura de build-cards.ts)", () => {
+  it("inserta el snippet justo antes de </body>", () => {
+    const html = "<html><body><p>x</p></body></html>";
+    const out = injectBrandToggle(html);
+    expect(out).toContain("data-brand");
+    expect(out).toContain("dc-brand-ready");
+    expect(out).toContain("</script></body>");
+  });
+
+  it("hace append al final si no hay </body> (no deberia pasar, pero no pierde el listener en silencio)", () => {
+    const html = "<html><p>x</p></html>";
+    const out = injectBrandToggle(html);
+    expect(out.startsWith(html)).toBe(true);
+    expect(out).toContain("dc-brand-ready");
   });
 });

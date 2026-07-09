@@ -16,23 +16,33 @@
          superpuesto. Todo el color viene de brand.colors + brand.colorsText del
          lead (parametrico); los neutros son fijos y seguros en contraste. */
       :root {
-        --primary: {{{colors.primary}}};
-        --primary-text: {{{colorsText.primary}}};
-        --secondary: {{{colors.secondary}}};
-        --accent: {{{colors.accent}}};
-        --accent-text: {{{colorsText.accent}}};
-        /* Superficie MEDIDA de la tarjeta (opcional): tine SOLO el fondo de
-           pagina; la tarjeta sigue blanca y la tinta fija, para conservar el
-           look limpio/confiable. Ausente (tarjeta blanca) => var() cae a
-           #e9ecf1 y el fondo queda como el original. */
-        {{#hasBackground}}--card-bg: {{{colors.background}}};{{/hasBackground}}
-        {{#hasSurface}}--card-surface: {{{colors.surface}}};{{/hasSurface}}
+        /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de
+           tu marca" OFF en el visor). */
+        --primary: #484c6f;
+        --primary-text: #FFFFFF;
+        --secondary: #dca566;
+        --accent: #bdc2ae;
+        --accent-text: #FFFFFF;
         --font-display: {{{fontFamily}}};
         --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         --ink: #1f2430;
         --ink-soft: #454c59;
         --ink-muted: #6b7280;
         --hairline: #eef0f4;
+      }
+      /* Paleta de MARCA (toggle ON, activado por el visor via postMessage;
+         ver _viewer.html). Superficie MEDIDA de la tarjeta (opcional): tine
+         SOLO el fondo de pagina; la tarjeta sigue blanca y la tinta fija,
+         para conservar el look limpio/confiable. Ausente (tarjeta blanca) =>
+         var() cae al default del diseno arriba. */
+      :root[data-brand] {
+        --primary: {{{colors.primary}}};
+        --primary-text: {{{colorsText.primary}}};
+        --secondary: {{{colors.secondary}}};
+        --accent: {{{colors.accent}}};
+        --accent-text: {{{colorsText.accent}}};
+        {{#hasBackground}}--card-bg: {{{colors.background}}};{{/hasBackground}}
+        {{#hasSurface}}--card-surface: {{{colors.surface}}};{{/hasSurface}}
       }
       * { box-sizing: border-box; margin: 0; padding: 0; }
       html { -webkit-text-size-adjust: 100%; }

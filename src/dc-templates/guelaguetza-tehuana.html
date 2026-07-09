@@ -19,8 +19,21 @@
 -->
 <style>
 :root{
+  /* Paleta FIJA de este diseno (es su propio "original" — ver comentario de
+     cabecera). --oro-text es la tinta sobre --oro (avatar/CTA); default
+     ciruela oscuro, coherente con el dorado original. */
   --fondo:#26102c; --panel:#321740; --oro:#f2b705; --magenta:#e0447e; --jade:#2fb3a4; --barro:#e2571b;
   --crema:#f6ead8; --crema-soft:#c4a9c9; --line:#4a2a56;
+  --oro-text:#26102c;
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Solo el rol "primario" (--oro) se mapea a la marca — el
+   resto del arte (picado, marco, PNG) es fijo, no se puede recolorear por
+   CSS. --oro-text usa colorsText.primary para no perder contraste si la
+   marca es un color oscuro. */
+:root[data-brand]{
+  --oro:{{{colors.primary}}};
+  --oro-text:{{{colorsText.primary}}};
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -62,14 +75,14 @@ a:hover{color:var(--oro)}
 .muneca{width:104px;height:auto;filter:drop-shadow(0 14px 20px rgba(0,0,0,.4))}
 .id-text{display:flex;flex-direction:column;gap:12px;min-width:0}
 .avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--panel);border:2px solid var(--oro);box-shadow:0 10px 26px -14px rgba(242,183,5,.5)}
-.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:32px;color:#26102c;background:var(--oro);border:none}
+.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:32px;color:var(--oro-text);background:var(--oro);border:none}
 h1{margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,8.2vw,38px);letter-spacing:-.01em;line-height:1.05;color:#fff}
 .tag{margin:0;font-size:14.5px;font-weight:500;color:var(--crema-soft);max-width:30ch;text-wrap:pretty}
 .org{margin:0;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--oro)}
 
 .actions{display:flex;flex-direction:column;gap:10px}
-.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:999px;background:var(--oro);color:#26102c;font-size:14.5px;font-weight:700;box-shadow:0 14px 30px -14px rgba(242,183,5,.55);transition:transform .2s ease,box-shadow .2s ease}
-.cta:hover{color:#26102c;transform:translateY(-2px);box-shadow:0 18px 34px -14px rgba(242,183,5,.7)}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:999px;background:var(--oro);color:var(--oro-text);font-size:14.5px;font-weight:700;box-shadow:0 14px 30px -14px rgba(242,183,5,.55);transition:transform .2s ease,box-shadow .2s ease}
+.cta:hover{color:var(--oro-text);transform:translateY(-2px);box-shadow:0 18px 34px -14px rgba(242,183,5,.7)}
 .row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:var(--panel);border:1px solid var(--line);font-size:14px;font-weight:500;transition:border-color .2s ease,transform .2s ease}
 .row:hover{border-color:var(--oro);transform:translateY(-1px);color:var(--crema)}
 .row .k{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--crema-soft);flex:none;width:64px}

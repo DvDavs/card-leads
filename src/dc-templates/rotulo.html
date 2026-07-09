@@ -18,14 +18,26 @@
 -->
 <style>
 :root{
-  --primary:{{{colors.primary}}};
-  --secondary:{{{colors.secondary}}};
-  --accent:{{{colors.accent}}};
-  --on-primary:{{{colorsText.primary}}};
+  /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de tu
+     marca" OFF en el visor). Diseno INVERTIDO: --primary ES el fondo de
+     pagina (ver `body{background:var(--primary)}` abajo). */
+  --primary:#16324f;
+  --secondary:#c0392b;
+  --accent:#d9b380;
+  --on-primary:#ffffff;
   --ink:var(--on-primary);
   --ink-soft:color-mix(in oklab,var(--on-primary) 55%,var(--primary));
   --line:color-mix(in oklab,var(--on-primary) 22%,var(--primary));
   --panel:color-mix(in oklab,var(--on-primary) 8%,var(--primary));
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Todos los neutros referencian --primary/--on-primary y
+   recalculan solos. */
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}

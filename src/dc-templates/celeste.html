@@ -17,15 +17,26 @@
 -->
 <style>
 :root{
-  --primary:{{{colors.primary}}};
-  --secondary:{{{colors.secondary}}};
-  --accent:{{{colors.accent}}};
-  --on-primary:{{{colorsText.primary}}};
+  /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de tu
+     marca" OFF en el visor). */
+  --primary:#35315e;
+  --secondary:#a9acb4;
+  --accent:#6b7fb3;
+  --on-primary:#ffffff;
   --bg:color-mix(in oklab,var(--primary) 5%,#fbfcfe);
   --ink:color-mix(in oklab,var(--primary) 80%,#12131c);
   --ink-soft:color-mix(in oklab,var(--primary) 38%,#8b909b);
   --card:#ffffff;
   --line:color-mix(in oklab,var(--primary) 12%,#e4e7ed);
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Los neutros (--bg/--ink/--line) referencian var(--primary)
+   y recalculan solos, no hace falta redeclararlos aca. */
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}

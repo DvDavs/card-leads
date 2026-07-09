@@ -19,8 +19,21 @@
 -->
 <style>
 :root{
+  /* Paleta FIJA de este diseno (es su propio "original" — ver comentario de
+     cabecera). --uva-text es la tinta sobre --uva (avatar/CTA); default
+     blanco, coherente con el morado oscuro original. */
   --uva:#5b1e8e; --magenta:#c2185b; --oro:#f2b705; --jade:#0e8b8b; --barro:#e2571b;
   --bg:#f8f4fc; --ink:#2c1445; --ink-soft:#8d7ba3; --card:#ffffff; --line:#e6dcf1;
+  --uva-text:#ffffff;
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Solo el rol "primario" (--uva) se mapea a la marca — el
+   resto del arte (confeti, picado, PNG) es fijo, no se puede recolorear por
+   CSS. --uva-text usa colorsText.primary para no perder contraste si la
+   marca es un color claro. */
+:root[data-brand]{
+  --uva:{{{colors.primary}}};
+  --uva-text:{{{colorsText.primary}}};
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -78,14 +91,14 @@ a:hover{color:var(--uva)}
 
 .identity{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:8px}
 .avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;background:#fff;border:3px solid var(--uva);box-shadow:0 10px 26px -14px rgba(91,30,142,.6)}
-.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:38px;color:#fff;background:var(--uva)}
+.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:38px;color:var(--uva-text);background:var(--uva)}
 h1{margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(32px,8.6vw,40px);letter-spacing:-.01em;line-height:1.05}
 .tag{margin:0;font-size:15px;font-weight:500;color:var(--ink-soft);max-width:34ch;text-wrap:pretty}
 .org{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--magenta)}
 
 .actions{display:flex;flex-direction:column;gap:10px}
-.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:999px;background:var(--uva);color:#fff;font-size:14.5px;font-weight:600;box-shadow:0 14px 30px -16px rgba(91,30,142,.8);transition:transform .2s ease,box-shadow .2s ease}
-.cta:hover{color:#fff;transform:translateY(-2px);box-shadow:0 18px 34px -16px rgba(91,30,142,.9)}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:999px;background:var(--uva);color:var(--uva-text);font-size:14.5px;font-weight:600;box-shadow:0 14px 30px -16px rgba(91,30,142,.8);transition:transform .2s ease,box-shadow .2s ease}
+.cta:hover{color:var(--uva-text);transform:translateY(-2px);box-shadow:0 18px 34px -16px rgba(91,30,142,.9)}
 .row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:500;transition:border-color .2s ease,transform .2s ease}
 .row:hover{border-color:var(--uva);transform:translateY(-1px)}
 .row .k{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);flex:none;width:64px}
