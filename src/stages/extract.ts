@@ -7,6 +7,7 @@ import {
   resolveAssignedColors,
   type ExtractedBrandColors,
 } from "../lib/colors.js";
+import { rubroConfig } from "../config/rubro-map.js";
 import { loadEnv } from "../lib/env.js";
 import type { Extraction } from "../lib/llm/extraction.js";
 import { getProvider, resolveProviderName } from "../lib/llm/index.js";
@@ -24,7 +25,12 @@ function val(s: string | null | undefined): string | undefined {
  * Se recalcula entero (no se hace diff) para que refleje el estado real tras la
  * extraccion. Cada campo que el modelo no pudo determinar queda anotado aca.
  */
-function computeNeeds(lead: Lead, originalRubro: Rubro, modelRubro: Rubro | null | undefined): string[] {
+function computeNeeds(
+  lead: Lead,
+  originalRubro: Rubro,
+  modelRubro: Rubro | null | undefined,
+  servicesFromDefault: boolean,
+): string[] {
   const needs: string[] = [];
 
   if (!val(lead.business.name)) needs.push("falta nombre del negocio");
@@ -42,7 +48,14 @@ function computeNeeds(lead: Lead, originalRubro: Rubro, modelRubro: Rubro | null
   // no es un error, el humano los revisa/carga a mano en verify.
   if (noColors) needs.push("revisar colores en verify");
 
-  if (lead.content.services.length === 0) needs.push("faltan servicios");
+  if (lead.content.services.length === 0) {
+    needs.push("faltan servicios");
+  } else if (servicesFromDefault) {
+    // la tarjeta no listaba servicios: se llenaron con el default del rubro
+    // (rubroConfig, deterministico) para que el checkpoint humano confirme
+    // o los ajuste, en vez de mandar la card al cliente con la lista vacia.
+    needs.push("servicios sugeridos por rubro (no estaban en la tarjeta), revisar en verify");
+  }
 
   if (lead.rubro === "otro") {
     needs.push("confirmar rubro (sigue en 'otro')");
@@ -133,13 +146,26 @@ export function applyExtraction(
     ...(val(brand.font_hint) ? { font_hint: val(brand.font_hint)! } : {}),
   };
 
-  const services = (ex.content?.services ?? []).map((v) => v.trim()).filter(Boolean);
-  const content: Lead["content"] = {
-    ...lead.content,
-    services: services.length ? services : lead.content.services,
-  };
-
   const rubro: Rubro = ex.rubro ?? lead.rubro;
+
+  // servicios: primero lo que LEYO el modelo en la tarjeta (o lo que ya tenia
+  // el lead). Si la tarjeta no enumera ninguno, se cae a la lista DETERMINISTA
+  // por rubro (rubroConfig.defaultServices) en vez de dejarla vacia: es un
+  // catalogo fijo en codigo, no una invencion del LLM (mismo principio que la
+  // heuristica de colores: lo determinista va en codigo). Queda anotado en
+  // meta.needs para que el humano lo confirme/ajuste en verify.
+  const servicesFromModel = (ex.content?.services ?? []).map((v) => v.trim()).filter(Boolean);
+  const existingServices = servicesFromModel.length ? servicesFromModel : lead.content.services;
+  let services = existingServices;
+  let servicesFromDefault = false;
+  if (services.length === 0) {
+    const defaults = rubroConfig(rubro).defaultServices;
+    if (defaults.length) {
+      services = defaults;
+      servicesFromDefault = true;
+    }
+  }
+  const content: Lead["content"] = { ...lead.content, services };
 
   const merged: Lead = {
     ...lead,
@@ -155,7 +181,7 @@ export function applyExtraction(
     ...merged,
     meta: {
       ...lead.meta,
-      needs: computeNeeds(merged, originalRubro, ex.rubro),
+      needs: computeNeeds(merged, originalRubro, ex.rubro, servicesFromDefault),
       errors: [],
     },
   };

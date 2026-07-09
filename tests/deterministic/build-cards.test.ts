@@ -651,6 +651,58 @@ describe("render del pool decorativo (celeste/vitrina/rotulo/seda/redondo/lienzo
   });
 });
 
+describe("render de los disenos Guelaguetza (paleta fija + assets propios)", () => {
+  const GUELA = ["guelaguetza-calenda", "guelaguetza-pina", "guelaguetza-tehuana"];
+
+  async function loadGuela(key: string): Promise<string> {
+    const url = new URL(`../../src/dc-templates/${key}.html`, import.meta.url);
+    return fs.readFile(fileURLToPath(url), "utf8");
+  }
+
+  async function renderGuela(key: string, lead: Lead = verifiedLead()): Promise<string> {
+    return renderTemplate(await loadGuela(key), buildCardView(lead, 2026));
+  }
+
+  it.each(GUELA)("%s: render limpio (sin {{ }} sin resolver ni 'undefined')", async (key) => {
+    const html = await renderGuela(key);
+    expect(html).not.toMatch(/\{\{/);
+    expect(html).not.toContain("undefined");
+  });
+
+  it.each(GUELA)("%s: muestra los datos del lead (persona + WhatsApp derivado)", async (key) => {
+    const html = await renderGuela(key);
+    expect(html).toContain("Dr. Guillermo Karey Pérez Cortés");
+    expect(html).toContain("wa.me/529515442192");
+  });
+
+  it.each(GUELA)("%s: IGNORA la paleta medida del lead (arte de color fijo, estatico por rubro)", async (key) => {
+    const html = await renderGuela(key);
+    expect(html).not.toContain("#24376d"); // el primary medido no entra en el diseno
+  });
+
+  it.each(GUELA)("%s: referencia sus assets exclusivos por ruta relativa (dc/assets/)", async (key) => {
+    const html = await renderGuela(key);
+    expect(html).toContain('src="assets/guelaguetza/');
+  });
+
+  it.each(GUELA)("%s: conserva la capa de motivos (swap por rubro con color fijo)", async (key) => {
+    const raw = await loadGuela(key);
+    expect(raw).toContain("MOTIF:START");
+    expect(raw).toContain("MOTIF:END");
+  });
+
+  it.each(GUELA)("%s: avatar con la misma cascada foto -> logo -> inicial", async (key) => {
+    const sinFoto = await renderGuela(key);
+    expect(sinFoto).toContain("avatar-ini");
+    expect(sinFoto).toContain(">T</div>");
+
+    const lead = verifiedLead();
+    lead.brand.photo_path = "foto-karey.jpg";
+    const conFoto = await renderGuela(key, lead);
+    expect(conFoto).toContain('src="foto-karey.jpg"');
+  });
+});
+
 describe("motivos por rubro — parseMotifs / swapMotif (fondo intercambiable)", () => {
   const RUBROS = ["doctor", "nutriologo", "barberia", "estetica", "veterinario", "otro"];
 

@@ -336,10 +336,10 @@ async function promptListField(
   lead: Lead,
   field: "contact.phones" | "content.services",
   label: string,
-  risky: boolean,
+  markText: string,
 ): Promise<Lead> {
   const list = field === "contact.phones" ? lead.contact.phones ?? [] : lead.content.services;
-  const mark = risky ? "  ⚠ VERIFICAR CONTRA LA TARJETA" : "";
+  const mark = markText ? `  ⚠ ${markText}` : "";
   console.log(`\n─ ${label} (${list.length})${mark}`);
   if (list.length === 0) console.log("  (vacio)");
   else list.forEach((s, i) => console.log(`   ${i + 1}. ${s}`));
@@ -403,7 +403,7 @@ export async function verify(slug: string): Promise<Lead | null> {
 
     let draft = lead;
     // telefonos: lista de riesgo (el modelo cambia digitos). Va primero.
-    draft = await promptListField(rl, draft, "contact.phones", "Telefonos", true);
+    draft = await promptListField(rl, draft, "contact.phones", "Telefonos", "VERIFICAR CONTRA LA TARJETA");
     for (const def of RISKY_FIELDS) draft = await promptStringField(rl, draft, def);
 
     console.log("\n── Campos generales ──");
@@ -413,7 +413,17 @@ export async function verify(slug: string): Promise<Lead | null> {
     draft = await promptRubro(rl, draft);
     draft = await promptStringField(rl, draft, ADDRESS);
     draft = await promptStringField(rl, draft, EMAIL);
-    draft = await promptListField(rl, draft, "content.services", "Servicios", false);
+    // si extract() los relleno con el default del rubro (no estaban en la
+    // tarjeta), meta.needs trae la marca "servicios sugeridos por rubro" y aca
+    // se muestra el aviso para que el humano los confirme o los reemplace.
+    const servicesSuggested = draft.meta.needs.some((n) => n.startsWith("servicios sugeridos por rubro"));
+    draft = await promptListField(
+      rl,
+      draft,
+      "content.services",
+      "Servicios",
+      servicesSuggested ? "SUGERIDOS POR RUBRO, NO ESTABAN EN LA TARJETA — confirma si aplican" : "",
+    );
 
     printSummary(draft);
     const ok = (await rl.question("\n¿Confirmas? Se guarda y avanza a 'verified' (s/n): "))

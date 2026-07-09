@@ -2,11 +2,14 @@ import type { Rubro } from "../lib/schema.js";
 
 /**
  * rubro-map.ts — mapea cada rubro a su template web, servicios por defecto
- * (para inferir cuando la tarjeta no los trae) e ideas base de propuesta.
- * El template por rubro es para la etapa build-web (stub por ahora). Las
- * digital cards (build-cards) NO se filtran por rubro: cada lead recibe
- * TODOS los disenos del pool en `src/dc-templates/`, para que el cliente
- * elija cual le gusta mas.
+ * e ideas base de propuesta.
+ * `defaultServices` lo consume `applyExtraction` (`stages/extract.ts`):
+ * cuando la tarjeta no enumera servicios, cae a esta lista fija en vez de
+ * dejar `content.services` vacio (queda anotado en meta.needs para que
+ * `verify` lo confirme). El template por rubro es para la etapa build-web
+ * (stub por ahora). Las digital cards (build-cards) NO se filtran por rubro:
+ * cada lead recibe TODOS los disenos del pool en `src/dc-templates/`, para
+ * que el cliente elija cual le gusta mas.
  */
 
 export interface RubroConfig {

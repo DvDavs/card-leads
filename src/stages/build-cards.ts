@@ -5,7 +5,7 @@ import { CARD_LABELS, RUBRO_TEMPLATE_ORDER } from "../config/rubro-map.js";
 import { textColorFor } from "../lib/colors.js";
 import { StatusSchema, type Lead, type Rubro, type Status } from "../lib/schema.js";
 import { renderTemplate } from "../lib/template.js";
-import { readLead, writeArtifact, writeLead } from "../lib/storage.js";
+import { copyTreeIntoLead, readLead, writeArtifact, writeLead } from "../lib/storage.js";
 
 /**
  * build-cards — reemplaza a build-linktree. En vez de un solo diseno, rellena
@@ -20,6 +20,14 @@ import { readLead, writeArtifact, writeLead } from "../lib/storage.js";
 
 const DC_DIR = "dc";
 const VIEWER_FILE = "index.html";
+/**
+ * ASSETS_DIR — subcarpeta de recursos compartidos del pool (imagenes de los
+ * disenos guelaguetza-*). Vive en `src/dc-templates/assets/` y se espeja en
+ * `leads/<slug>/dc/assets/` para que las rutas relativas (`assets/...`) de esos
+ * disenos resuelvan dentro del iframe del visor. Son recursos EXCLUSIVOS de los
+ * disenos guelaguetza; el resto del pool no los referencia.
+ */
+const ASSETS_DIR = "assets";
 
 /* ------------------------------------------------------------------ */
 /* Constantes tuneables (mismo criterio que los umbrales de colors.ts) */
@@ -555,6 +563,7 @@ export function buildCardView(
 /* ------------------------------------------------------------------ */
 
 const DC_TEMPLATES_DIR = new URL("../dc-templates/", import.meta.url);
+const DC_ASSETS_DIR = new URL(`../dc-templates/${ASSETS_DIR}/`, import.meta.url);
 
 interface PoolEntry {
   /** Nombre del diseno, sin extension (ej. "clinic"). */
@@ -672,6 +681,16 @@ export async function buildCards(slug: string): Promise<string[]> {
   const viewerRelPath = path.posix.join(DC_DIR, VIEWER_FILE);
   const viewerPath = await writeArtifact(slug, viewerRelPath, viewerHtml);
   writtenPaths.push(viewerPath);
+
+  // Assets compartidos (imagenes de los disenos guelaguetza-*): se espejan en
+  // `dc/assets/` para que sus rutas relativas resuelvan en el iframe. No-op si
+  // el pool no trae carpeta de assets.
+  const assetsDest = await copyTreeIntoLead(
+    slug,
+    fileURLToPath(DC_ASSETS_DIR),
+    path.posix.join(DC_DIR, ASSETS_DIR),
+  );
+  if (assetsDest) writtenPaths.push(assetsDest);
 
   const order = StatusSchema.options;
   const status: Status =

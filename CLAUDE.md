@@ -40,6 +40,18 @@ que se le muestra al negocio como propuesta comercial.
   LLM.**
   - Texto de la tarjeta (nombre, teléfonos, redes, servicios) → LLM
     (Gemini), porque es lectura/interpretación de una foto real.
+  - Servicios cuando la tarjeta NO los enumera → **catálogo fijo por rubro**
+    (`rubroConfig(rubro).defaultServices`, `src/config/rubro-map.ts`), NO el
+    LLM. El prompt (`extract-card.md`) le sigue prohibiendo al modelo inventar
+    servicios que no ve; si la tarjeta no trae ninguno, `applyExtraction`
+    (`extract.ts`) rellena con la lista fija de ese rubro (p.ej. veterinario →
+    "Consulta, Vacunacion, Urgencias") para que la card no salga vacía. Mismo
+    principio que los colores: inventar una lista de servicios típicos por
+    rubro es dato determinista (catálogo en código), no interpretación de
+    imagen. Rubros sin default (`otro`) quedan vacíos igual que antes. Queda
+    anotado en `meta.needs` (`"servicios sugeridos por rubro..."`) y `verify`
+    lo marca `⚠ SUGERIDOS POR RUBRO, NO ESTABAN EN LA TARJETA` para que el
+    humano los confirme o los reemplace en el checkpoint.
   - Colores de marca → **medición de píxeles** con `colorthief` + `sharp`
     (`src/lib/colors.ts`), NO el LLM. El LLM ESTIMABA hex muy mal (le decía
     "negro" a un verde), porque el color no es tarea de lenguaje. Los hex
@@ -87,7 +99,7 @@ Campos principales:
 | `brand.colorsText` | Color de texto legible (`#ffffff`/`#000000`, WCAG) **derivado** de cada hex de `colors` que sea SUPERFICIE (`primary`…`surface`); `text` es tinta y no lo lleva. Se recalcula, nunca se edita a mano. |
 | `brand.has_logo`, `brand.font_hint` | Sí los aporta el LLM (`font_hint` es pista: "serif"/"sans"/"display", no exacto). |
 | `brand.logo_path`, `brand.photo_path` | Rutas (relativas al lead o data URI) al logo y a una foto real. Alimentan el avatar circular del pool decorativo con cascada `photo_path` → `logo_path` → inicial. Opcionales; **nunca** una cara/foto generada, solo material real del negocio. |
-| `content.services` | Lista de servicios detectados/confirmados. |
+| `content.services` | Lista de servicios. Si la tarjeta los enumera, vienen del LLM; si no, `extract` los rellena con el default fijo del rubro (`rubroConfig`) y lo anota en `meta.needs` para que `verify` los confirme. |
 | `generated` | URLs/paths de artefactos generados: `dc_url` (visor swipeable, `dc/index.html`), `cards` (lista `{template, path}`, una por diseño rellenado en `dc/`), `linktree_url` (legado, pre digital-cards), `web_url`, `proposal_path`, `outreach_message`. |
 | `meta.needs` | Huecos pendientes para el checkpoint humano (recalculado en cada etapa, no es un diff acumulado). |
 | `meta.errors` | Errores de la última corrida (p.ej. el modelo no devolvió JSON válido). |
@@ -103,9 +115,9 @@ falta correr nada a mano.
 | Etapa | Exige status | Deja status | LLM | Qué hace |
 |---|---|---|---|---|
 | `ingest` | (nuevo) | `ingested` | no | Crea `leads/<slug>/`, copia las fotos como `card_front.<ext>`/`card_back.<ext>`, escribe `data.json` con los campos de negocio vacíos. `rubro` default `"otro"` si no se pasa (queda anotado en `meta.needs`). |
-| `extract` | `ingested` | `extracted` | sí (Gemini) | (1) **Mide** la paleta con `extractPalette` (`colors.ts`, píxeles). (2) Manda las fotos + la paleta al proveedor de visión: el LLM llena `business`/`contact`/`socials`/`content.services` Y **asigna roles de color** eligiendo hex de la paleta. (3) `resolveAssignedColors` valida (hex ∈ paleta); si el LLM no asignó nada válido cae a la heurística `extractBrandColors`. Los hex NUNCA los inventa el LLM. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (queda `ingested` para reintentar). |
+| `extract` | `ingested` | `extracted` | sí (Gemini) | (1) **Mide** la paleta con `extractPalette` (`colors.ts`, píxeles). (2) Manda las fotos + la paleta al proveedor de visión: el LLM llena `business`/`contact`/`socials`/`content.services` Y **asigna roles de color** eligiendo hex de la paleta. (3) `resolveAssignedColors` valida (hex ∈ paleta); si el LLM no asignó nada válido cae a la heurística `extractBrandColors`. Los hex NUNCA los inventa el LLM. (4) Si el LLM no vio servicios en la tarjeta (`content.services: []`), `applyExtraction` cae al default fijo de `rubroConfig(rubro).defaultServices` (rubro ya corregido por el modelo si aplica) y lo anota en `meta.needs`. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (queda `ingested` para reintentar). |
 | `verify` | `extracted` | `verified` | no | Checkpoint humano interactivo por terminal (`readline`). Recorre primero los campos de riesgo, después los generales; al confirmar (`s`) valida contra `LeadSchema` estricto y recién ahí escribe disco. `n`/Ctrl+C no escribe nada. |
-| `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; los que empiezan con `_` se saltan) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Antes de rellenar, **swap de motivos por rubro**: `swapMotif` reemplaza el bloque `MOTIF:START…MOTIF:END` que trae cada diseño decorativo por el del `lead.rubro` (leído de `_motifs.html` vía `parseMotifs`/`loadMotifs`), así todos los diseños que ve el cliente muestran motivos coherentes con su rubro; los diseños sin marcadores quedan intactos (no-op). Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código. |
+| `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; los que empiezan con `_` se saltan) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Antes de rellenar, **swap de motivos por rubro**: `swapMotif` reemplaza el bloque `MOTIF:START…MOTIF:END` que trae cada diseño decorativo por el del `lead.rubro` (leído de `_motifs.html` vía `parseMotifs`/`loadMotifs`), así todos los diseños que ve el cliente muestran motivos coherentes con su rubro; los diseños sin marcadores quedan intactos (no-op). Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes), y **espeja** `src/dc-templates/assets/` en `leads/<slug>/dc/assets/` (`copyTreeIntoLead`) para los diseños con imágenes propias (guelaguetza-*). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código (si trae imágenes, van a `src/dc-templates/assets/` y se copian solas). |
 | `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
 | `deploy` | — | `deployed` | — | **Stub**, lanza `"no implementado"`. |
 | `proposal` | — | `proposal_ready` | — | **Stub**, lanza `"no implementado"`. |
@@ -119,14 +131,15 @@ implementado")`, sin lógica todavía.
 
 Cada `.html` de esta carpeta (menos los que empiezan con `_`) es un diseño
 completo, standalone, que `build-cards` rellena con `buildCardView` y escribe
-en `leads/<slug>/dc/<nombre>.html`. Hoy hay **11**: los base `clinic`, `dark`,
+en `leads/<slug>/dc/<nombre>.html`. Hoy hay **14**: los base `clinic`, `dark`,
 `executive`, `luxury` y `credencial` (el original del linktree, el único
-self-contained sin fuentes remotas), más el **pool decorativo** `celeste`,
-`vitrina`, `rotulo`, `seda`, `redondo`, `lienzo` (público objetivo por diseño
-en `CARD_LABELS`, `src/config/rubro-map.ts`). El pool decorativo agrega dos
-capas nuevas: avatar circular con cascada foto → logo → inicial (campo
-`photoPath`) y una capa de motivos decorativos intercambiable por rubro (ver
-abajo). `_viewer.html` es el visor: arma un carrusel de `<iframe>` (cada card
+self-contained sin fuentes remotas), el **pool decorativo** `celeste`,
+`vitrina`, `rotulo`, `seda`, `redondo`, `lienzo`, y los **Guelaguetza**
+`guelaguetza-calenda`, `guelaguetza-pina`, `guelaguetza-tehuana` (público
+objetivo por diseño en `CARD_LABELS`, `src/config/rubro-map.ts`). El pool
+decorativo agrega dos capas nuevas: avatar circular con cascada foto → logo →
+inicial (campo `photoPath`) y una capa de motivos decorativos intercambiable
+por rubro (ver abajo). `_viewer.html` es el visor: arma un carrusel de `<iframe>` (cada card
 queda intacta como archivo standalone) con swipe (Pointer Events +
 `setPointerCapture` recién al confirmar gesto horizontal, para no robarle el
 tap a los botones de adentro de la card), flechas, dots y
@@ -146,12 +159,25 @@ de cada diseño (`currentColor` → paleta de marca), los bloques no llevan
 variables de template. El diseñador lo pensó como swap manual (copiar/pegar);
 en el pipeline es **automático por rubro**.
 
+**Diseños Guelaguetza (Oaxaca) — arte fijo + assets propios.** `guelaguetza-*`
+son un caso aparte del pool decorativo: paleta y arte de color son **FIJOS**
+(hardcodeados en su `:root`), ignoran a propósito `colors`/`colorsText` del
+lead. Se ofrecen en TODOS los rubros (como el resto del pool) y son
+**estáticos por rubro**: solo cambian los DATOS del lead y la capa de motivos
+(`_motifs.html`, teñida con un color fijo de su paleta). Traen imágenes reales
+(`assets/guelaguetza/*.png`) referenciadas por ruta RELATIVA — recursos
+EXCLUSIVOS de estos diseños, ningún otro los usa. Por eso `build-cards` espeja
+`src/dc-templates/assets/` en `leads/<slug>/dc/assets/` (`copyTreeIntoLead` en
+`storage.ts`), para que esas rutas resuelvan dentro del iframe del visor. Son
+la única excepción a la regla self-contained en cuanto a IMÁGENES (el resto
+usa SVG inline / data URI); los assets se copian una vez por lead.
+
 **Excepción de self-contained:** todos los diseños salvo `credencial` traen
 `<link>` a Google Fonts (Anton, Newsreader, Cormorant Garamond, Oswald,
 Fredoka, Instrument Serif, etc.) — decisión explícita del usuario para
 preservar la identidad tipográfica de cada diseño. Es la ÚNICA excepción a la
-regla self-contained del resto del repo; `credencial` (heredera del linktree)
-sigue sin fuentes remotas.
+regla self-contained (fuentes) del resto del repo; `credencial` (heredera del
+linktree) sigue sin fuentes remotas.
 
 `buildCardView` (en `build-cards.ts`) es un objeto SUPERSET: expone tanto los
 campos del diseño `credencial` (`name`, `personName`, `links`, `address`
