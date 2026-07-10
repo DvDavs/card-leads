@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{meta_titulo}}</title>
+<meta name="description" content="{{meta_descripcion}}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: {
+      primary:   'var(--primary)',
+      secondary: 'var(--secondary)',
+      accent:    'var(--accent)',
+    } } }
+  };
+</script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Paleta ORIGINAL del diseno (default, toggle "Ver colores de tu marca" OFF).
+       Identidad editorial teal-azul del portafolio de fisioterapia. Hardcodeada. */
+    --primary:#0d9488;
+    --secondary:#1e40af;
+    --accent:#0ea5e9;
+    --on-primary:#ffffff;
+    --on-secondary:#ffffff;
+    --on-accent:#ffffff;
+    /* Tokens derivados (profundidad tonal propia del diseno). Se recalculan
+       solos via color-mix cuando --primary/--accent cambian bajo [data-brand];
+       no se pisan directo, no son parte del contrato de marca. */
+    --primary-50:color-mix(in oklab, var(--primary) 8%, white);
+    --primary-100:color-mix(in oklab, var(--primary) 14%, white);
+    --primary-200:color-mix(in oklab, var(--primary) 30%, white);
+    --primary-300:color-mix(in oklab, var(--primary) 55%, white);
+    --primary-400:color-mix(in oklab, var(--primary) 70%, white);
+    --primary-700:color-mix(in oklab, var(--primary) 88%, black);
+    --primary-900:color-mix(in oklab, var(--primary) 70%, black);
+    --primary-ring:color-mix(in oklab, var(--primary) 20%, transparent);
+    --accent-100:color-mix(in oklab, var(--accent) 16%, white);
+    --accent-700:color-mix(in oklab, var(--accent) 82%, black);
+  }
+  /* Paleta de MARCA (toggle ON, activado por el visor via postMessage; el
+     script que la conmuta lo inyecta build-web, no este archivo). */
+  :root[data-brand]{
+    --primary:{{{colors.primary}}};
+    --secondary:{{{colors.secondary}}};
+    --accent:{{{colors.accent}}};
+    --on-primary:{{{colorsText.primary}}};
+    --on-secondary:{{{colorsText.secondary}}};
+    --on-accent:{{{colorsText.accent}}};
+    {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+    {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+  }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-600 antialiased font-sans selection:bg-[var(--primary-100)] selection:text-[var(--primary-900)]">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
+        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+            <a href="#" class="text-lg font-medium tracking-tight text-gray-900 hover:text-primary transition-colors font-sans">
+                {{nombre}}
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex gap-8 text-sm font-medium text-gray-500">
+                {{#tiene_bio}}<a href="#about" class="hover:text-primary transition-colors font-sans">Acerca de</a>{{/tiene_bio}}
+                {{#tiene_experiencia}}<a href="#experience" class="hover:text-primary transition-colors font-sans">Experiencia</a>{{/tiene_experiencia}}
+                {{#tiene_educacion}}<a href="#education" class="hover:text-primary transition-colors font-sans">Educación</a>{{/tiene_educacion}}
+                {{#tiene_investigacion}}<a href="#research" class="hover:text-primary transition-colors font-sans">Investigación</a>{{/tiene_investigacion}}
+                <a href="#contact" class="hover:text-primary transition-colors font-sans">Contacto</a>
+            </div>
+
+            <!-- Mobile Menu Toggle (Simplified for single file) -->
+            <button class="md:hidden text-gray-600">
+                <iconify-icon icon="lucide:menu" width="24" stroke-width="1.5"></iconify-icon>
+            </button>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-20">
+
+        <!-- Hero Section -->
+        <section class="max-w-5xl mx-auto px-6 mb-24">
+            <div class="flex flex-col md:flex-row gap-12 items-center">
+                <div class="flex-1 space-y-6">
+                    {{#tiene_badge_disponibilidad}}
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--primary-50)] border border-[var(--primary-100)] text-primary text-xs font-medium uppercase tracking-wide font-sans">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary-400)] opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                        </span>
+                        {{badge_disponibilidad}}
+                    </div>
+                    {{/tiene_badge_disponibilidad}}
+
+                    <h1 class="text-4xl md:text-6xl tracking-tight text-gray-900 leading-[1.1] font-light font-poppins">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary font-light font-poppins">{{hero_titulo}}</span>
+                    </h1>
+
+                    {{#tiene_hero_subtitulo}}
+                    <p class="text-lg text-gray-500 max-w-xl leading-relaxed font-sans">
+                        {{hero_subtitulo}}
+                    </p>
+                    {{/tiene_hero_subtitulo}}
+
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <a href="#contact" class="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-[var(--on-primary)] text-sm font-medium hover:bg-[var(--primary-900)] transition-all shadow-sm hover:shadow-md font-sans">
+                            {{hero_cta}}
+                        </a>
+                        {{#tiene_investigacion}}
+                        <a href="#research" class="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-all font-sans">
+                            Ver Investigación
+                        </a>
+                        {{/tiene_investigacion}}
+                    </div>
+
+                    <div class="flex flex-wrap gap-6 text-sm text-gray-500 pt-6 border-t border-gray-100">
+                        {{#tiene_direccion}}
+                        <div class="flex items-center gap-2 font-sans">
+                            <iconify-icon icon="lucide:map-pin" class="text-primary" width="16" stroke-width="1.5"></iconify-icon>
+                            {{direccion}}
+                        </div>
+                        {{/tiene_direccion}}
+                        {{#tiene_email}}
+                        <div class="flex items-center gap-2 font-sans">
+                            <iconify-icon icon="lucide:mail" class="text-primary" width="16" stroke-width="1.5"></iconify-icon>
+                            {{email}}
+                        </div>
+                        {{/tiene_email}}
+                    </div>
+                </div>
+
+                <!-- Profile Photo -->
+                <div class="relative w-full max-w-xs md:max-w-sm aspect-[3/4] md:aspect-square flex-shrink-0 group">
+                    <div class="absolute inset-0 bg-[var(--primary-200)] rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-500 ease-out"></div>
+                    <div class="absolute inset-0 bg-gray-200 rounded-2xl -rotate-2 group-hover:-rotate-3 transition-transform duration-500 ease-out"></div>
+                    <div class="relative h-full w-full rounded-2xl overflow-hidden shadow-xl border border-white/50">
+                        <img src="{{img_retrato_principal}}" alt="{{nombre}}" class="h-full w-full object-cover object-center grayscale hover:grayscale-0 transition-all duration-700">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{#tiene_bio}}
+        <!-- About Section -->
+        <section id="about" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <h2 class="text-sm font-semibold tracking-wider text-gray-400 uppercase mb-8 font-sans">Acerca de Mí</h2>
+            <div class="grid md:grid-cols-3 gap-12">
+                <div class="md:col-span-2">
+                    <p class="text-gray-600 leading-relaxed text-lg font-sans">
+                        {{bio}}
+                    </p>
+                </div>
+                {{#tiene_idiomas}}
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 class="font-medium text-gray-900 mb-4 flex items-center gap-2 font-sans">
+                        <iconify-icon icon="lucide:languages" class="text-primary" width="18" stroke-width="1.5"></iconify-icon>
+                        Idiomas
+                    </h3>
+                    <ul class="space-y-3">
+                        {{#idiomas}}
+                        <li class="flex justify-between items-center text-sm">
+                            <span class="font-sans">{{idioma}}</span>
+                            <span class="text-gray-400 font-sans">{{nivel}}</span>
+                        </li>
+                        {{/idiomas}}
+                    </ul>
+                </div>
+                {{/tiene_idiomas}}
+            </div>
+        </section>
+        {{/tiene_bio}}
+
+        {{#tiene_experiencia}}
+        <!-- Work Experience -->
+        <section id="experience" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="flex items-center gap-3 mb-8">
+                <iconify-icon icon="lucide:briefcase" class="text-primary" width="24" stroke-width="1.5"></iconify-icon>
+                <h2 class="text-2xl tracking-tight text-gray-900 font-light font-poppins">Experiencia Laboral</h2>
+            </div>
+
+            <div class="relative border-l border-gray-200 ml-3 space-y-12">
+                {{#experiencia}}
+                <div class="relative pl-8 md:pl-12">
+                    <span class="absolute -left-[5px] top-2 h-2.5 w-2.5 rounded-full {{#actual}}bg-primary{{/actual}}{{^actual}}bg-gray-300{{/actual}} ring-4 ring-white"></span>
+                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
+                        <h3 class="text-lg font-medium text-gray-900 font-sans">{{puesto}}</h3>
+                        {{#actual}}
+                        <span class="text-sm font-medium text-primary bg-[var(--primary-50)] px-2 py-1 rounded font-sans">{{periodo}}</span>
+                        {{/actual}}
+                        {{^actual}}
+                        <span class="text-sm text-gray-500 font-sans">{{periodo}}</span>
+                        {{/actual}}
+                    </div>
+                    <div class="text-sm text-gray-500 mb-3 font-sans">{{lugar}}</div>
+                    <p class="text-gray-600 leading-relaxed max-w-3xl font-sans">
+                        {{descripcion}}
+                    </p>
+                </div>
+                {{/experiencia}}
+            </div>
+        </section>
+        {{/tiene_experiencia}}
+
+        {{#tiene_educacion}}
+        <!-- Education -->
+        <section id="education" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="flex items-center gap-3 mb-8">
+                <iconify-icon icon="lucide:graduation-cap" class="text-primary" width="24" stroke-width="1.5"></iconify-icon>
+                <h2 class="text-2xl tracking-tight text-gray-900 font-light font-poppins">Educación</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                {{#educacion}}
+                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-medium text-gray-900 font-sans">{{titulo}}</h3>
+                            <p class="text-sm text-gray-500 font-sans">{{institucion}}</p>
+                        </div>
+                        <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded font-sans">{{periodo}}</span>
+                    </div>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        {{#detalles}}
+                        <li class="flex items-center gap-2 font-sans">
+                            <iconify-icon icon="lucide:check" class="text-primary" width="14"></iconify-icon>
+                            {{.}}
+                        </li>
+                        {{/detalles}}
+                    </ul>
+                </div>
+                {{/educacion}}
+            </div>
+        </section>
+        {{/tiene_educacion}}
+
+        {{#tiene_investigacion}}
+        <!-- Research & Publications -->
+        <section id="research" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="flex items-center gap-3 mb-8">
+                <iconify-icon icon="lucide:book-open" class="text-primary" width="24" stroke-width="1.5"></iconify-icon>
+                <h2 class="text-2xl tracking-tight text-gray-900 font-light font-poppins">Investigación y Publicaciones</h2>
+            </div>
+
+            <div class="space-y-6">
+                {{#investigacion}}
+                <div class="group p-6 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-[var(--primary-300)] transition-all">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[var(--accent-100)] text-[var(--accent-700)] font-sans">{{etiqueta}}</span>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2 group-hover:text-[var(--primary-700)] transition-colors font-sans">
+                        {{titulo}}
+                    </h3>
+                    <p class="text-gray-600 text-sm leading-relaxed font-sans">
+                        {{descripcion}}
+                    </p>
+                </div>
+                {{/investigacion}}
+            </div>
+        </section>
+        {{/tiene_investigacion}}
+
+        {{#tiene_habilidades}}
+        <!-- Professional Skills -->
+        <section id="skills" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <h2 class="text-sm font-semibold tracking-wider text-gray-400 uppercase mb-8 font-sans">Experiencia Profesional</h2>
+            <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                <div class="flex flex-wrap gap-3">
+                    {{#habilidades}}
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-[var(--primary-300)] hover:text-[var(--primary-700)] transition-colors cursor-default font-sans">
+                        {{.}}
+                    </span>
+                    {{/habilidades}}
+                </div>
+            </div>
+        </section>
+        {{/tiene_habilidades}}
+
+        <!-- Contact Section -->
+        <section id="contact" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="grid md:grid-cols-2 gap-16">
+                <div>
+                    <h2 class="text-3xl tracking-tight text-gray-900 mb-6 font-light font-poppins">Ponte en Contacto</h2>
+                    <p class="text-gray-600 mb-8 font-sans">
+                        No dudes en contactarme para consultas, colaboraciones o consultas profesionales.
+                    </p>
+
+                    <div class="space-y-6">
+                        {{#tiene_telefono}}
+                        <div class="flex items-start gap-4">
+                            <div class="p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-primary">
+                                <iconify-icon icon="lucide:phone" width="20" stroke-width="1.5"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-900 text-sm font-sans">Teléfono</h3>
+                                <a href="tel:{{telefono_href}}" class="text-gray-500 hover:text-primary transition-colors font-sans">{{telefono}}</a>
+                            </div>
+                        </div>
+                        {{/tiene_telefono}}
+
+                        {{#tiene_email}}
+                        <div class="flex items-start gap-4">
+                            <div class="p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-primary">
+                                <iconify-icon icon="lucide:mail" width="20" stroke-width="1.5"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-900 text-sm font-sans">Correo Electrónico</h3>
+                                <a href="mailto:{{email}}" class="text-gray-500 hover:text-primary transition-colors font-sans">{{email}}</a>
+                            </div>
+                        </div>
+                        {{/tiene_email}}
+
+                        {{#tiene_direccion}}
+                        <div class="flex items-start gap-4">
+                            <div class="p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-primary">
+                                <iconify-icon icon="lucide:map-pin" width="20" stroke-width="1.5"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-900 text-sm font-sans">Ubicación</h3>
+                                <p class="text-gray-500 font-sans">{{direccion}}</p>
+                            </div>
+                        </div>
+                        {{/tiene_direccion}}
+                    </div>
+                </div>
+
+                <!-- Contact Form (demo, sin backend) -->
+                <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-lg shadow-gray-200/50">
+                    <form class="space-y-4" onsubmit="event.preventDefault();">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="firstName" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Nombre</label>
+                                <input type="text" id="firstName" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring)] focus:border-primary transition-all text-sm">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="lastName" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Apellido</label>
+                                <input type="text" id="lastName" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring)] focus:border-primary transition-all text-sm">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="email" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Correo Electrónico</label>
+                            <input type="email" id="email" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring)] focus:border-primary transition-all text-sm">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="message" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Mensaje</label>
+                            <textarea id="message" rows="4" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring)] focus:border-primary transition-all text-sm"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm font-sans">
+                            Enviar Mensaje
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-gray-200 bg-white">
+        <div class="max-w-5xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <p class="font-medium text-gray-900 font-sans">{{nombre}}</p>
+                <p class="text-sm text-gray-500 mt-1 font-sans">{{footer_bio}}</p>
+            </div>
+            <div class="text-sm text-gray-400 font-sans text-center md:text-right">
+                <p>© {{anio}} {{nombre}}. Todos los derechos reservados.</p>
+                {{#demo_es_ejemplo}}<p class="mt-1 text-xs text-gray-400">Página de demostración — contenido de muestra.</p>{{/demo_es_ejemplo}}
+            </div>
+        </div>
+    </footer>
+
+
+</body></html>
