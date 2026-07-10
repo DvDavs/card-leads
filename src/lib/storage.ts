@@ -91,6 +91,34 @@ export async function copyTreeIntoLead(
 }
 
 /**
+ * Copia una LISTA de archivos sueltos dentro de la carpeta del lead (ej. las
+ * imagenes del banco que consumio build-web). Cada par es `{from, to}`: `from`
+ * es la ruta origen (absoluta) y `to` la ruta destino RELATIVA a la carpeta
+ * del lead (puede traer subcarpetas, ej. "web/assets/Retrato01.jpg").
+ * Idempotente: sobreescribe si ya existe. Un origen inexistente se SALTA sin
+ * romper (misma tolerancia que copyTreeIntoLead: un banco incompleto no debe
+ * tirar el build). Devuelve las rutas absolutas de lo que SI se copio.
+ */
+export async function copyFilesIntoLead(
+  slug: string,
+  pairs: { from: string; to: string }[],
+): Promise<string[]> {
+  const copied: string[] = [];
+  for (const { from, to } of pairs) {
+    try {
+      await fs.access(from);
+    } catch {
+      continue; // origen inexistente: se salta, no rompe
+    }
+    const dest = path.join(leadDir(slug), to);
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await fs.copyFile(from, dest);
+    copied.push(dest);
+  }
+  return copied;
+}
+
+/**
  * Escribe un artefacto de texto (HTML, md) en la carpeta del lead. `fileName`
  * puede traer subcarpetas (ej. "dc/clinic.html", como hacen las digital
  * cards): se crea todo el arbol de directorios necesario, no solo la raiz
