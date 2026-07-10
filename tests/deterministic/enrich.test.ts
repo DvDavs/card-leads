@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseEnrichment, type Enrichment } from "../../src/lib/llm/enrichment.js";
-import { applyEnrichment } from "../../src/stages/enrich.js";
+import { applyEnrichment, buildEnrichInput } from "../../src/stages/enrich.js";
 import { parseLead, type Lead } from "../../src/lib/schema.js";
 
 /**
@@ -64,6 +64,89 @@ const SAMPLE = {
   meta_description: "Atencion medica integral y humana en Oaxaca.",
 };
 
+/** Bloque `demo` tal como lo devolveria el modelo (contenido FICTICIO de muestra). */
+const SAMPLE_DEMO = {
+  stats: [
+    { value: "1,200+", label: "pacientes atendidos" },
+    { value: "12 anos", label: "de trayectoria" },
+    { value: "4.9", label: "calificacion promedio" },
+    { value: "98%", label: "pacientes que regresan" },
+  ],
+  team: [
+    { name: "Laura Mendoza", role: "Odontologa general", gender: "f" },
+    { name: "Carlos Rios", role: "Higienista", gender: "m" },
+    { name: "Ana Torres", role: "Recepcion", gender: "f" },
+    { name: "Miguel Salas", role: "Asistente", gender: "m" },
+    { name: "Sofia Vega", role: "Administracion", gender: "f" },
+  ],
+  experience: [
+    {
+      role: "Medica titular",
+      place: "Consultorio propio",
+      period: "2018 - Presente",
+      description: "Atencion integral de pacientes.",
+      current: true,
+    },
+    {
+      role: "Medica adscrita",
+      place: "Hospital General Regional",
+      period: "2014 - 2018",
+      description: "Consulta externa y seguimiento.",
+      current: false,
+    },
+    {
+      role: "Residente",
+      place: "Centro de Salud Municipal",
+      period: "2011 - 2014",
+      description: "Formacion clinica supervisada.",
+      current: false,
+    },
+  ],
+  education: [
+    {
+      degree: "Medica Cirujana",
+      institution: "Universidad Nacional",
+      period: "2005 - 2011",
+      details: ["Titulo profesional", "Servicio social comunitario"],
+    },
+    {
+      degree: "Diplomado en medicina familiar",
+      institution: "Instituto de Especialidades Medicas",
+      period: "2012",
+      details: ["Enfoque preventivo"],
+    },
+  ],
+  research: [
+    { tag: "Prevencion", title: "Habitos y salud familiar", description: "Educacion preventiva." },
+    { tag: "Atencion primaria", title: "Seguimiento continuo", description: "Acompanamiento al paciente." },
+  ],
+  skills: ["Diagnostico", "Prevencion", "Seguimiento", "Comunicacion", "Urgencias menores", "Nutricion basica"],
+  languages: [
+    { language: "Espanol", level: "Nativo" },
+    { language: "Ingles", level: "Intermedio" },
+  ],
+  mission: "Acompanar a cada paciente con atencion clara y humana.",
+  patient_education: [
+    { title: "Chequeo anual", description: "Detectar a tiempo cambia el pronostico." },
+    { title: "Hidratacion", description: "Beber agua suficiente cada dia." },
+    { title: "Descanso", description: "Dormir bien es parte del tratamiento." },
+  ],
+  sedation: {
+    title: "Atencion sin dolor",
+    description: "Opciones para pacientes con ansiedad.",
+    points: ["Evaluacion previa", "Monitoreo continuo"],
+  },
+  hygiene: [
+    { title: "Esterilizacion", description: "Instrumental esterilizado por paciente." },
+    { title: "Desinfeccion", description: "Superficies limpias entre consultas." },
+    { title: "Material desechable", description: "Un solo uso donde corresponde." },
+  ],
+  urgency: { headline: "Atencion el mismo dia", subtext: "Espacios reservados para urgencias." },
+  availability_badge: "Agenda abierta",
+  rating: { value: "4.9", count_label: "128 resenas" },
+  trust_items: ["Atencion personalizada", "Equipo calificado", "Instalaciones limpias"],
+};
+
 /** Parsea el sample y devuelve la Enrichment, fallando el test si el fixture es invalido. */
 function parseOk(sample: unknown): Enrichment {
   const r = parseEnrichment(JSON.stringify(sample));
@@ -110,6 +193,46 @@ describe("parseEnrichment", () => {
 
   it("falla si falta un campo narrativo requerido (hero_headline vacio)", () => {
     const bad = { ...SAMPLE, hero_headline: "" };
+    expect(parseEnrichment(JSON.stringify(bad)).ok).toBe(false);
+  });
+
+  it("acepta el bloque demo completo", () => {
+    const r = parseEnrichment(JSON.stringify({ ...SAMPLE, demo: SAMPLE_DEMO }));
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.data.demo?.stats).toHaveLength(4);
+      expect(r.data.demo?.team[0]).toEqual({
+        name: "Laura Mendoza",
+        role: "Odontologa general",
+        gender: "f",
+      });
+    }
+  });
+
+  it("back-compat: una respuesta SIN demo sigue parseando (demo queda undefined)", () => {
+    // SAMPLE es la forma vieja del contrato (previa al bloque demo)
+    const r = parseEnrichment(JSON.stringify(SAMPLE));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.demo).toBeUndefined();
+  });
+
+  it("demo parcial: las listas ausentes caen a [] y no tumban el parseo", () => {
+    const partialDemo = { stats: SAMPLE_DEMO.stats, mission: "Cuidar de verdad." };
+    const r = parseEnrichment(JSON.stringify({ ...SAMPLE, demo: partialDemo }));
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.data.demo?.stats).toHaveLength(4);
+      expect(r.data.demo?.team).toEqual([]);
+      expect(r.data.demo?.hygiene).toEqual([]);
+      expect(r.data.demo?.sedation).toBeUndefined();
+    }
+  });
+
+  it("demo con gender invalido en team falla el parseo (contrato estricto)", () => {
+    const bad = {
+      ...SAMPLE,
+      demo: { team: [{ name: "Laura", role: "Recepcion", gender: "x" }] },
+    };
     expect(parseEnrichment(JSON.stringify(bad)).ok).toBe(false);
   });
 });
@@ -218,5 +341,77 @@ describe("applyEnrichment", () => {
     // un data.json previo a enrich (sin el bloque) debe seguir cargando
     expect(() => parseLead(verifiedLead())).not.toThrow();
     expect(verifiedLead().content.generated_copy).toBeUndefined();
+  });
+
+  it("fusiona el bloque demo en generated_copy.demo y sigue validando el schema", () => {
+    const lead = applyEnrichment(verifiedLead(), parseOk({ ...SAMPLE, demo: SAMPLE_DEMO }), NOW);
+    const demo = lead.content.generated_copy!.demo;
+    expect(demo).toBeDefined();
+    expect(demo?.stats).toHaveLength(4);
+    expect(demo?.team).toHaveLength(5);
+    expect(demo?.experience?.filter((e) => e.current)).toHaveLength(1);
+    expect(demo?.mission).toBe("Acompanar a cada paciente con atencion clara y humana.");
+    expect(demo?.rating).toEqual({ value: "4.9", count_label: "128 resenas" });
+    expect(() => parseLead(lead)).not.toThrow();
+  });
+
+  it("marca el demo como EJEMPLO en sample_fields y anota el need", () => {
+    const lead = applyEnrichment(verifiedLead(), parseOk({ ...SAMPLE, demo: SAMPLE_DEMO }), NOW);
+    expect(lead.content.generated_copy!.sample_fields).toContain("demo");
+    expect(lead.meta.needs.join(" | ")).toContain("contenido de DEMO generado");
+  });
+
+  it("'demo' aparece UNA sola vez en sample_fields y meta.needs aun al re-correr", () => {
+    const withDemo = parseOk({ ...SAMPLE, demo: SAMPLE_DEMO });
+    const once = applyEnrichment(verifiedLead(), withDemo, NOW);
+    const twice = applyEnrichment(once, withDemo, NOW);
+    const fields = twice.content.generated_copy!.sample_fields!;
+    expect(fields.filter((f) => f === "demo")).toHaveLength(1);
+    const needCount = twice.meta.needs.filter((n) =>
+      n.startsWith("contenido de DEMO generado"),
+    ).length;
+    expect(needCount).toBe(1);
+  });
+
+  it("sin demo del modelo: ni generated_copy.demo, ni sample_field, ni need", () => {
+    const lead = applyEnrichment(verifiedLead(), parseOk(SAMPLE), NOW);
+    expect(lead.content.generated_copy!.demo).toBeUndefined();
+    expect(lead.content.generated_copy!.sample_fields).not.toContain("demo");
+    expect(lead.meta.needs.join(" | ")).not.toContain("contenido de DEMO generado");
+  });
+
+  it("re-correr SIN demo limpia el need de demo dejado por una corrida anterior", () => {
+    const once = applyEnrichment(verifiedLead(), parseOk({ ...SAMPLE, demo: SAMPLE_DEMO }), NOW);
+    const twice = applyEnrichment(once, parseOk(SAMPLE), NOW);
+    expect(twice.meta.needs.join(" | ")).not.toContain("contenido de DEMO generado");
+  });
+
+  it("demo vacio (todas las listas []) se trata como ausente: no se persiste", () => {
+    const lead = applyEnrichment(verifiedLead(), parseOk({ ...SAMPLE, demo: {} }), NOW);
+    expect(lead.content.generated_copy!.demo).toBeUndefined();
+    expect(lead.content.generated_copy!.sample_fields).not.toContain("demo");
+  });
+});
+
+describe("buildEnrichInput", () => {
+  it("pasa person_gender del lead como personGender", () => {
+    const lead = verifiedLead({
+      business: {
+        name: "Consultorio Karey",
+        person_name: "Dra. Karey",
+        person_gender: "f",
+        attrs: {},
+      },
+    });
+    const input = buildEnrichInput(lead);
+    expect(input.personGender).toBe("f");
+    expect(input.personName).toBe("Dra. Karey");
+    expect(input.rubro).toBe("doctor");
+    expect(input.services).toEqual(["Consulta", "Estudios"]);
+  });
+
+  it("sin person_gender en el lead, personGender queda ausente (no null)", () => {
+    const input = buildEnrichInput(verifiedLead());
+    expect("personGender" in input).toBe(false);
   });
 });

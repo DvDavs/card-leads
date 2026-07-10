@@ -22,6 +22,56 @@ import { z } from "zod";
 const str = z.string();
 const nstr = z.string().nullish();
 
+/**
+ * DemoSchema — el bloque de contenido de MUESTRA (ficticio) que el modelo GENERA
+ * para la web demo comercial: stats de vitrina, equipo, trayectoria, educacion,
+ * investigacion, mision, higiene, confianza, etc. Es la contraparte "con forma
+ * fija" del copy libre y su unica excepcion a la regla "sin numeros/credenciales"
+ * (ver write-copy.md, seccion DEMO): aca SI hay numeros modestos y credenciales
+ * genericas, pero TODO es de ejemplo y se marca como tal (sample_fields "demo").
+ *
+ * Espeja la forma de DemoContentSchema (lib/schema.ts). Las LISTAS usan
+ * `.default([])` y los objetos/escalares sueltos son `.nullish()`: una generacion
+ * parcial NO tumba el parseo, solo trae menos bloques. El bloque `demo` entero es
+ * `.optional()` para back-compat: respuestas viejas SIN `demo` siguen validando.
+ */
+const DemoSchema = z.object({
+  stats: z.array(z.object({ value: str, label: str })).default([]),
+  team: z.array(z.object({ name: str, role: str, gender: z.enum(["m", "f"]) })).default([]),
+  experience: z
+    .array(
+      z.object({
+        role: str,
+        place: str,
+        period: str,
+        description: str,
+        current: z.boolean().default(false),
+      }),
+    )
+    .default([]),
+  education: z
+    .array(
+      z.object({
+        degree: str,
+        institution: str,
+        period: str,
+        details: z.array(str).default([]),
+      }),
+    )
+    .default([]),
+  research: z.array(z.object({ tag: str, title: str, description: str })).default([]),
+  skills: z.array(str).default([]),
+  languages: z.array(z.object({ language: str, level: str })).default([]),
+  mission: nstr,
+  patient_education: z.array(z.object({ title: str, description: str })).default([]),
+  sedation: z.object({ title: str, description: str, points: z.array(str).default([]) }).nullish(),
+  hygiene: z.array(z.object({ title: str, description: str })).default([]),
+  urgency: z.object({ headline: str, subtext: str }).nullish(),
+  availability_badge: nstr,
+  rating: z.object({ value: str, count_label: str }).nullish(),
+  trust_items: z.array(str).default([]),
+});
+
 export const EnrichmentSchema = z.object({
   hero_headline: str.min(1),
   hero_subheadline: str.min(1),
@@ -39,6 +89,9 @@ export const EnrichmentSchema = z.object({
   footer_tagline: str.min(1),
   meta_title: nstr,
   meta_description: nstr,
+  // demo: contenido de MUESTRA con forma fija para la web demo. Opcional =>
+  // respuestas de modelo previas a esta pieza siguen parseando (back-compat).
+  demo: DemoSchema.optional(),
 });
 
 /** La forma validada que devuelven TODOS los proveedores por igual. */
@@ -57,6 +110,10 @@ export interface EnrichInput {
   tagline?: string;
   services: string[]; // servicios REALES (autoridad = verify)
   location?: string; // direccion, para dar color local al copy
+  // personGender: genero de LA PERSONA del negocio. Se usa SOLO para la
+  // concordancia del copy ("el doctor" / "la doctora") y para balancear el
+  // genero del equipo de MUESTRA (demo.team). No es un dato de contacto.
+  personGender?: "m" | "f";
 }
 
 /** Resultado del parseo: nunca lanza, enruta el error para meta.errors. */
