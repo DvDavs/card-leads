@@ -1,0 +1,527 @@
+<html lang="es" class="scroll-smooth"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{meta_titulo}}</title>
+<meta name="description" content="{{meta_descripcion}}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: {
+      primary:   'var(--primary)',
+      secondary: 'var(--secondary)',
+      accent:    'var(--accent)',
+      'on-primary':   'var(--on-primary)',
+      'on-secondary': 'var(--on-secondary)',
+      'on-accent':    'var(--on-accent)',
+    } } }
+  };
+</script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Paleta ORIGINAL del diseno (default, toggle OFF). Hardcodeada. */
+  --primary:#0F4C5C;
+  --secondary:#C9A24D;
+  --accent:#8b94a3;
+  --on-primary:#ffffff;
+  --on-secondary:#1a1a1a;
+  --on-accent:#ffffff;
+}
+:root[data-brand]{
+  /* Paleta de MARCA del lead (toggle ON). Unicos hex crudos permitidos. */
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
+  --on-secondary:{{{colorsText.secondary}}};
+  --on-accent:{{{colorsText.accent}}};
+}
+/* Custom scrollbar for luxury feel */
+::-webkit-scrollbar {
+width: 8px;
+}
+::-webkit-scrollbar-track {
+background: #FAFAF8;
+}
+::-webkit-scrollbar-thumb {
+background: #D1D5DB;
+border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+background: var(--primary);
+}
+::selection{
+background: var(--secondary);
+color: var(--on-secondary);
+}
+/* Removing default input styles */
+input:focus, textarea:focus, select:focus {
+outline: none;
+box-shadow: none;
+}
+/* Sombra suave de marca para la tarjeta de reserva (reemplaza el rgba fijo) */
+.shadow-brand-soft{
+box-shadow: 0 20px 50px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+</style>
+</head>
+<body class="bg-[#FAFAF8] text-[#2B2B2B] font-['Inter'] antialiased overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 top-0 left-0 border-b border-primary/5 bg-[#FAFAF8]/95 backdrop-blur-md transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center relative z-50">
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center">
+                    <iconify-icon icon="solar:medical-kit-linear" width="18" stroke-width="1.5"></iconify-icon>
+                </div>
+                <span class="font-['Cormorant_Garamond'] text-lg uppercase tracking-widest font-semibold text-primary">{{nombre}}</span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-[#2B2B2B]/80">
+                <a href="#about" class="hover:text-primary transition-colors">Nosotros</a>
+                <a href="#services" class="hover:text-primary transition-colors">Servicios</a>
+                <a href="#reviews" class="hover:text-primary transition-colors">Opiniones</a>
+            </div>
+
+            <a href="#book" class="hidden md:flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-full text-xs font-medium tracking-wide hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/20">
+                <span>Reservar Cita</span>
+                <iconify-icon icon="solar:calendar-add-linear" width="16"></iconify-icon>
+            </a>
+
+            <!-- Mobile Menu Toggle Button -->
+            <button id="menu-toggle" class="md:hidden text-primary p-2 hover:bg-primary/5 rounded-full transition-colors focus:outline-none">
+                <iconify-icon icon="solar:hamburger-menu-linear" width="24"></iconify-icon>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-menu" class="fixed inset-0 bg-white z-40 transform translate-x-full transition-transform duration-300 ease-in-out md:hidden flex flex-col pt-28 px-6 pb-6 shadow-2xl">
+            <!-- Close Button inside menu for easier access -->
+            <button id="menu-close" class="absolute top-6 right-6 text-primary p-2 hover:bg-primary/5 rounded-full transition-colors">
+                <iconify-icon icon="solar:close-circle-linear" width="32"></iconify-icon>
+            </button>
+
+            <div class="flex flex-col gap-6 text-xl font-['Cormorant_Garamond'] font-medium text-primary">
+                <a href="#about" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
+                    Sobre el Doctor
+                    <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
+                </a>
+                <a href="#services" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
+                    Tratamientos
+                    <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
+                </a>
+                <a href="#reviews" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
+                    Opiniones
+                    <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
+                </a>
+            </div>
+
+            <div class="mt-auto mb-8">
+                <a href="#book" class="mobile-link w-full bg-primary text-on-primary py-4 rounded-xl flex items-center justify-center gap-2 text-sm font-sans font-medium tracking-wide shadow-lg shadow-primary/20">
+                    <span>Reservar Cita</span>
+                    <iconify-icon icon="solar:calendar-add-linear" width="18"></iconify-icon>
+                </a>
+                <div class="mt-6 flex justify-center gap-6 text-primary/60">
+                     {{#tiene_telefono}}<a href="tel:{{telefono_href}}" class="hover:text-primary"><iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon></a>{{/tiene_telefono}}
+                     {{#tiene_whatsapp}}<a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="hover:text-primary"><iconify-icon icon="mdi:whatsapp" width="24"></iconify-icon></a>{{/tiene_whatsapp}}
+                     {{#tiene_direccion}}<a href="{{mapa_url}}" target="_blank" rel="noopener" class="hover:text-primary"><iconify-icon icon="solar:map-point-linear" width="24"></iconify-icon></a>{{/tiene_direccion}}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden">
+        <!-- Subtle Background Elements -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-b from-secondary/5 to-transparent pointer-events-none"></div>
+        <div class="absolute -left-20 top-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            {{#tiene_calificacion}}
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-white/50 backdrop-blur-sm mb-6">
+                <iconify-icon icon="solar:star-linear" class="text-secondary" width="14"></iconify-icon>
+                <span class="text-xs tracking-wide uppercase font-medium text-primary">Calificados con {{calificacion.valor}}/5 por {{calificacion.resenas}} pacientes</span>
+            </div>
+            {{/tiene_calificacion}}
+
+            <h1 class="font-['Cormorant_Garamond'] text-5xl md:text-7xl lg:text-8xl leading-[1.1] font-medium tracking-tight text-primary mb-6">
+                {{hero_titulo}}
+                {{#tiene_tagline}}<br><span class="italic text-secondary">{{tagline}}</span>{{/tiene_tagline}}
+            </h1>
+
+            {{#tiene_hero_subtitulo}}
+            <p class="text-lg md:text-xl text-[#2B2B2B]/70 max-w-2xl mx-auto leading-relaxed mb-10 font-light">
+                {{hero_subtitulo}}
+            </p>
+            {{/tiene_hero_subtitulo}}
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="#book" class="w-full sm:w-auto bg-primary text-on-primary h-12 px-8 rounded-full flex items-center justify-center gap-2 text-sm font-medium tracking-wide hover:shadow-xl hover:shadow-primary/20 transition-all transform hover:-translate-y-0.5">
+                    {{hero_cta}}
+                    <iconify-icon icon="solar:arrow-right-linear" width="18"></iconify-icon>
+                </a>
+                {{#tiene_telefono}}
+                <a href="tel:{{telefono_href}}" class="w-full sm:w-auto h-12 px-8 rounded-full border border-primary/20 text-primary flex items-center justify-center gap-2 text-sm font-medium hover:bg-primary/5 transition-all">
+                    <iconify-icon icon="solar:phone-calling-linear" width="18"></iconify-icon>
+                    Llamar Ahora
+                </a>
+                {{/tiene_telefono}}
+            </div>
+
+            <!-- Trust Grid (propuestas de valor, universal §3a) -->
+            {{#tiene_propuestas}}
+            <div class="mt-16 pt-8 border-t border-primary/10 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+                {{#propuestas}}
+                <div class="flex flex-col items-center gap-2">
+                    <iconify-icon icon="solar:shield-check-linear" class="text-secondary" width="24"></iconify-icon>
+                    <span class="text-xs text-[#2B2B2B]/60 font-medium">{{titulo}}</span>
+                </div>
+                {{/propuestas}}
+            </div>
+            {{/tiene_propuestas}}
+        </div>
+    </section>
+
+    <!-- Doctor Section -->
+    <section id="about" class="py-20 px-6 bg-white border-y border-primary/5">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+            <div class="relative group">
+                <!-- Abstract Image Representation for Luxurious Feel (sin fotos: icono placeholder, identidad preservada) -->
+                <div class="aspect-[3/4] rounded-2xl overflow-hidden bg-[#FAFAF8] border border-primary/10 relative">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-primary/20">
+                         <!-- Placeholder for Doctor's Photo -->
+                        <iconify-icon icon="solar:user-circle-linear" width="120" stroke-width="0.5"></iconify-icon>
+                    </div>
+                    {{#tiene_cita_destacada}}
+                    <div class="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur p-4 rounded-xl border border-primary/10 shadow-sm">
+                        <p class="font-['Cormorant_Garamond'] text-primary text-lg italic">"{{cita_destacada}}"</p>
+                    </div>
+                    {{/tiene_cita_destacada}}
+                </div>
+                <!-- Decorative border -->
+                <div class="absolute -inset-4 border border-secondary/30 rounded-[20px] -z-10 translate-x-2 translate-y-2"></div>
+            </div>
+
+            <div>
+                <span class="text-secondary text-xs font-semibold tracking-widest uppercase mb-2 block">Conozca a Su Dentista</span>
+                <h2 class="font-['Cormorant_Garamond'] text-4xl md:text-5xl font-medium text-primary mb-6 tracking-tight">{{nombre}}</h2>
+                {{#tiene_bio}}
+                <div class="space-y-6 text-[#2B2B2B]/80 font-light leading-relaxed">
+                    <p>{{bio}}</p>
+                </div>
+                {{/tiene_bio}}
+
+                {{#tiene_credenciales}}
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{#credenciales}}
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <iconify-icon icon="solar:check-circle-linear" width="14"></iconify-icon>
+                        </div>
+                        <span class="text-sm">{{clave}}: {{valor}}</span>
+                    </div>
+                    {{/credenciales}}
+                </div>
+                {{/tiene_credenciales}}
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-24 px-6 bg-[#FAFAF8]">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="font-['Cormorant_Garamond'] text-4xl md:text-5xl font-medium text-primary tracking-tight mb-4">Nuestros Tratamientos Especializados</h2>
+                <p class="text-[#2B2B2B]/60 max-w-xl mx-auto">Cuidado integral diseñado para la durabilidad y el confort.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {{#tiene_servicios}}
+                {{#servicios}}
+                <div class="bg-white p-8 rounded-2xl border border-primary/5 hover:border-secondary/30 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] group">
+                    <div class="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                        <iconify-icon icon="solar:medical-kit-linear" width="24"></iconify-icon>
+                    </div>
+                    <h3 class="font-['Cormorant_Garamond'] text-2xl font-medium text-primary mb-2">{{nombre}}</h3>
+                    {{#tiene_descripcion}}<p class="text-sm text-[#2B2B2B]/70 leading-relaxed mb-4">{{descripcion}}</p>{{/tiene_descripcion}}
+                </div>
+                {{/servicios}}
+                {{/tiene_servicios}}
+
+                 <!-- CTA Card -->
+                 <div class="bg-primary p-8 rounded-2xl flex flex-col justify-center items-center text-center">
+                    <h3 class="font-['Cormorant_Garamond'] text-2xl font-medium text-on-primary mb-2">¿Necesita un Consejo?</h3>
+                    <p class="text-sm text-on-primary/70 leading-relaxed mb-6">
+                        Consulte hoy con {{nombre}} y reciba una opinión honesta.
+                    </p>
+                    <a href="#book" class="bg-secondary text-on-secondary px-6 py-3 rounded-full text-sm font-medium hover:brightness-90 transition w-full">Consultar Hoy</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Patients Love Us (Reviews) -->
+    <section id="reviews" class="py-24 px-6 relative bg-white overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute right-0 top-0 w-64 h-64 bg-secondary/5 rounded-bl-full pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                <div>
+                    <span class="text-secondary text-xs font-semibold tracking-widest uppercase mb-2 block">Testimonios de Pacientes</span>
+                    <h2 class="font-['Cormorant_Garamond'] text-4xl md:text-5xl font-medium text-primary tracking-tight">Por Qué los Pacientes Nos Eligen</h2>
+                </div>
+                <div class="flex gap-1 text-secondary">
+                    <iconify-icon icon="solar:star-bold" width="20"></iconify-icon>
+                    <iconify-icon icon="solar:star-bold" width="20"></iconify-icon>
+                    <iconify-icon icon="solar:star-bold" width="20"></iconify-icon>
+                    <iconify-icon icon="solar:star-bold" width="20"></iconify-icon>
+                    <iconify-icon icon="solar:star-bold" width="20"></iconify-icon>
+                </div>
+            </div>
+
+            {{#tiene_testimonios}}
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {{#testimonios}}
+                <div class="bg-[#FAFAF8] p-6 rounded-xl border-t-2 border-secondary shadow-sm">
+                    <div class="mb-4 text-secondary flex gap-1 text-xs">
+                        <iconify-icon icon="solar:star-bold"></iconify-icon>
+                        <iconify-icon icon="solar:star-bold"></iconify-icon>
+                        <iconify-icon icon="solar:star-bold"></iconify-icon>
+                        <iconify-icon icon="solar:star-bold"></iconify-icon>
+                        <iconify-icon icon="solar:star-bold"></iconify-icon>
+                    </div>
+                    <p class="text-sm text-[#2B2B2B]/80 font-light italic mb-4">"{{cita}}"</p>
+                    <p class="text-xs font-semibold text-primary uppercase tracking-wide">{{autor}}{{#tiene_rol}} — {{rol}}{{/tiene_rol}}</p>
+                </div>
+                {{/testimonios}}
+            </div>
+            {{/tiene_testimonios}}
+        </div>
+    </section>
+
+    <!-- Hygiene & Safety -->
+    <section class="py-16 px-6 bg-primary text-on-primary">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+            <div class="md:w-1/2">
+                <h2 class="font-['Cormorant_Garamond'] text-3xl md:text-4xl font-medium mb-4">Su Seguridad Es Nuestra Prioridad</h2>
+                <p class="opacity-70 font-light mb-6">Tratamos a cada paciente como familia, cumpliendo estrictos protocolos de esterilización en un ambiente tranquilo, similar a un spa.</p>
+                {{#tiene_higiene_puntos}}
+                <div class="flex flex-wrap gap-4">
+                    {{#higiene_puntos}}
+                    <div class="flex items-start gap-2 bg-on-primary/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-on-primary/10 max-w-xs">
+                        <iconify-icon icon="solar:shield-check-linear" class="text-secondary shrink-0 mt-0.5"></iconify-icon>
+                        <div>
+                            <p class="text-xs font-medium">{{titulo}}</p>
+                            <p class="text-[11px] opacity-70">{{descripcion}}</p>
+                        </div>
+                    </div>
+                    {{/higiene_puntos}}
+                </div>
+                {{/tiene_higiene_puntos}}
+            </div>
+            <div class="md:w-1/3 w-full bg-secondary h-1 rounded-full opacity-20 md:hidden"></div>
+            <div class="md:w-1/2 text-right">
+               <p class="text-2xl font-['Cormorant_Garamond'] italic opacity-80">"La limpieza, junto a la santidad"</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location & Final CTA -->
+    <section id="book" class="py-24 px-6 bg-[#FAFAF8]">
+        <div class="max-w-5xl mx-auto bg-white rounded-3xl overflow-hidden shadow-brand-soft border border-primary/5">
+            <div class="grid md:grid-cols-2">
+                <!-- Contact Form Area -->
+                <div class="p-8 md:p-12">
+                    <span class="text-secondary text-xs font-semibold tracking-widest uppercase mb-2 block">Cita</span>
+                    <h2 class="font-['Cormorant_Garamond'] text-3xl md:text-4xl font-medium text-primary mb-2">{{cta_titulo}}</h2>
+                    {{#tiene_cta_subtexto}}<p class="text-sm text-[#2B2B2B]/60 mb-8">{{cta_subtexto}}</p>{{/tiene_cta_subtexto}}
+
+                    <form class="space-y-4">
+                        <div>
+                            <input type="text" placeholder="Su Nombre" class="w-full bg-[#FAFAF8] border-b border-primary/20 px-4 py-3 text-sm text-primary placeholder-primary/40 transition focus:border-primary focus:bg-primary/5">
+                        </div>
+                        <div>
+                            <input type="tel" placeholder="Número de Teléfono" class="w-full bg-[#FAFAF8] border-b border-primary/20 px-4 py-3 text-sm text-primary placeholder-primary/40 transition focus:border-primary focus:bg-primary/5">
+                        </div>
+
+                        <!-- Custom Select -->
+                        <div class="relative">
+                            <select class="w-full bg-[#FAFAF8] border-b border-primary/20 px-4 py-3 text-sm text-primary appearance-none cursor-pointer focus:bg-primary/5">
+                                <option>Consulta General</option>
+                                {{#servicios}}<option>{{nombre}}</option>{{/servicios}}
+                            </select>
+                            <iconify-icon icon="solar:alt-arrow-down-linear" class="absolute right-4 top-3.5 text-primary/50 pointer-events-none"></iconify-icon>
+                        </div>
+
+                        <button type="button" class="w-full bg-primary text-on-primary h-12 rounded-lg text-sm font-medium tracking-wide mt-4 hover:brightness-90 transition shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                            Solicitar Cita
+                            <iconify-icon icon="solar:calendar-add-linear" width="18"></iconify-icon>
+                        </button>
+                    </form>
+
+                    <p class="mt-6 text-xs text-center text-[#2B2B2B]/40">Pacientes de toda la región confían en nuestro cuidado.</p>
+                </div>
+
+                <!-- Info Area -->
+                <div class="bg-primary/5 p-8 md:p-12 flex flex-col justify-between border-l border-primary/5">
+                    <div>
+                        <h3 class="font-['Cormorant_Garamond'] text-2xl font-medium text-primary mb-6">Información de la Clínica</h3>
+
+                        <div class="space-y-6">
+                            {{#tiene_direccion}}
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-secondary shadow-sm shrink-0">
+                                    <iconify-icon icon="solar:map-point-linear" width="20"></iconify-icon>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-primary uppercase tracking-wide mb-1">Ubicación</p>
+                                    <p class="text-sm text-[#2B2B2B]/70">{{direccion}}</p>
+                                </div>
+                            </div>
+                            {{/tiene_direccion}}
+
+                            {{#tiene_telefono}}
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-secondary shadow-sm shrink-0">
+                                    <iconify-icon icon="solar:phone-calling-linear" width="20"></iconify-icon>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-primary uppercase tracking-wide mb-1">Contacto</p>
+                                    <p class="text-sm text-[#2B2B2B]/70">{{telefono}}</p>
+                                    {{#tiene_email}}<p class="text-sm text-[#2B2B2B]/70">{{email}}</p>{{/tiene_email}}
+                                </div>
+                            </div>
+                            {{/tiene_telefono}}
+
+                            {{#tiene_horario}}
+                            <div class="flex gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-secondary shadow-sm shrink-0">
+                                    <iconify-icon icon="solar:clock-circle-linear" width="20"></iconify-icon>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-primary uppercase tracking-wide mb-1">Horario{{#horario_referencial}} (referencial){{/horario_referencial}}</p>
+                                    {{#horario_lineas}}<p class="text-sm text-[#2B2B2B]/70">{{.}}</p>{{/horario_lineas}}
+                                </div>
+                            </div>
+                            {{/tiene_horario}}
+
+                            {{#tiene_doctor_cita}}
+                            <div class="flex gap-4 pt-4 border-t border-primary/10">
+                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-secondary shadow-sm shrink-0">
+                                    <iconify-icon icon="solar:user-circle-linear" width="20"></iconify-icon>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-primary">{{doctor_cita.nombre}}</p>
+                                    <p class="text-xs text-[#2B2B2B]/50">{{doctor_cita.rol}}</p>
+                                </div>
+                            </div>
+                            {{/tiene_doctor_cita}}
+                        </div>
+                    </div>
+
+                    <!-- Map Placeholder (texto, sin iframe ni imagen: identidad preservada) -->
+                    {{#tiene_direccion}}
+                    <div class="mt-8 h-32 w-full bg-white rounded-xl border border-primary/10 flex items-center justify-center text-primary/30 text-xs uppercase tracking-widest">
+                        <iconify-icon icon="solar:map-linear" width="24" class="mr-2"></iconify-icon> Mapa de Google Insertado
+                    </div>
+                    {{/tiene_direccion}}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-primary/10 pt-16 pb-8 px-6">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-12">
+            <div class="md:col-span-1">
+                <a href="#" class="font-['Cormorant_Garamond'] text-2xl font-semibold text-primary uppercase block mb-4">{{nombre}}</a>
+                <p class="text-sm text-[#2B2B2B]/60 leading-relaxed mb-6">
+                    {{footer_bio}}
+                </p>
+                {{#tiene_redes}}
+                <div class="flex gap-4">
+                    {{#tiene_facebook}}<a href="{{facebook_url}}" target="_blank" rel="noopener" class="text-primary hover:text-secondary transition"><iconify-icon icon="mdi:facebook" width="20"></iconify-icon></a>{{/tiene_facebook}}
+                    {{#tiene_instagram}}<a href="{{instagram_url}}" target="_blank" rel="noopener" class="text-primary hover:text-secondary transition"><iconify-icon icon="mdi:instagram" width="20"></iconify-icon></a>{{/tiene_instagram}}
+                    {{#tiene_whatsapp}}<a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="text-primary hover:text-secondary transition"><iconify-icon icon="mdi:whatsapp" width="20"></iconify-icon></a>{{/tiene_whatsapp}}
+                </div>
+                {{/tiene_redes}}
+            </div>
+
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-widest text-primary mb-6">Menú</h4>
+                <ul class="space-y-3 text-sm text-[#2B2B2B]/70">
+                    <li><a href="#" class="hover:text-secondary transition">Inicio</a></li>
+                    <li><a href="#about" class="hover:text-secondary transition">Sobre el Doctor</a></li>
+                    <li><a href="#services" class="hover:text-secondary transition">Tratamientos</a></li>
+                    <li><a href="#reviews" class="hover:text-secondary transition">Testimonios de Pacientes</a></li>
+                </ul>
+            </div>
+
+            {{#tiene_servicios}}
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-widest text-primary mb-6">Servicios</h4>
+                <ul class="space-y-3 text-sm text-[#2B2B2B]/70">
+                    {{#servicios}}<li>{{nombre}}</li>{{/servicios}}
+                </ul>
+            </div>
+            {{/tiene_servicios}}
+
+             {{#tiene_telefono}}
+             <div>
+                <h4 class="text-xs font-semibold uppercase tracking-widest text-primary mb-6">Urgencias</h4>
+                <p class="text-sm text-[#2B2B2B]/70 mb-4">¿Tiene dolor? Llámenos de inmediato.</p>
+                <a href="tel:{{telefono_href}}" class="inline-flex items-center gap-2 text-primary font-medium text-sm hover:underline">
+                    <iconify-icon icon="solar:phone-calling-linear"></iconify-icon>
+                    {{telefono}}
+                </a>
+            </div>
+            {{/tiene_telefono}}
+        </div>
+
+        <div class="max-w-7xl mx-auto border-t border-primary/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[#2B2B2B]/40">
+            <p>© {{anio}} {{nombre}}. Todos los derechos reservados.</p>
+            <p>{{#demo_es_ejemplo}}Página de demostración — contenido de muestra{{/demo_es_ejemplo}}{{^demo_es_ejemplo}}Diseñado con Cuidado.{{/demo_es_ejemplo}}</p>
+        </div>
+    </footer>
+
+    <!-- Sticky Mobile Call Button -->
+    {{#tiene_telefono}}
+    <div class="fixed bottom-6 right-6 md:hidden z-40">
+        <a href="tel:{{telefono_href}}" class="w-14 h-14 bg-secondary rounded-full text-on-secondary shadow-lg shadow-secondary/40 flex items-center justify-center animate-bounce">
+            <iconify-icon icon="solar:phone-calling-bold" width="24"></iconify-icon>
+        </a>
+    </div>
+    {{/tiene_telefono}}
+
+    <!-- Mobile Menu Script -->
+    <script>
+        const menuBtn = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const closeBtn = document.getElementById('menu-close');
+        const links = document.querySelectorAll('.mobile-link');
+
+        function toggleMenu() {
+            const isClosed = mobileMenu.classList.contains('translate-x-full');
+            if (isClosed) {
+                mobileMenu.classList.remove('translate-x-full');
+            } else {
+                mobileMenu.classList.add('translate-x-full');
+            }
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+        closeBtn.addEventListener('click', toggleMenu);
+
+        // Close menu when a link is clicked
+        links.forEach(link => {
+            link.addEventListener('click', toggleMenu);
+        });
+    </script>
+
+
+</body></html>
