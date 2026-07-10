@@ -110,3 +110,40 @@ export const RUBRO_TEMPLATE_ORDER: Record<Rubro, string> = {
   estetica: "luxury",
   otro: "credencial",
 };
+
+/**
+ * WEB_LABELS — etiqueta legible + publico objetivo de cada plantilla WEB del
+ * pool, para el chip del visor swipeable (`src/templates/<rubro>/_viewer.html`).
+ * Es el equivalente web de `CARD_LABELS`: la clave es el nombre de archivo sin
+ * extension ("doc-clasico.html" -> "doc-clasico"). Una plantilla nueva sin
+ * entrada aca cae al fallback (nombre de archivo capitalizado, sin publico
+ * objetivo) — ver `_BRIEF-web-doctor.md` §9.
+ */
+export const WEB_LABELS: Record<string, { name: string; audience: string }> = {
+  "doc-clasico": { name: "Clásico", audience: "Médicos y consultorios" },
+  "doc-perfil": { name: "Perfil", audience: "Profesional individual · CV" },
+  "doc-lujo": { name: "Lujo", audience: "Especialistas premium" },
+  "doc-moderno": { name: "Moderno", audience: "Clínicas dentales" },
+  "doc-limpio": { name: "Limpio", audience: "Clínicas con equipo" },
+  "doc-familiar": { name: "Familiar", audience: "Medicina familiar" },
+  "doc-urgencias": { name: "Urgencias 24h", audience: "Urgencias y disponibilidad" },
+};
+
+/**
+ * WEB_TEMPLATE_ORDER — que plantilla WEB abre PRIMERO en el visor segun el
+ * rubro del lead (equivalente web de `RUBRO_TEMPLATE_ORDER`). La clave del
+ * valor matchea el nombre de archivo sin extension dentro de la carpeta del
+ * rubro (`rubroConfig(rubro).webTemplate`). Si la plantilla referenciada no
+ * esta en el pool, `orderWebPoolByRubro` (build-web.ts) conserva el orden
+ * alfabetico sin romper. Hoy solo `doctor` tiene carpeta de plantillas web;
+ * los demas rubros quedan apuntando al mismo diseno de entrada para cuando
+ * su carpeta exista.
+ */
+export const WEB_TEMPLATE_ORDER: Record<Rubro, string> = {
+  doctor: "doc-clasico",
+  veterinario: "doc-clasico",
+  nutriologo: "doc-clasico",
+  barberia: "doc-clasico",
+  estetica: "doc-clasico",
+  otro: "doc-clasico",
+};

@@ -58,7 +58,7 @@
     .brand-btn { background: var(--primary); color: var(--on-primary); }
     .brand-btn:hover { filter: brightness(0.92); }
 
-    /* Patron de la banda de mision, inline (antes: transparenttextures.com, dominio externo prohibido). */
+    /* Patron de la banda de mision, inline (antes venia de un dominio externo de texturas, prohibido). */
     .mission-pattern {
       background-image: radial-gradient(circle, rgba(255, 255, 255, 0.55) 1px, transparent 1.6px);
       background-size: 18px 18px;
@@ -117,7 +117,7 @@
       <!-- CTA & Mobile Toggle -->
       <div class="flex items-center gap-4">
         {{#tiene_telefono}}
-        <a href="{{telefono_href}}" class="hidden md:flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-slate-800 transition-all hover:shadow-lg active:scale-95">
+        <a href="tel:{{telefono_href}}" class="hidden md:flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-slate-800 transition-all hover:shadow-lg active:scale-95">
           <iconify-icon icon="solar:phone-calling-linear" width="18"></iconify-icon>
           <span>{{telefono}}</span>
         </a>
@@ -137,7 +137,7 @@
         {{#tiene_servicios}}<a href="#services" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Servicios</a>{{/tiene_servicios}}
         <a href="#contact" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Contacto</a>
         {{#tiene_telefono}}
-        <a href="{{telefono_href}}" class="brand-btn text-center w-full py-3 rounded-lg font-medium text-sm mt-2">
+        <a href="tel:{{telefono_href}}" class="brand-btn text-center w-full py-3 rounded-lg font-medium text-sm mt-2">
           {{hero_cta}}
         </a>
         {{/tiene_telefono}}
@@ -168,7 +168,7 @@
         {{/tiene_hero_subtitulo}}
         <div class="flex flex-col sm:flex-row gap-4 pt-4">
           {{#tiene_telefono}}
-          <a href="{{telefono_href}}" class="brand-btn flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-medium transition-all hover:shadow-xl active:scale-95">
+          <a href="tel:{{telefono_href}}" class="brand-btn flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-medium transition-all hover:shadow-xl active:scale-95">
             <iconify-icon icon="solar:phone-calling-linear" width="20"></iconify-icon>
             {{hero_cta}} &ndash; {{telefono}}
           </a>
@@ -330,7 +330,7 @@
           {{/educacion_paciente}}
         </div>
         {{#tiene_telefono}}
-        <a href="{{telefono_href}}" class="brand-btn inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-all hover:shadow-lg">
+        <a href="tel:{{telefono_href}}" class="brand-btn inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-all hover:shadow-lg">
           <iconify-icon icon="solar:phone-calling-linear" width="20"></iconify-icon>
           {{hero_cta}} &ndash; {{telefono}}
         </a>
@@ -392,7 +392,7 @@
               <iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon>
               <h3 class="font-semibold text-slate-900">Tel&eacute;fono</h3>
             </div>
-            <a href="{{telefono_href}}" class="block text-slate-600 text-sm pl-9 hover:opacity-80 transition-opacity">{{telefono}}</a>
+            <a href="tel:{{telefono_href}}" class="block text-slate-600 text-sm pl-9 hover:opacity-80 transition-opacity">{{telefono}}</a>
           </div>
           {{/tiene_telefono}}
 
@@ -408,7 +408,7 @@
 
           {{#tiene_telefono}}
           <div class="pt-2">
-            <a href="{{telefono_href}}" class="brand-btn w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-colors">
+            <a href="tel:{{telefono_href}}" class="brand-btn w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-colors">
               Llamar para Reservar
             </a>
           </div>
@@ -464,7 +464,7 @@
           <h4 class="font-semibold text-slate-900 text-sm">Contacto</h4>
           <ul class="space-y-2 text-sm text-slate-500">
             {{#tiene_direccion}}<li>{{direccion}}</li>{{/tiene_direccion}}
-            {{#tiene_telefono}}<li><a href="{{telefono_href}}" class="hover:text-primary transition-colors">{{telefono}}</a></li>{{/tiene_telefono}}
+            {{#tiene_telefono}}<li><a href="tel:{{telefono_href}}" class="hover:text-primary transition-colors">{{telefono}}</a></li>{{/tiene_telefono}}
             {{#tiene_email}}<li><a href="mailto:{{email}}" class="break-all hover:text-primary transition-colors">{{email}}</a></li>{{/tiene_email}}
           </ul>
         </div>
