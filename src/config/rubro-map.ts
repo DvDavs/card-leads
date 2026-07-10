@@ -15,6 +15,11 @@ import type { Rubro } from "../lib/schema.js";
 export interface RubroConfig {
   webTemplate: string; // carpeta bajo src/templates/
   defaultServices: string[];
+  // defaultHours: horario tipico por rubro. La tarjeta casi nunca lo trae; la
+  // etapa `enrich` lo usa como fallback DETERMINISTA para `contact.hours` cuando
+  // falta (NO lo inventa el LLM, mismo criterio que defaultServices) y lo anota
+  // en meta.needs para que el humano lo confirme/ajuste.
+  defaultHours: string;
   proposalIdeas: string[];
 }
 
@@ -22,31 +27,37 @@ const CONFIG: Record<Rubro, RubroConfig> = {
   doctor: {
     webTemplate: "doctor",
     defaultServices: ["Consulta", "Estudios", "Seguimiento"],
+    defaultHours: "Lunes a Viernes 9:00-18:00, Sabado 9:00-14:00",
     proposalIdeas: ["Agenda de citas online", "Recordatorios por WhatsApp"],
   },
   barberia: {
     webTemplate: "barberia",
     defaultServices: ["Corte", "Barba", "Afeitado"],
+    defaultHours: "Martes a Sabado 10:00-20:00",
     proposalIdeas: ["Reserva de turnos", "Programa de fidelidad"],
   },
   estetica: {
     webTemplate: "estetica",
     defaultServices: ["Facial", "Manicura", "Depilacion"],
+    defaultHours: "Lunes a Sabado 10:00-19:00",
     proposalIdeas: ["Catalogo de servicios", "Reserva online"],
   },
   veterinario: {
     webTemplate: "generico",
     defaultServices: ["Consulta", "Vacunacion", "Urgencias"],
+    defaultHours: "Lunes a Sabado 9:00-19:00, Urgencias 24h",
     proposalIdeas: ["Carnet digital de mascotas", "Recordatorio de vacunas"],
   },
   nutriologo: {
     webTemplate: "generico",
     defaultServices: ["Plan alimenticio", "Seguimiento", "Consulta"],
+    defaultHours: "Lunes a Viernes 9:00-18:00",
     proposalIdeas: ["Portal de planes", "Seguimiento por WhatsApp"],
   },
   otro: {
     webTemplate: "generico",
     defaultServices: [],
+    defaultHours: "Lunes a Viernes 9:00-18:00",
     proposalIdeas: ["Presencia web basica", "Contacto directo por WhatsApp"],
   },
 };

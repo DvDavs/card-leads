@@ -159,6 +159,23 @@ export function applyCorrection(
 }
 
 /**
+ * setAttr — funcion PURA: setea/actualiza/borra UNA credencial de
+ * `business.attrs`. Las credenciales (cedula, universidad, certificacion) viven
+ * en ese mapa libre `Record<string,string>`; como sus claves son dinamicas no
+ * caben en el union tipado de `LeadFieldPath`, se editan por aca.
+ * - `value` string       -> setea la clave (recortado).
+ * - `value` null / vacio -> BORRA la clave (la credencial se quita).
+ * Nunca muta el lead de entrada. No toca status ni disco.
+ */
+export function setAttr(lead: Lead, key: string, value: string | null): Lead {
+  const attrs = { ...lead.business.attrs };
+  const v = normStr(value);
+  if (v === undefined) delete attrs[key];
+  else attrs[key] = v;
+  return { ...lead, business: { ...lead.business, attrs } };
+}
+
+/**
  * remainingNeeds — recalcula SOLO los huecos de datos reales (no los pasos de
  * proceso). Se usa al cerrar verify para limpiar de meta.needs lo que el humano
  * ya resolvio (p.ej. si ahora hay email, desaparece "falta email").
@@ -309,6 +326,23 @@ async function promptStringField(rl: Rl, lead: Lead, def: FieldDef): Promise<Lea
   return applyCorrection(lead, def.path, ans);
 }
 
+/**
+ * promptAttrField — recorre UNA credencial de `business.attrs`. Siempre marcada
+ * de RIESGO (son datos verificables: cedulas, universidad, certificaciones; una
+ * cedula mal transcrita es peor que ausente). La CLAVE es la etiqueta legible.
+ * Enter mantiene, '-' borra la credencial, cualquier otra cosa la corrige.
+ */
+async function promptAttrField(rl: Rl, lead: Lead, key: string): Promise<Lead> {
+  const cur = val(lead.business.attrs[key]);
+  console.log(`\n─ ${key}  ⚠ VERIFICAR CONTRA LA TARJETA`);
+  console.log(`  actual: ${cur ?? "(vacio)"}`);
+  console.log(`  [Enter]=mantener  '${CLEAR_KEY}'=borrar  o escribi el valor corregido`);
+  const ans = (await rl.question("  > ")).trim();
+  if (ans === "") return lead;
+  if (ans === CLEAR_KEY) return setAttr(lead, key, null);
+  return setAttr(lead, key, ans);
+}
+
 /** Recorre rubro: valida contra el enum y re-pregunta si el valor no esta. */
 async function promptRubro(rl: Rl, lead: Lead): Promise<Lead> {
   console.log(`\n─ Rubro`);
@@ -370,6 +404,11 @@ function printSummary(lead: Lead): void {
   const pal = lead.brand.palette ?? [];
   if (pal.length) console.log(`  Paleta:    ${pal.join(", ")}`);
   console.log(`  Servicios: ${lead.content.services.length ? lead.content.services.join(", ") : "(vacio)"}`);
+  const attrKeys = Object.keys(lead.business.attrs);
+  if (attrKeys.length) {
+    console.log(`  Credenciales:`);
+    for (const k of attrKeys) console.log(`    ${k}: ${lead.business.attrs[k]}`);
+  }
 }
 
 /**
@@ -405,6 +444,14 @@ export async function verify(slug: string): Promise<Lead | null> {
     // telefonos: lista de riesgo (el modelo cambia digitos). Va primero.
     draft = await promptListField(rl, draft, "contact.phones", "Telefonos", "VERIFICAR CONTRA LA TARJETA");
     for (const def of RISKY_FIELDS) draft = await promptStringField(rl, draft, def);
+
+    // credenciales (attrs): campo de riesgo. Solo se recorren las que capturo el
+    // modelo (claves dinamicas). El humano confirma cada cedula/certificacion.
+    const attrKeys = Object.keys(draft.business.attrs);
+    if (attrKeys.length) {
+      console.log("\n── Credenciales (verifica cada numero contra la tarjeta) ──");
+      for (const key of attrKeys) draft = await promptAttrField(rl, draft, key);
+    }
 
     console.log("\n── Campos generales ──");
     draft = await promptStringField(rl, draft, NAME);

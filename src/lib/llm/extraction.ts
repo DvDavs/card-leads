@@ -24,6 +24,14 @@ export const ExtractionSchema = z.object({
       name: str,
       person_name: str,
       tagline: str,
+      // attrs: credenciales PROFESIONALES libres que la tarjeta muestre (cedula,
+      // universidad, certificacion). Valor `z.any()` A PROPOSITO: una cedula es un
+      // numero y el modelo puede mandarla como number o lista; con z.string() eso
+      // haria fallar TODO el parse y se perderia la extraccion entera (el peor
+      // caso para un campo de riesgo). Se coacciona a string en normalizeAttrs
+      // (stages/extract), que descarta lo no representable. Clave = etiqueta
+      // legible (se muestra tal cual en las cards).
+      attrs: z.record(z.any()).nullish(),
     })
     .nullish(),
   // el modelo puede sugerir/corregir el rubro que se puso al ingerir

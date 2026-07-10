@@ -21,6 +21,7 @@ export const StatusSchema = z.enum([
   "extracted", // LLM lleno datos, ESPERA revision humana
   "verified", // el humano dio OK a los datos
   "linktree_built",
+  "enriched", // copy de marketing generado por IA (web-ready), ESPERA build-web
   "web_built",
   "deployed",
   "proposal_ready", // propuesta generada, ESPERA OK
@@ -64,8 +65,57 @@ export const ContactSchema = z.preprocess(
     email: z.string().optional(),
     address: z.string().optional(),
     website: z.string().optional(),
+    // hours: horario de atencion. NO viene en la tarjeta casi nunca; la etapa
+    // `enrich` lo rellena con el default DETERMINISTA por rubro
+    // (rubroConfig.defaultHours) cuando falta y lo anota en meta.needs para que
+    // el humano lo confirme. No lo inventa el LLM (mismo principio que
+    // defaultServices). Opcional => data.json viejos siguen validando.
+    hours: z.string().optional(),
   }),
 );
+
+/**
+ * GeneratedCopySchema — el bloque de copy de MARKETING que produce la etapa
+ * `enrich`. Todo es texto GENERADO por el LLM a partir de los datos YA
+ * verificados (no medido, no leido de la tarjeta): headlines, bio, value props,
+ * FAQs, testimonios de ejemplo, CTA. Vive SEPARADO de los datos reales
+ * (`business`/`contact`/`socials`/`brand`) a proposito, para que sea obvio que
+ * es generado y para que a futuro `verify` pueda mostrarlo/editarlo. Se genera
+ * UNA vez y se persiste; `build-web` lee de aca, no regenera (mismo lead, misma
+ * web, sin costo ni no-determinismo). El LLM NUNCA aporta datos de contacto,
+ * numeros duros (stats) ni credenciales: solo prosa.
+ */
+export const GeneratedCopySchema = z.object({
+  hero_headline: z.string(), // H1, frase corta de marketing
+  hero_subheadline: z.string(), // pitch bajo el H1, 1-2 frases
+  hero_badge: z.string().optional(), // pill corta ("Aceptando pacientes")
+  bio: z.string(), // 1 parrafo sobre el profesional/negocio
+  pull_quote: z.string().optional(), // cita en 1ra persona, 1 frase
+  // value_props: reemplazan a los "stats" (numeros inventados, se descartaron a
+  // proposito): claims CUALITATIVOS, no cuantitativos.
+  value_props: z.array(z.object({ title: z.string(), description: z.string() })),
+  // service_descriptions: una descripcion por servicio REAL. El nombre debe
+  // matchear un servicio de `content.services` (autoridad = verify); la etapa
+  // descarta cualquier descripcion cuyo nombre no exista. El LLM NO cambia la
+  // lista de servicios, solo le pega texto.
+  service_descriptions: z.array(z.object({ name: z.string(), description: z.string() })),
+  faqs: z.array(z.object({ question: z.string(), answer: z.string() })),
+  // testimonials: reseñas de EJEMPLO (autor generico). Fabricadas: se registran
+  // en `sample_fields` para que verify las marque como ejemplo editable.
+  testimonials: z.array(
+    z.object({ quote: z.string(), author: z.string(), role: z.string().optional() }),
+  ),
+  cta_headline: z.string(),
+  cta_subtext: z.string(),
+  footer_tagline: z.string(),
+  meta_title: z.string().optional(), // <title> para SEO
+  meta_description: z.string().optional(),
+  generated_at: z.string(), // ISO — cuando se genero el copy
+  // sample_fields: nombres de campos cuyo contenido es EJEMPLO/placeholder (hoy
+  // "testimonials"), no dato real. Para que verify/publicacion los marquen.
+  sample_fields: z.array(z.string()).optional(),
+});
+export type GeneratedCopy = z.infer<typeof GeneratedCopySchema>;
 
 export const LeadSchema = z.object({
   slug: z.string().min(1), // llave. ej "dr-perez-cardiologo"
@@ -146,6 +196,10 @@ export const LeadSchema = z.object({
     services: z.array(z.string()),
     about: z.string().optional(),
     highlights: z.array(z.string()).optional(),
+    // generated_copy: copy de marketing generado por la etapa `enrich`. Ver
+    // GeneratedCopySchema. Opcional => data.json previos a enrich siguen
+    // validando (back-compat, no hace falta migracion).
+    generated_copy: GeneratedCopySchema.optional(),
   }),
 
   generated: z.object({

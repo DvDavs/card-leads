@@ -1,12 +1,13 @@
 import type { ExtractionResult } from "./extraction.js";
+import type { EnrichInput, EnrichmentResult } from "./enrichment.js";
 
 /**
- * llm/index.ts — la interfaz comun de vision + el switch por proveedor.
+ * llm/index.ts — la interfaz comun del proveedor LLM + el switch por proveedor.
  *
  * Cambiar de proveedor = cambiar la env var LLM_PROVIDER, nada mas. Todos los
  * proveedores implementan la MISMA interfaz y devuelven la MISMA forma
- * (ExtractionResult), validada por el MISMO schema (parseExtraction). El caller
- * (la etapa `extract`) no sabe ni le importa que modelo respondio.
+ * (ExtractionResult / EnrichmentResult), validada por el MISMO schema. El caller
+ * (las etapas `extract` / `enrich`) no sabe ni le importa que modelo respondio.
  */
 
 export interface VisionProvider {
@@ -21,6 +22,14 @@ export interface VisionProvider {
    *                heuristica).
    */
   extractCard(front: string, back?: string, palette?: string[]): Promise<ExtractionResult>;
+  /**
+   * Genera el copy de marketing (headlines, bio, FAQs, value props, testimonios
+   * de ejemplo, CTA) a partir de los datos YA verificados del lead. Texto-only:
+   * NO usa las fotos. Devuelve la salida YA validada (EnrichmentResult), misma
+   * forma para todo proveedor. El modelo nunca aporta datos de contacto ni
+   * numeros duros: eso lo prohibe el prompt.
+   */
+  enrichCopy(input: EnrichInput): Promise<EnrichmentResult>;
 }
 
 export type ProviderName = "openai" | "gemini";

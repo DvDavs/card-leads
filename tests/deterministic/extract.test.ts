@@ -280,4 +280,73 @@ describe("applyExtraction", () => {
       expect(lead.meta.needs.join(" | ")).not.toContain("servicios sugeridos por rubro");
     });
   });
+
+  describe("credenciales medicas (business.attrs)", () => {
+    it("parseExtraction NO falla si una cedula viene como number (z.any, se coacciona luego)", () => {
+      // con z.string() por valor esto tiraria TODO el parse y se perderia la
+      // extraccion entera; el schema tolerante lo acepta y lo arregla al mapear.
+      const sample = {
+        ...SAMPLE,
+        business: { ...SAMPLE.business, attrs: { "Cédula profesional": 12007041 } },
+      };
+      expect(parseExtraction(JSON.stringify(sample)).ok).toBe(true);
+    });
+
+    it("mapea attrs: coacciona number a string, joinea listas y trimea", () => {
+      const ex = parseOk({
+        ...SAMPLE,
+        rubro: "doctor",
+        business: {
+          ...SAMPLE.business,
+          attrs: {
+            "Cédula profesional": 12007041,
+            "Cédula de especialidad": ["13937097", "14886103"],
+            "Universidad": "  UNAM  ",
+            vacio: "   ",
+          },
+        },
+      });
+      const lead = applyExtraction(ingestedLead({ rubro: "doctor" }), ex);
+      expect(lead.business.attrs["Cédula profesional"]).toBe("12007041");
+      expect(lead.business.attrs["Cédula de especialidad"]).toBe("13937097, 14886103");
+      expect(lead.business.attrs["Universidad"]).toBe("UNAM");
+      expect(lead.business.attrs.vacio).toBeUndefined(); // valor vacio se descarta
+      expect(() => parseLead(lead)).not.toThrow();
+    });
+
+    it("fusiona: conserva attrs previos y el modelo agrega/actualiza por clave", () => {
+      const base = ingestedLead({
+        rubro: "doctor",
+        business: { name: "", attrs: { Universidad: "UABJO" } },
+      });
+      const lead = applyExtraction(
+        base,
+        parseOk({ business: { attrs: { "Cédula profesional": "12007041" } } }),
+      );
+      expect(lead.business.attrs["Universidad"]).toBe("UABJO"); // conservado
+      expect(lead.business.attrs["Cédula profesional"]).toBe("12007041"); // agregado
+    });
+
+    it("con credenciales, anota en needs que hay que VERIFICARLAS contra la tarjeta", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "doctor" }),
+        parseOk({ rubro: "doctor", business: { attrs: { "Cédula profesional": "12007041" } } }),
+      );
+      expect(lead.meta.needs.join(" | ")).toContain("credenciales capturadas");
+    });
+
+    it("doctor SIN credenciales: avisa que no se detectaron (posible lectura fallida)", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "doctor" }),
+        parseOk({ rubro: "doctor", business: { attrs: {} } }),
+      );
+      expect(lead.meta.needs.join(" | ")).toContain("sin credenciales detectadas");
+    });
+
+    it("rubro NO-doctor sin credenciales: attrs vacio y NINGUN aviso de credenciales", () => {
+      const lead = applyExtraction(ingestedLead({ rubro: "barberia" }), parseOk(SAMPLE));
+      expect(lead.business.attrs).toEqual({});
+      expect(lead.meta.needs.join(" | ")).not.toContain("credenciales");
+    });
+  });
 });

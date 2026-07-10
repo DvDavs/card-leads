@@ -21,6 +21,43 @@ function val(s: string | null | undefined): string | undefined {
 }
 
 /**
+ * normalizeAttrs — funcion PURA: limpia el mapa de credenciales libres
+ * (business.attrs) que devuelve el modelo. Es TOLERANTE a proposito: el schema
+ * acepta `z.any()` por valor (una cedula numerica o una lista no debe tirar el
+ * parse y perder TODA la extraccion), asi que aca se coacciona cada valor a un
+ * string mostrable:
+ * - string          -> tal cual (recortado)
+ * - number          -> String()
+ * - array           -> join(", ") de sus strings/numbers (varias cedulas, etc.)
+ * - null / objeto / boolean -> se descarta (no es una credencial mostrable)
+ * Recorta claves y valores y descarta los que queden vacios. El resultado
+ * siempre cumple `Record<string,string>` (lo que exige el schema del Lead).
+ */
+export function normalizeAttrs(
+  raw: Record<string, unknown> | null | undefined,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [rawKey, rawVal] of Object.entries(raw)) {
+    const key = rawKey.trim();
+    if (!key) continue;
+    let value: string | undefined;
+    if (typeof rawVal === "string") value = rawVal;
+    else if (typeof rawVal === "number") value = String(rawVal);
+    else if (Array.isArray(rawVal)) {
+      value = rawVal
+        .filter((v) => typeof v === "string" || typeof v === "number")
+        .map((v) => String(v).trim())
+        .filter(Boolean)
+        .join(", ");
+    }
+    const v = value?.trim();
+    if (v) out[key] = v;
+  }
+  return out;
+}
+
+/**
  * computeNeeds — recalcula los huecos que quedan para el checkpoint humano.
  * Se recalcula entero (no se hace diff) para que refleje el estado real tras la
  * extraccion. Cada campo que el modelo no pudo determinar queda anotado aca.
@@ -47,6 +84,21 @@ function computeNeeds(
   // colorthief no pudo medir colores (imagen rara o solo texto sobre blanco):
   // no es un error, el humano los revisa/carga a mano en verify.
   if (noColors) needs.push("revisar colores en verify");
+
+  // credenciales (business.attrs): son datos verificables SENSIBLES (cedulas,
+  // universidad, certificaciones). Si el modelo capturo alguna, se marca como
+  // campo de RIESGO igual que los telefonos: el humano confirma cada numero
+  // contra la tarjeta en verify. Para rubro doctor, si NO se detecto ninguna,
+  // se avisa: una tarjeta medica casi siempre trae cedula, asi que la ausencia
+  // suele ser una lectura fallida que conviene revisar.
+  const attrKeys = Object.keys(lead.business.attrs);
+  if (attrKeys.length) {
+    needs.push(
+      "credenciales capturadas (cedula/universidad/certificacion), VERIFICAR cada numero contra la tarjeta digito por digito",
+    );
+  } else if (lead.rubro === "doctor") {
+    needs.push("sin credenciales detectadas (cedula/universidad), revisar la tarjeta");
+  }
 
   if (lead.content.services.length === 0) {
     needs.push("faltan servicios");
@@ -102,6 +154,10 @@ export function applyExtraction(
     name: val(b.name) ?? lead.business.name,
     ...(val(b.person_name) ? { person_name: val(b.person_name)! } : {}),
     ...(val(b.tagline) ? { tagline: val(b.tagline)! } : {}),
+    // credenciales: se FUSIONAN (no se reemplaza). El modelo agrega/actualiza por
+    // clave; un attr ya cargado en una corrida previa no se pierde. normalizeAttrs
+    // ya descarto lo vacio/no mostrable, asi que nunca pisa con basura.
+    attrs: { ...lead.business.attrs, ...normalizeAttrs(b.attrs) },
   };
 
   const phones = (c.phones ?? []).map((v) => v.trim()).filter(Boolean);

@@ -11,6 +11,7 @@
     "cli": "tsx src/cli.ts",
     "ingest": "tsx src/cli.ts ingest",
     "extract": "tsx src/cli.ts extract",
+    "enrich": "tsx src/cli.ts enrich",
     "build-cards": "tsx src/cli.ts build-cards",
     "test": "vitest run",
     "test:watch": "vitest",

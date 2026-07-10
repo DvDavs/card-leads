@@ -32,10 +32,13 @@ que se le muestra al negocio como propuesta comercial.
   teléfonos, direcciones, email). Nunca commitear nada de ahí.
 - **Máquina de estados por `status`** (`src/lib/schema.ts`, `StatusSchema`),
   secuencia real que recorre un lead:
-  `ingested → extracted → verified → linktree_built → web_built → deployed → proposal_ready → packaged`
+  `ingested → extracted → verified → linktree_built → enriched → web_built → deployed → proposal_ready → packaged`
   (más `error` como estado de escape). Cada etapa exige el status anterior y
   avanza al siguiente; si el status no matchea, la etapa lanza y no toca
-  disco.
+  disco. Excepción: `build-cards` (`→ linktree_built`) y `enrich` (`→
+  enriched`) son ramas HERMANAS, ambas con guard tolerante `>= verified`, para
+  no acoplar la rama de digital cards con la del copy web; ninguna retrocede el
+  status si el lead ya estaba más adelante.
 - **Principio rector: lo determinista va en código, lo interpretativo va al
   LLM.**
   - Texto de la tarjeta (nombre, teléfonos, redes, servicios) → LLM
@@ -65,6 +68,20 @@ que se le muestra al negocio como propuesta comercial.
     para captar la identidad de la tarjeta; `brandWeight` queda como FALLBACK si
     el LLM falla o no hay paleta. Esto respeta el principio rector: medir es
     determinista (código), asignar el rol es interpretativo (LLM).
+  - Copy de MARKETING para la web (bio, FAQs, value props, testimonios de
+    ejemplo, headlines, CTA) → **LLM (Gemini), etapa `enrich`**, porque
+    redactar prosa plausible a partir de datos verificados ES interpretativo.
+    Vive separado en `content.generated_copy` (nunca mezclado con datos
+    reales); el LLM NUNCA aporta contacto ni números duros. Ver la etapa
+    `enrich` más abajo.
+  - Horario de atención cuando la tarjeta NO lo trae → **default fijo por
+    rubro** (`rubroConfig(rubro).defaultHours`, `src/config/rubro-map.ts`), NO
+    el LLM (mismo principio que `defaultServices`). La etapa `enrich` rellena
+    `contact.hours` con ese default si falta y lo anota en `meta.needs`
+    (`"horario sugerido por rubro..."`) para que el humano lo confirme. Los
+    STATS de marketing (números de pacientes/años) se descartaron a propósito:
+    inventar cifras no es interpretar, es fabricar hechos; en su lugar el copy
+    usa `value_props` cualitativos.
   - Relleno de templates (digital cards en `leads/<slug>/dc/*.html`) →
     templating puro (`src/lib/template.ts`), sin LLM.
 - **Checkpoint humano obligatorio (`verify`).** El modelo barato
@@ -92,7 +109,7 @@ Campos principales:
 | `rubro` | Enum: `doctor · barberia · estetica · veterinario · nutriologo · otro`. |
 | `source` | Rutas a `card_front`/`card_back` (relativas a la carpeta del lead), `ingested_at`, `channel` (`telegram`\|`manual`). |
 | `business` | `name` (string, puede quedar vacío hasta `extract`), `person_name`, `tagline`, `attrs` (libre por rubro). |
-| `contact` | `phones` (**lista**, no un solo string — un consultorio puede tener varios), `whatsapp` (uno solo), `email`, `address`, `website`. |
+| `contact` | `phones` (**lista**, no un solo string — un consultorio puede tener varios), `whatsapp` (uno solo), `email`, `address`, `website`, `hours` (horario; casi nunca en la tarjeta — lo rellena `enrich` con el default por rubro, opcional). |
 | `socials` | `facebook`, `instagram`, `tiktok`, `other`. |
 | `brand.palette` | Lista de hex **medidos** de la foto (`extractPalette`, hasta 8). Es la fuente de candidatos que se le pasa al LLM para asignar roles; opcional (data.json viejos no la tienen). |
 | `brand.colors` | Hex por ROL: `primary`/`secondary`/`accent` (los que usan las cards hoy) + `background`/`surface`/`text` (asignados pero aún sin usar en templates). El hex sale de `palette` (medido); el ROL lo asigna el LLM con visión, validado contra la paleta. Todos editables en `verify`. |
@@ -100,6 +117,7 @@ Campos principales:
 | `brand.has_logo`, `brand.font_hint` | Sí los aporta el LLM (`font_hint` es pista: "serif"/"sans"/"display", no exacto). |
 | `brand.logo_path`, `brand.photo_path` | Rutas (relativas al lead o data URI) al logo y a una foto real. Alimentan el avatar circular del pool decorativo con cascada `photo_path` → `logo_path` → inicial. Opcionales; **nunca** una cara/foto generada, solo material real del negocio. |
 | `content.services` | Lista de servicios. Si la tarjeta los enumera, vienen del LLM; si no, `extract` los rellena con el default fijo del rubro (`rubroConfig`) y lo anota en `meta.needs` para que `verify` los confirme. |
+| `content.generated_copy` | Copy de MARKETING generado por `enrich` (LLM), SEPARADO de los datos reales: `hero_headline`/`hero_subheadline`/`hero_badge`, `bio`, `pull_quote`, `value_props` (título+desc), `service_descriptions` (una por servicio REAL; el LLM solo pega texto, no cambia la lista), `faqs`, `testimonials` (EJEMPLO, autor genérico), `cta_headline`/`cta_subtext`, `footer_tagline`, `meta_title`/`meta_description`, `generated_at` (ISO) y `sample_fields` (qué campos son ejemplo, hoy `testimonials`). Opcional (data.json previos a `enrich` no lo tienen). Se genera UNA vez y se persiste; `build-web` lo lee, no regenera. |
 | `generated` | URLs/paths de artefactos generados: `dc_url` (visor swipeable, `dc/index.html`), `cards` (lista `{template, path}`, una por diseño rellenado en `dc/`), `linktree_url` (legado, pre digital-cards), `web_url`, `proposal_path`, `outreach_message`. |
 | `meta.needs` | Huecos pendientes para el checkpoint humano (recalculado en cada etapa, no es un diff acumulado). |
 | `meta.errors` | Errores de la última corrida (p.ej. el modelo no devolvió JSON válido). |
@@ -118,7 +136,8 @@ falta correr nada a mano.
 | `extract` | `ingested` | `extracted` | sí (Gemini) | (1) **Mide** la paleta con `extractPalette` (`colors.ts`, píxeles). (2) Manda las fotos + la paleta al proveedor de visión: el LLM llena `business`/`contact`/`socials`/`content.services` Y **asigna roles de color** eligiendo hex de la paleta. (3) `resolveAssignedColors` valida (hex ∈ paleta); si el LLM no asignó nada válido cae a la heurística `extractBrandColors`. Los hex NUNCA los inventa el LLM. (4) Si el LLM no vio servicios en la tarjeta (`content.services: []`), `applyExtraction` cae al default fijo de `rubroConfig(rubro).defaultServices` (rubro ya corregido por el modelo si aplica) y lo anota en `meta.needs`. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (queda `ingested` para reintentar). |
 | `verify` | `extracted` | `verified` | no | Checkpoint humano interactivo por terminal (`readline`). Recorre primero los campos de riesgo, después los generales; al confirmar (`s`) valida contra `LeadSchema` estricto y recién ahí escribe disco. `n`/Ctrl+C no escribe nada. |
 | `build-cards` | `verified` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `linktree_built` (se mantiene ese nombre de status por compatibilidad; no retrocede si el lead ya estaba más adelante) | no | Recorre **todos** los `*.html` de `src/dc-templates/` (el pool; los que empiezan con `_` se saltan) y rellena cada uno con la vista de `buildCardView`: paleta + `colorsText` (WCAG), WhatsApp derivado de `phones[0]` si falta (`DEFAULT_COUNTRY_CODE = 52`), botón "Guardar contacto" (vCard como data URI) en el diseño `credencial`, dirección → Google Maps, JSON-LD por rubro. Antes de rellenar, **swap de motivos por rubro**: `swapMotif` reemplaza el bloque `MOTIF:START…MOTIF:END` que trae cada diseño decorativo por el del `lead.rubro` (leído de `_motifs.html` vía `parseMotifs`/`loadMotifs`), así todos los diseños que ve el cliente muestran motivos coherentes con su rubro; los diseños sin marcadores quedan intactos (no-op). Escribe `leads/<slug>/dc/<template>.html` por cada diseño más `leads/<slug>/dc/index.html` (visor swipeable, carrusel de iframes), y **espeja** `src/dc-templates/assets/` en `leads/<slug>/dc/assets/` (`copyTreeIntoLead`) para los diseños con imágenes propias (guelaguetza-*). No filtra por rubro: cada lead recibe TODOS los diseños del pool. Agregar un diseño nuevo = tirar un `.html` más en `src/dc-templates/`, sin tocar código (si trae imágenes, van a `src/dc-templates/assets/` y se copian solas). |
-| `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
+| `enrich` | `verified` o posterior (excluye `error`; guard tolerante por índice en `StatusSchema`, hermano de `build-cards`) | `enriched` (no retrocede si el lead ya estaba más adelante) | sí (Gemini, text-only) | Genera el COPY de marketing para la web a partir de los datos YA verificados y lo escribe en `content.generated_copy` (bloque separado de los datos reales). (1) Arma `EnrichInput` (rubro, nombre, persona, tagline, servicios reales, ubicación) y llama a `provider.enrichCopy` (prompt `write-copy.md`, sin fotos). (2) `parseEnrichment` valida la salida (nunca lanza). (3) `applyEnrichment` (pura) fusiona: mapea `service_descriptions` contra los servicios REALES (nombre y orden de `verify`; descarta descripciones ajenas), marca `testimonials` como EJEMPLO en `sample_fields`, y rellena `contact.hours` con `rubroConfig(rubro).defaultHours` si falta (DETERMINISTA, no LLM), anotándolo en `meta.needs`. El LLM NUNCA aporta contacto ni números duros. Si la respuesta no parsea, registra en `meta.errors` y **no** avanza el status (queda como estaba, para reintentar). El copy se genera una vez y se persiste. |
+| `build-web` | `enriched` (a futuro; hoy stub) | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: template por rubro (`rubroConfig(rubro).webTemplate`) rellenado con los datos reales + `content.generated_copy` (leído de disco, sin regenerar). |
 | `deploy` | — | `deployed` | — | **Stub**, lanza `"no implementado"`. |
 | `proposal` | — | `proposal_ready` | — | **Stub**, lanza `"no implementado"`. |
 | `package` | — | `packaged` | — | **Stub**, lanza `"no implementado"`. |
@@ -247,16 +266,22 @@ muestra vacío: su `{{#hasX}}` correspondiente simplemente no renderiza.
   (`{{var}}`, `{{{raw}}}`, `{{#section}}`, `{{^inverted}}`, `{{.}}`). Sin
   dependencias externas. Puro y determinista.
 - **`llm/`** — interfaz común `VisionProvider` + switch por
-  `LLM_PROVIDER` (env, default `gemini`). `gemini.ts` pega directo al REST
-  API de Google (sin SDK, `fetch` nativo) con `gemini-2.5-flash` por
-  defecto; fuerza `thinkingBudget: 0` porque los modelos `gemini-2.5-*`
-  gastan tokens de salida "pensando" antes de escribir y eso cortaba el JSON
-  a la mitad con un `maxOutputTokens` chico. `openai.ts` es un **stub**
-  deliberado (lanza "no implementado"; queda pensado para `gpt-4o-mini`).
-  `extraction.ts` define el contrato de salida del modelo (`ExtractionSchema`,
-  todo `.nullish()` porque el modelo llena solo lo que ve) y
-  `parseExtraction()`, que nunca lanza — enruta cualquier fallo a
-  `{ ok: false, error }` para que `extract.ts` lo registre en `meta.errors`.
+  `LLM_PROVIDER` (env, default `gemini`). Dos capacidades: `extractCard`
+  (visión, lee la tarjeta) y `enrichCopy` (text-only, redacta copy). `gemini.ts`
+  pega directo al REST API de Google (sin SDK, `fetch` nativo) con
+  `gemini-2.5-flash` por defecto; un único helper `generateText` comparte el
+  plumbing HTTP entre ambas. Fuerza `thinkingBudget: 0` porque los modelos
+  `gemini-2.5-*` gastan tokens de salida "pensando" antes de escribir y eso
+  cortaba el JSON a la mitad con un `maxOutputTokens` chico. `openai.ts` es un
+  **stub** deliberado (lanza "no implementado" en ambos métodos; queda pensado
+  para `gpt-4o-mini`). `extraction.ts` define el contrato de salida de
+  `extractCard` (`ExtractionSchema`, todo `.nullish()` porque el modelo llena
+  solo lo que ve) y `parseExtraction()`; `enrichment.ts` hace lo propio para
+  `enrichCopy` (`EnrichmentSchema` + `EnrichInput` + `parseEnrichment()`,
+  narrativos requeridos y listas con `.default([])`). Ambos `parse*()` NUNCA
+  lanzan — enrutan cualquier fallo a `{ ok: false, error }` para que la etapa lo
+  registre en `meta.errors`. Prompts en `src/prompts/`: `extract-card.md` y
+  `write-copy.md` (el de `enrich`).
 
 ## Convenciones técnicas
 
@@ -271,7 +296,8 @@ muestra vacío: su `{{#hasX}}` correspondiente simplemente no renderiza.
   paralela a mano; editar el schema y dejar que el tipo se derive.
 - Tests en `tests/deterministic/`: aserciones estrictas (TDD real) sobre
   lógica pura — `slug.test.ts`, `template.test.ts`, `schema.test.ts`,
-  `colors.test.ts`, `extract.test.ts`, `verify.test.ts`, `build-cards.test.ts`
+  `colors.test.ts`, `extract.test.ts`, `verify.test.ts`, `enrich.test.ts`
+  (`parseEnrichment` + `applyEnrichment`, LLM mockeado), `build-cards.test.ts`
   (vista `buildCardView` + render real de cada diseño del pool + el visor).
 
 ## Sobre `tests/evals/` — discrepancia encontrada
@@ -292,6 +318,7 @@ pnpm cli ingest anverso.jpg reverso.jpg --slug dr-karey --rubro doctor
 pnpm cli extract dr-karey          # llama a Gemini -> status=extracted
 pnpm cli verify dr-karey           # checkpoint humano -> status=verified
 pnpm cli build-cards dr-karey      # -> leads/dr-karey/dc/*.html + dc/index.html
+pnpm cli enrich dr-karey           # llama a Gemini (copy web) -> status=enriched
 ```
 
 Comandos (firma real, `src/cli.ts`):
@@ -301,6 +328,7 @@ Comandos (firma real, `src/cli.ts`):
 | `pnpm cli ingest` | `ingest <front> [back] [--slug s] [--rubro r] [--channel c] [--force]` | no |
 | `pnpm cli extract` | `extract <slug>` | sí (`GEMINI_API_KEY`) |
 | `pnpm cli verify` | `verify <slug>` | no |
+| `pnpm cli enrich` | `enrich <slug>` | sí (`GEMINI_API_KEY`) |
 | `pnpm cli build-cards` | `build-cards <slug>` | no |
 | `pnpm cli build-web` \| `deploy` \| `proposal` \| `package` | `<comando> <slug>` | — (stubs) |
 | `pnpm test` | suite determinista (vitest) | no |

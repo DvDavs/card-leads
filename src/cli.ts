@@ -3,6 +3,7 @@ import { ingest } from "./stages/ingest.js";
 import { buildCards } from "./stages/build-cards.js";
 import { extract } from "./stages/extract.js";
 import { verify } from "./stages/verify.js";
+import { enrich } from "./stages/enrich.js";
 import { buildWeb } from "./stages/build-web.js";
 import { deploy } from "./stages/deploy.js";
 import { proposal } from "./stages/proposal.js";
@@ -53,6 +54,7 @@ Uso:
   cli build-cards <slug>
   cli extract <slug>
   cli verify <slug>           (checkpoint humano interactivo)
+  cli enrich <slug>           (genera copy de marketing con IA)
   cli build-web <slug>        (stub)
   cli deploy <slug>           (stub)
   cli proposal <slug>         (stub)
@@ -112,9 +114,28 @@ async function main(): Promise<void> {
       }
       break;
     }
-    case "build-web":
-      await buildWeb(positionals[0]!);
+    case "enrich": {
+      const lead = await enrich(positionals[0]!);
+      console.log(`enriched: ${lead.slug} (status=${lead.status})`);
+      const copy = lead.content.generated_copy;
+      if (copy) {
+        console.log(`  headline: ${copy.hero_headline}`);
+        console.log(
+          `  bloques: ${copy.value_props.length} value props, ${copy.faqs.length} FAQs, ` +
+            `${copy.testimonials.length} testimonios, ${copy.service_descriptions.length} servicios con descripcion`,
+        );
+      }
+      if (lead.meta.needs.length) {
+        console.log("  pendiente (revision humana):");
+        for (const n of lead.meta.needs) console.log(`   - ${n}`);
+      }
       break;
+    }
+    case "build-web": {
+      const out = await buildWeb(positionals[0]!);
+      console.log(`web escrita: ${out}`);
+      break;
+    }
     case "deploy":
       await deploy(positionals[0]!);
       break;

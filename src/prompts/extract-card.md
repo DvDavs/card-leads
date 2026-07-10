@@ -15,7 +15,8 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
   "business": {
     "name": string | null,
     "person_name": string | null,
-    "tagline": string | null
+    "tagline": string | null,
+    "attrs": { [etiqueta: string]: string }
   },
   "rubro": "doctor" | "barberia" | "estetica" | "veterinario" | "nutriologo" | "otro" | null,
   "contact": {
@@ -68,4 +69,18 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
 - `brand.has_logo`: `true` solo si hay un logo/isotipo real (no si es solo texto).
 - `content.services`: lista los servicios que la tarjeta enumere explicitamente.
   Si no enumera ninguno, devuelve `[]` (lista vacia). No inventes servicios.
+- `business.attrs`: mapa de CREDENCIALES PROFESIONALES que la tarjeta muestre
+  (cedula profesional, cedulas de especialidad, universidad de egreso,
+  certificaciones o consejos). Usa EXACTAMENTE estas etiquetas como clave cuando
+  aparezcan en la tarjeta:
+  - `"Cédula profesional"` -> el numero de cedula profesional general.
+  - `"Cédula de especialidad"` -> cedula(s) de especialidad.
+  - `"Universidad"` -> universidad(es) donde estudio.
+  - `"Certificación"` -> consejo(s) o certificacion(es).
+  Si hay VARIOS del mismo tipo (dos cedulas de especialidad, dos universidades),
+  ponlos en UN solo string separados por ", " (ej. `"13937097, 14886103"`). Los
+  numeros de cedula se transcriben DIGITO POR DIGITO tal como se leen: PROHIBIDO
+  inventar, adivinar o completar una cedula (mismo criterio que los telefonos).
+  Aplica a CUALQUIER rubro: si la tarjeta no muestra credenciales (p.ej. una
+  barberia), devuelve `attrs: {}` (objeto vacio).
 - Ante la duda entre poner un dato inseguro o `null`: pon `null`.

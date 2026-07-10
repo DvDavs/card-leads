@@ -11,3 +11,14 @@ export async function loadExtractPrompt(): Promise<string> {
   const url = new URL("../../prompts/extract-card.md", import.meta.url);
   return fs.readFile(fileURLToPath(url), "utf8");
 }
+
+/**
+ * Carga el prompt de enriquecimiento (copy de marketing) desde
+ * src/prompts/write-copy.md. Mismo criterio que loadExtractPrompt: se resuelve
+ * contra este archivo fuente (no el cwd) y vive en .md para iterarlo sin tocar
+ * codigo. La etapa `enrich` lo usa via el proveedor LLM.
+ */
+export async function loadEnrichPrompt(): Promise<string> {
+  const url = new URL("../../prompts/write-copy.md", import.meta.url);
+  return fs.readFile(fileURLToPath(url), "utf8");
+}
