@@ -1,0 +1,358 @@
+
+<html lang="es" class="scroll-smooth"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{meta_titulo}}</title>
+<meta name="description" content="{{meta_descripcion}}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: {
+      primary:     'var(--primary)',
+      secondary:   'var(--secondary)',
+      accent:      'var(--accent)',
+      onPrimary:   'var(--on-primary)',
+      onSecondary: 'var(--on-secondary)',
+      onAccent:    'var(--on-accent)',
+    } } }
+  };
+</script>
+<script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Paleta ORIGINAL del diseno (default, toggle OFF). Hardcodeada (cyan). */
+  --primary:#0891b2;
+  --secondary:#0e7490;
+  --accent:#22d3ee;
+  --on-primary:#ffffff;
+  --on-secondary:#ffffff;
+  --on-accent:#164e63;
+}
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
+  --on-secondary:{{{colorsText.secondary}}};
+  --on-accent:{{{colorsText.accent}}};
+  {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+  {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+}
+body {
+font-family: 'Inter', sans-serif;
+}
+/* Custom scrollbar for subtle look */
+::-webkit-scrollbar {
+width: 8px;
+}
+::-webkit-scrollbar-track {
+background: transparent;
+}
+::-webkit-scrollbar-thumb {
+background-color: #cbd5e1;
+border-radius: 20px;
+}
+/* Enforcing stroke width on Iconify icons */
+.iconify path, .iconify circle, .iconify line, .iconify polyline, .iconify rect {
+stroke-width: 1.5 !important;
+}
+/* Card flotante del hero: stats[] puede traer hasta 4 items, pero este diseno
+   solo muestra el primero (ver matriz de la plantilla clasico en el brief). */
+.stat-item:not(:first-of-type){
+display: none;
+}
+</style></head>
+<body class="bg-white text-slate-600 antialiased selection:bg-primary/20 selection:text-primary">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
+                    <span class="iconify" data-icon="lucide:activity" data-width="18"></span>
+                </div>
+                <span class="text-base font-semibold tracking-tighter text-slate-900">DR. {{nombre}}</span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
+                <a href="#about" class="hover:text-primary transition-colors">Nosotros</a>
+                <a href="#services" class="hover:text-primary transition-colors">Servicios</a>
+                <a href="#reviews" class="hover:text-primary transition-colors">Opiniones</a>
+            </div>
+
+            <a href="#book" class="hidden md:inline-flex items-center justify-center px-4 py-2 text-xs font-medium tracking-wide text-white transition-colors bg-slate-900 rounded-lg hover:bg-slate-800 focus:ring-2 focus:ring-offset-2 focus:ring-slate-900">
+                Reservar Cita
+            </a>
+
+            <!-- Mobile Menu Icon -->
+            <button class="md:hidden text-slate-900">
+                <span class="iconify" data-icon="lucide:menu" data-width="24"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
+        <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+
+            <!-- Content -->
+            <div class="max-w-2xl">
+                {{#tiene_hero_badge}}
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-6">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    {{hero_badge}}
+                </div>
+                {{/tiene_hero_badge}}
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold text-slate-900 tracking-tight leading-[1.1] mb-6">
+                    {{hero_titulo}}
+                </h1>
+                {{#tiene_hero_subtitulo}}
+                <p class="text-lg text-slate-500 mb-8 leading-relaxed max-w-lg">
+                    {{hero_subtitulo}}
+                </p>
+                {{/tiene_hero_subtitulo}}
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="#book" class="inline-flex items-center justify-center px-6 py-3.5 text-sm font-medium text-white transition-all bg-slate-900 rounded-xl hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-200">
+                        {{hero_cta}}
+                        <span class="iconify ml-2" data-icon="lucide:arrow-right" data-width="16"></span>
+                    </a>
+                    <a href="#services" class="inline-flex items-center justify-center px-6 py-3.5 text-sm font-medium text-slate-600 transition-all bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300">
+                        Ver Servicios
+                    </a>
+                </div>
+
+                {{#tiene_confianza_items}}
+                <div class="mt-10 flex items-center gap-6 text-sm text-slate-500">
+                    {{#confianza_items}}
+                    <div class="flex items-center gap-2">
+                        <span class="iconify text-primary" data-icon="lucide:check-circle-2" data-width="18"></span>
+                        <span>{{.}}</span>
+                    </div>
+                    {{/confianza_items}}
+                </div>
+                {{/tiene_confianza_items}}
+            </div>
+
+            <!-- Hero Image -->
+            <div class="relative lg:h-[600px] w-full bg-slate-100 rounded-3xl overflow-hidden border border-slate-200">
+                <img src="{{img_retrato_principal}}" alt="{{nombre}}" class="object-cover w-full h-full opacity-90 hover:scale-105 transition-transform duration-700">
+
+                <!-- Floating Card -->
+                {{#tiene_stats}}
+                <div class="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center text-primary">
+                            <span class="iconify" data-icon="lucide:users" data-width="24"></span>
+                        </div>
+                        <div>
+                            {{#stats}}
+                            <div class="stat-item">
+                                <p class="text-2xl font-semibold text-slate-900 tracking-tight">{{valor}}</p>
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">{{etiqueta}}</p>
+                            </div>
+                            {{/stats}}
+                        </div>
+                    </div>
+                </div>
+                {{/tiene_stats}}
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    {{#tiene_servicios}}
+    <section id="services" class="py-24 bg-slate-50/50 border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-2xl mb-16">
+                <h2 class="text-3xl font-semibold text-slate-900 tracking-tight mb-4">Servicios Médicos Especializados</h2>
+                <p class="text-slate-500 text-lg">Utilizamos la tecnología más avanzada y los últimos avances médicos para brindar la mejor atención posible.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#servicios}}
+                <div class="group p-8 bg-white border border-slate-200 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+                        <span class="iconify" data-icon="lucide:stethoscope" data-width="24"></span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-2">{{nombre}}</h3>
+                    {{#tiene_descripcion}}
+                    <p class="text-sm text-slate-500 leading-relaxed">{{descripcion}}</p>
+                    {{/tiene_descripcion}}
+                </div>
+                {{/servicios}}
+            </div>
+        </div>
+    </section>
+    {{/tiene_servicios}}
+
+    <!-- Appointment & Info -->
+    <section id="book" class="py-24">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid lg:grid-cols-5 gap-12 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl shadow-slate-200">
+
+                <!-- Info Side -->
+                <div class="lg:col-span-2 bg-slate-800 p-10 flex flex-col justify-between">
+                    {{#tiene_horario}}
+                    <div>
+                        <h3 class="text-2xl font-semibold text-white tracking-tight mb-2">Horario de Atención</h3>
+                        <p class="text-slate-400 text-sm mb-8">Visítanos durante nuestro horario de atención.</p>
+
+                        <div class="space-y-4">
+                            {{#horario_lineas}}
+                            <div class="flex items-center justify-between text-sm border-b border-slate-700/50 pb-2">
+                                <span class="text-white font-medium">{{.}}</span>
+                            </div>
+                            {{/horario_lineas}}
+                        </div>
+                        {{#horario_referencial}}
+                        <p class="text-xs text-slate-500 mt-3">Horario referencial</p>
+                        {{/horario_referencial}}
+                    </div>
+                    {{/tiene_horario}}
+
+                    <div class="mt-12">
+                        {{#tiene_telefono}}
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white">
+                                <span class="iconify" data-icon="lucide:phone" data-width="18"></span>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400 uppercase tracking-wider">Llámanos</p>
+                                <a href="tel:{{telefono_href}}" class="text-white font-medium hover:text-primary transition-colors">{{telefono}}</a>
+                            </div>
+                        </div>
+                        {{/tiene_telefono}}
+                        {{#tiene_direccion}}
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white">
+                                <span class="iconify" data-icon="lucide:map-pin" data-width="18"></span>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400 uppercase tracking-wider">Ubicación</p>
+                                <a href="{{mapa_url}}" target="_blank" rel="noopener" class="text-white font-medium hover:text-primary transition-colors">{{direccion}}</a>
+                            </div>
+                        </div>
+                        {{/tiene_direccion}}
+                    </div>
+                </div>
+
+                <!-- Form Side -->
+                <div class="lg:col-span-3 p-10 bg-white">
+                    <h3 class="text-2xl font-semibold text-slate-900 tracking-tight mb-6">Reservar una Cita</h3>
+                    <form class="space-y-5">
+                        <div class="grid grid-cols-2 gap-5">
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre</label>
+                                <input type="text" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" placeholder="Juan">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Apellido</label>
+                                <input type="text" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" placeholder="Pérez">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Correo Electrónico</label>
+                            <input type="email" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all" placeholder="juan@ejemplo.com">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-5">
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Fecha</label>
+                                <input type="date" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all text-slate-500">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Especialidad</label>
+                                <div class="relative">
+                                    <select class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all appearance-none text-slate-500">
+                                        {{#servicios}}
+                                        <option>{{nombre}}</option>
+                                        {{/servicios}}
+                                    </select>
+                                    <span class="iconify absolute right-4 top-3.5 text-slate-400 pointer-events-none" data-icon="lucide:chevron-down" data-width="16"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="button" class="w-full py-4 px-6 bg-primary hover:opacity-90 text-onPrimary font-medium rounded-lg transition-opacity flex items-center justify-center gap-2">
+                                Confirmar Reserva
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 pt-16 pb-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-12 mb-16">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-primary/20 rounded flex items-center justify-center text-primary">
+                            <span class="iconify" data-icon="lucide:activity" data-width="14"></span>
+                        </div>
+                        <span class="text-sm font-semibold tracking-tight text-slate-900">DR. {{nombre}}</span>
+                    </div>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-sm">
+                        {{footer_bio}}
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-slate-900 text-sm mb-4">Enlaces</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li><a href="#" class="hover:text-primary transition-colors">Inicio</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Nosotros</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Servicios</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Contacto</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold text-slate-900 text-sm mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li><a href="#" class="hover:text-primary transition-colors">Política de Privacidad</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Términos de Servicio</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Política de Cookies</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            {{#demo_es_ejemplo}}
+            <p class="text-center text-[11px] text-slate-400 pb-6">Página de demostración — contenido de muestra.</p>
+            {{/demo_es_ejemplo}}
+
+            <div class="border-t border-slate-100 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-xs text-slate-400">© {{anio}} Clínica Dr. {{nombre}}. Todos los derechos reservados.</p>
+                {{#tiene_redes}}
+                <div class="flex items-center gap-4">
+                    {{#tiene_facebook}}
+                    <a href="{{facebook_url}}" target="_blank" rel="noopener" class="text-slate-400 hover:text-primary transition-colors">
+                        <span class="iconify" data-icon="lucide:facebook" data-width="18"></span>
+                    </a>
+                    {{/tiene_facebook}}
+                    {{#tiene_tiktok}}
+                    <a href="{{tiktok_url}}" target="_blank" rel="noopener" class="text-slate-400 hover:text-primary transition-colors">
+                        <span class="iconify" data-icon="tabler:brand-tiktok" data-width="18"></span>
+                    </a>
+                    {{/tiene_tiktok}}
+                    {{#tiene_instagram}}
+                    <a href="{{instagram_url}}" target="_blank" rel="noopener" class="text-slate-400 hover:text-primary transition-colors">
+                        <span class="iconify" data-icon="lucide:instagram" data-width="18"></span>
+                    </a>
+                    {{/tiene_instagram}}
+                </div>
+                {{/tiene_redes}}
+            </div>
+        </div>
+    </footer>
+</body></html>
