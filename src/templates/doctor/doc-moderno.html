@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{meta_titulo}}</title>
+  <meta name="description" content="{{meta_descripcion}}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        primary:   'var(--primary)',
+        secondary: 'var(--secondary)',
+        accent:    'var(--accent)',
+      } } }
+    };
+  </script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
+  <style>
+    :root{
+      /* Paleta ORIGINAL del diseno (Moderno Emerald), default, toggle OFF. Hardcodeada. */
+      --primary:#10b981;
+      --secondary:#059669;
+      --accent:#34d399;
+      --on-primary:#ffffff;
+      --on-secondary:#ffffff;
+      --on-accent:#022c22;
+    }
+    :root[data-brand]{
+      --primary:{{{colors.primary}}};
+      --secondary:{{{colors.secondary}}};
+      --accent:{{{colors.accent}}};
+      --on-primary:{{{colorsText.primary}}};
+      --on-secondary:{{{colorsText.secondary}}};
+      --on-accent:{{{colorsText.accent}}};
+      {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+      {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    /* Hide scrollbar for clean UI */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+    /* Mobile Menu Transition */
+    #mobile-menu { transition: opacity 0.3s ease, transform 0.3s ease; }
+  </style>
+</head>
+<body class="antialiased selection:bg-secondary/20 selection:text-secondary bg-slate-50 text-slate-600">
+
+{{#demo_es_ejemplo}}
+<div class="bg-slate-900 text-slate-200 text-center text-[11px] font-medium py-1.5 px-4">
+  Página de demostración — contenido de muestra
+</div>
+{{/demo_es_ejemplo}}
+
+<!-- 0. TOP BAR (Emergency & Location) -->
+<div class="bg-emerald-950 text-emerald-50 text-xs font-medium py-2 px-4 border-b border-emerald-900">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-left">
+    <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5">
+                    <iconify-icon icon="solar:bell-linear" class="text-emerald-400 text-sm"></iconify-icon>
+                    Servicios de emergencia disponibles las 24 horas, los 7 días de la semana
+                </span>
+      {{#tiene_direccion}}
+      <span class="hidden sm:inline text-emerald-800">|</span>
+      <span class="flex items-center gap-1.5">
+                    <iconify-icon icon="solar:map-point-linear" class="text-emerald-400 text-sm"></iconify-icon>
+                    {{direccion}}
+                </span>
+      {{/tiene_direccion}}
+    </div>
+    <div class="flex items-center gap-3">
+      {{#tiene_telefono}}
+      <a href="tel:{{telefono_href}}" class="flex items-center gap-1.5 hover:text-white transition-colors">
+        <iconify-icon icon="solar:phone-calling-linear" class="text-emerald-400 text-sm"></iconify-icon>
+        {{telefono}}
+      </a>
+      {{/tiene_telefono}}
+    </div>
+  </div>
+</div>
+
+<!-- 1. HEADER / NAVBAR -->
+<header class="sticky md:p-4 w-full z-50 pt-3 pr-3 pb-3 pl-3 top-0 right-0 left-0">
+  <nav class="mx-auto max-w-7xl rounded-2xl backdrop-blur-xl border shadow-lg px-4 md:px-6 py-3 flex items-center justify-between transition-all duration-300 bg-white/90 border-white/20 shadow-slate-200/50">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2 group">
+      <div class="bg-primary p-1.5 rounded-lg group-hover:bg-secondary transition-colors text-[var(--on-primary)]">
+        <iconify-icon icon="ri:tooth-line" width="24" height="24"></iconify-icon>
+      </div>
+      <div class="flex flex-col">
+        <span class="text-lg font-semibold tracking-tight text-slate-900 leading-none">{{nombre}}</span>
+        {{#tiene_tagline}}<span class="text-xs font-medium text-secondary tracking-wide uppercase">{{tagline}}</span>{{/tiene_tagline}}
+      </div>
+    </a>
+
+    <!-- Menu (Desktop) -->
+    <div class="hidden lg:flex items-center gap-8">
+      <a href="#" class="text-sm font-medium transition-colors text-slate-600 hover:text-secondary">Inicio</a>
+      {{#tiene_servicios}}<a href="#services" class="text-sm font-medium transition-colors text-slate-600 hover:text-secondary">Servicios Dentales</a>{{/tiene_servicios}}
+      {{#tiene_sedacion}}<a href="#sedation" class="text-sm font-medium transition-colors text-slate-600 hover:text-secondary">Sedación</a>{{/tiene_sedacion}}
+      <a href="#book" class="text-sm font-medium transition-colors text-slate-600 hover:text-secondary">Nuevos Pacientes</a>
+      <a href="#contact" class="text-sm font-medium transition-colors text-slate-600 hover:text-secondary">Contacto</a>
+    </div>
+
+    <!-- CTA -->
+    <div class="hidden lg:flex items-center gap-3">
+      {{#tiene_telefono}}
+      <a href="tel:{{telefono_href}}" class="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-secondary transition-colors">
+        <iconify-icon icon="solar:phone-calling-linear" class="text-lg"></iconify-icon>
+        {{telefono}}
+      </a>
+      {{/tiene_telefono}}
+      <a href="#book" class="inline-flex items-center gap-2 bg-primary text-sm font-medium px-5 py-2.5 rounded-full transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:bg-secondary text-[var(--on-primary)]">
+        {{hero_cta}}
+      </a>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button id="mobile-toggle" class="lg:hidden text-slate-900 p-1 relative z-50">
+      <iconify-icon icon="solar:hamburger-menu-linear" width="28" height="28"></iconify-icon>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu Overlay (Hidden by Default) -->
+  <div id="mobile-menu" class="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl opacity-0 pointer-events-none flex flex-col items-center justify-center space-y-8 p-6">
+    <!-- Close Button -->
+    <button id="mobile-close" class="absolute top-6 right-6 text-slate-500 hover:text-slate-900">
+      <iconify-icon icon="solar:close-circle-linear" width="32" height="32"></iconify-icon>
+    </button>
+
+    <a href="#" class="mobile-link text-2xl font-semibold text-slate-900">Inicio</a>
+    {{#tiene_servicios}}<a href="#services" class="mobile-link text-2xl font-semibold text-slate-900">Servicios</a>{{/tiene_servicios}}
+    {{#tiene_sedacion}}<a href="#sedation" class="mobile-link text-2xl font-semibold text-slate-900">Sedación</a>{{/tiene_sedacion}}
+    <a href="#book" class="mobile-link text-2xl font-semibold text-slate-900">Nuevos Pacientes</a>
+    <a href="#contact" class="mobile-link text-2xl font-semibold text-slate-900">Ubicación</a>
+
+    <hr class="w-12 border-slate-200">
+
+    {{#tiene_telefono}}
+    <a href="tel:{{telefono_href}}" class="flex items-center gap-2 text-xl font-medium text-secondary">
+      <iconify-icon icon="solar:phone-calling-linear"></iconify-icon>
+      {{telefono}}
+    </a>
+    {{/tiene_telefono}}
+    <a href="#book" class="mobile-link w-full max-w-xs text-center bg-primary font-medium py-4 rounded-xl shadow-lg shadow-primary/20 text-[var(--on-primary)]">
+      {{hero_cta}}
+    </a>
+  </div>
+</header>
+
+<!-- 2. HERO SECTION -->
+<section class="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden">
+  <!-- Background Image with Overlay -->
+  <div class="absolute inset-0 z-0">
+    <img src="{{img_consultorio_01}}" alt="{{nombre}}" class="w-full h-full object-cover">
+    <div class="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-transparent"></div>
+  </div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl space-y-8">
+      {{#tiene_hero_badge}}
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+        <span class="text-xs font-semibold text-white/90 tracking-wide uppercase">{{hero_badge}}</span>
+      </div>
+      {{/tiene_hero_badge}}
+
+      <h1 class="text-4xl lg:text-6xl font-semibold tracking-tighter leading-[1.1] text-white">
+        {{hero_titulo}}
+      </h1>
+
+      {{#tiene_hero_subtitulo}}
+      <p class="text-lg text-slate-200 font-medium leading-relaxed max-w-lg">
+        {{hero_subtitulo}}
+      </p>
+      {{/tiene_hero_subtitulo}}
+
+      <div class="flex flex-col sm:flex-row gap-4 pt-2">
+        <a href="#book" class="inline-flex justify-center items-center gap-2 bg-primary text-base font-medium px-8 py-3.5 rounded-full transition-all shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 hover:bg-secondary text-[var(--on-primary)]">
+          {{hero_cta}}
+          <iconify-icon icon="solar:calendar-add-linear" class="text-lg"></iconify-icon>
+        </a>
+        {{#tiene_telefono}}
+        <a href="tel:{{telefono_href}}" class="inline-flex justify-center items-center gap-2 border text-base font-medium px-8 py-3.5 rounded-full transition-all bg-white/10 backdrop-blur-md hover:bg-white text-white hover:text-slate-900 border-white/20">
+          Llamar al {{telefono}}
+        </a>
+        {{/tiene_telefono}}
+      </div>
+
+      <!-- Trust Badges -->
+      {{#tiene_confianza_items}}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 border-t border-white/10">
+        {{#confianza_items}}
+        <div class="flex items-center gap-2 text-white/90">
+          <iconify-icon icon="solar:check-circle-linear" class="text-accent text-xl"></iconify-icon>
+          <span class="text-sm font-medium">{{.}}</span>
+        </div>
+        {{/confianza_items}}
+      </div>
+      {{/tiene_confianza_items}}
+    </div>
+  </div>
+</section>
+
+<!-- 3. SERVICES SECTION -->
+{{#tiene_servicios}}
+<section id="services" class="py-24 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-4 text-slate-900">
+        <span class="text-secondary">Servicios Dentales</span> Integrales
+      </h2>
+      <p class="text-lg text-slate-500 font-medium">
+        Desde limpiezas simples hasta tratamientos complejos, una solución integral para todas las necesidades de salud de tu familia.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {{#servicios}}
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-secondary/5 transition-all group">
+        <div class="w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-[var(--on-primary)] transition-colors">
+          <iconify-icon icon="solar:health-linear" width="24"></iconify-icon>
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-2">{{nombre}}</h3>
+        {{#tiene_descripcion}}<p class="text-sm text-slate-500">{{descripcion}}</p>{{/tiene_descripcion}}
+      </div>
+      {{/servicios}}
+    </div>
+  </div>
+</section>
+{{/tiene_servicios}}
+
+<!-- 4. UNIQUE VALUE / SEDATION -->
+{{#tiene_sedacion}}
+<section id="sedation" class="py-24 bg-white relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <!-- Content -->
+      <div>
+        {{#tiene_tagline}}<span class="text-secondary font-semibold tracking-wide uppercase text-sm">{{tagline}}</span>{{/tiene_tagline}}
+        <h2 class="text-3xl md:text-5xl font-semibold tracking-tight mt-4 mb-6 text-slate-900">
+          {{sedacion.titulo}}
+        </h2>
+        <p class="text-lg text-slate-500 font-medium leading-relaxed mb-8">
+          {{sedacion.descripcion}}
+        </p>
+
+        <div class="space-y-4">
+          {{#sedacion.puntos}}
+          <div class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <div class="p-2 bg-white rounded-lg shadow-sm text-primary">
+              <iconify-icon icon="solar:check-circle-linear" width="24"></iconify-icon>
+            </div>
+            <p class="font-medium text-slate-900 text-sm mt-1.5">{{.}}</p>
+          </div>
+          {{/sedacion.puntos}}
+        </div>
+      </div>
+
+      <!-- Image -->
+      <div class="relative">
+        <div class="relative rounded-[2.5rem] overflow-hidden shadow-2xl group shadow-secondary/10 border-4 border-white">
+          <img src="{{img_sonrisa_01}}" alt="{{nombre}}" class="w-full object-cover">
+          <!-- Floating Badge -->
+          <div class="absolute bottom-8 left-8 right-8 backdrop-blur-xl p-4 rounded-2xl shadow-xl flex items-center gap-4 bg-white/95">
+            <div class="p-3 rounded-full bg-secondary/10 text-secondary">
+              <iconify-icon icon="solar:cup-star-linear" width="24"></iconify-icon>
+            </div>
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider mb-0.5 text-secondary">Compromiso</p>
+              <p class="font-medium text-slate-900 text-sm">Cuidamos tu comodidad en cada visita</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{{/tiene_sedacion}}
+
+<!-- 5. LOCATION & HOURS -->
+<section class="py-24 bg-emerald-950 text-white rounded-t-[3rem]" id="contact">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
+
+      <!-- Contact Info -->
+      <div class="space-y-8">
+        <h2 class="text-3xl md:text-5xl font-semibold tracking-tight">Visita {{nombre}}</h2>
+        <p class="text-emerald-100/80 text-lg">{{#tiene_direccion}}Ubicados en {{direccion}}.{{/tiene_direccion}}{{^tiene_direccion}}Te esperamos con gusto para atenderte.{{/tiene_direccion}}</p>
+
+        <div class="space-y-6">
+          {{#tiene_direccion}}
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 shrink-0">
+              <iconify-icon icon="solar:map-point-linear" width="24"></iconify-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold">Dirección</h3>
+              <p class="text-emerald-100/70">{{direccion}}</p>
+              <a href="{{mapa_url}}" target="_blank" rel="noopener" class="text-sm font-medium text-emerald-400 mt-2 inline-flex items-center gap-1 hover:text-white">
+                Cómo Llegar <iconify-icon icon="solar:arrow-right-linear"></iconify-icon>
+              </a>
+            </div>
+          </div>
+          {{/tiene_direccion}}
+
+          {{#tiene_telefono}}
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 shrink-0">
+              <iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold">Teléfono</h3>
+              <p class="text-emerald-100/70">Para citas y emergencias:</p>
+              <a href="tel:{{telefono_href}}" class="text-xl font-bold text-white mt-1 block hover:text-emerald-400 transition-colors">{{telefono}}</a>
+            </div>
+          </div>
+          {{/tiene_telefono}}
+
+          {{#tiene_email}}
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 shrink-0">
+              <iconify-icon icon="solar:letter-linear" width="24"></iconify-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold">Correo Electrónico</h3>
+              <a href="mailto:{{email}}" class="text-emerald-100/70 hover:text-white transition-colors">{{email}}</a>
+            </div>
+          </div>
+          {{/tiene_email}}
+        </div>
+      </div>
+
+      <!-- Hours Card -->
+      {{#tiene_horario}}
+      <div class="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm">
+        <div class="flex items-center gap-3 mb-8">
+          <iconify-icon icon="solar:clock-circle-linear" class="text-emerald-400 text-3xl"></iconify-icon>
+          <h3 class="text-2xl font-semibold">Horario de Atención</h3>
+        </div>
+
+        <ul class="space-y-4 text-emerald-50/90 text-sm md:text-base">
+          {{#horario_lineas}}
+          <li class="border-b border-white/10 pb-3 font-medium">{{.}}</li>
+          {{/horario_lineas}}
+        </ul>
+
+        {{#horario_referencial}}
+        <p class="text-xs text-emerald-400/80 mt-4">Horario referencial</p>
+        {{/horario_referencial}}
+
+        <div class="mt-8 pt-6 border-t border-white/10">
+          <p class="text-sm text-center text-emerald-200">Servicios de emergencia disponibles las 24 horas, los 7 días de la semana. Llámanos de inmediato.</p>
+        </div>
+      </div>
+      {{/tiene_horario}}
+
+    </div>
+  </div>
+</section>
+
+<!-- 6. BOOKING FORM -->
+<section id="book" class="py-24 bg-slate-50">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-10">
+      <h2 class="text-3xl font-semibold tracking-tight text-slate-900">Solicitar una Cita</h2>
+      <p class="text-slate-500 mt-2">Completa el siguiente formulario y nos pondremos en contacto contigo para confirmar.</p>
+    </div>
+
+    <form class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100 space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Nombre Completo</label>
+          <input type="text" placeholder="Juan Pérez" class="w-full border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Número de Teléfono</label>
+          <input type="tel" placeholder="(555) 555-5555" class="w-full border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Correo Electrónico</label>
+          <input type="email" placeholder="juan@ejemplo.com" class="w-full border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Fecha Preferida</label>
+          <input type="date" class="w-full border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Motivo de la Visita</label>
+        <select class="w-full border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50 appearance-none">
+          <option>Chequeo General / Limpieza</option>
+          <option>Dolor / Emergencia</option>
+          <option>Consulta Cosmética</option>
+          <option>Procedimiento / Cirugía</option>
+          <option>Otro</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Mensaje (Opcional)</label>
+        <textarea rows="3" placeholder="¿Alguna inquietud en particular?" class="w-full border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50"></textarea>
+      </div>
+
+      <button type="button" class="w-full bg-primary font-semibold text-lg py-3.5 rounded-xl shadow-lg shadow-primary/20 hover:bg-secondary transition-all flex items-center justify-center gap-2 text-[var(--on-primary)]">
+        Enviar Solicitud
+        <iconify-icon icon="solar:arrow-right-linear"></iconify-icon>
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- 7. FOOTER -->
+<footer class="bg-white border-t border-slate-200 pt-16 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+      <!-- Brand -->
+      <div class="space-y-4">
+        <a href="#" class="flex items-center gap-2">
+          <div class="bg-primary p-1.5 rounded-lg text-[var(--on-primary)]">
+            <iconify-icon icon="ri:tooth-line" width="20"></iconify-icon>
+          </div>
+          <span class="text-lg font-semibold text-slate-900">{{nombre}}</span>
+        </a>
+        <p class="text-slate-500 text-sm leading-relaxed">{{footer_bio}}</p>
+        {{#tiene_redes}}
+        <div class="flex gap-4">
+          {{#tiene_facebook}}
+          <a href="{{facebook_url}}" target="_blank" rel="noopener" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-secondary/10 hover:text-secondary transition-colors">
+            <iconify-icon icon="ri:facebook-fill" width="20"></iconify-icon>
+          </a>
+          {{/tiene_facebook}}
+          {{#tiene_instagram}}
+          <a href="{{instagram_url}}" target="_blank" rel="noopener" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-secondary/10 hover:text-secondary transition-colors">
+            <iconify-icon icon="ri:instagram-line" width="20"></iconify-icon>
+          </a>
+          {{/tiene_instagram}}
+          {{#tiene_tiktok}}
+          <a href="{{tiktok_url}}" target="_blank" rel="noopener" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-secondary/10 hover:text-secondary transition-colors">
+            <iconify-icon icon="ri:tiktok-fill" width="20"></iconify-icon>
+          </a>
+          {{/tiene_tiktok}}
+        </div>
+        {{/tiene_redes}}
+      </div>
+
+      <!-- Navigation -->
+      <div>
+        <h4 class="font-bold text-slate-900 mb-6">Enlaces Rápidos</h4>
+        <ul class="space-y-3 text-sm font-medium text-slate-500">
+          <li><a href="#" class="hover:text-secondary">Inicio</a></li>
+          {{#tiene_servicios}}<li><a href="#services" class="hover:text-secondary">Servicios Dentales</a></li>{{/tiene_servicios}}
+          {{#tiene_sedacion}}<li><a href="#sedation" class="hover:text-secondary">Odontología de Sedación</a></li>{{/tiene_sedacion}}
+          <li><a href="#book" class="hover:text-secondary">Reservar Cita</a></li>
+        </ul>
+      </div>
+
+      <!-- Services -->
+      {{#tiene_servicios}}
+      <div>
+        <h4 class="font-bold text-slate-900 mb-6">Servicios</h4>
+        <ul class="space-y-3 text-sm font-medium text-slate-500">
+          {{#servicios}}
+          <li><a href="#services" class="hover:text-secondary">{{nombre}}</a></li>
+          {{/servicios}}
+        </ul>
+      </div>
+      {{/tiene_servicios}}
+
+      <!-- Contact -->
+      <div>
+        <h4 class="font-bold text-slate-900 mb-6">Contacto</h4>
+        <ul class="space-y-3 text-sm font-medium text-slate-500">
+          {{#tiene_direccion}}
+          <li class="flex items-start gap-3">
+            <iconify-icon icon="solar:map-point-linear" class="text-primary mt-0.5"></iconify-icon>
+            <span>{{direccion}}</span>
+          </li>
+          {{/tiene_direccion}}
+          {{#tiene_telefono}}
+          <li class="flex items-center gap-3">
+            <iconify-icon icon="solar:phone-calling-linear" class="text-primary"></iconify-icon>
+            <a href="tel:{{telefono_href}}" class="hover:text-secondary">{{telefono}}</a>
+          </li>
+          {{/tiene_telefono}}
+          {{#tiene_email}}
+          <li class="flex items-center gap-3">
+            <iconify-icon icon="solar:letter-linear" class="text-primary"></iconify-icon>
+            <a href="mailto:{{email}}" class="hover:text-secondary break-all">{{email}}</a>
+          </li>
+          {{/tiene_email}}
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400 font-medium">
+      <p>© {{anio}} {{nombre}}. Todos los derechos reservados.</p>
+      <div class="flex gap-6">
+        <a href="#" class="hover:text-secondary">Términos de Uso</a>
+        <a href="#" class="hover:text-secondary">Política de Privacidad</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Mobile Menu Script -->
+<script>
+  const mobileToggle = document.getElementById('mobile-toggle');
+  const mobileClose = document.getElementById('mobile-close');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileLinks = document.querySelectorAll('.mobile-link');
+
+  function toggleMenu() {
+    const isHidden = mobileMenu.classList.contains('opacity-0');
+    if (isHidden) {
+      // Open
+      mobileMenu.classList.remove('opacity-0', 'pointer-events-none');
+      mobileMenu.classList.add('opacity-100', 'pointer-events-auto');
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+    } else {
+      // Close
+      mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+      mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+      document.body.style.overflow = '';
+    }
+  }
+
+  mobileToggle.addEventListener('click', toggleMenu);
+  mobileClose.addEventListener('click', toggleMenu);
+
+  // Close menu when clicking a link
+  mobileLinks.forEach(link => {
+    link.addEventListener('click', toggleMenu);
+  });
+</script>
+
+</body>
+</html>
