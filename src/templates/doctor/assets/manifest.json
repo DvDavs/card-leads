@@ -1,0 +1,20 @@
+{
+  "images": [
+    { "tag": "RetratoDoctor01", "file": "RetratoDoctor01.jpg", "kind": "retrato", "gender": "m" },
+    { "tag": "RetratoDoctor02", "file": "RetratoDoctor02.jpg", "kind": "retrato", "gender": "m" },
+    { "tag": "RetratoDoctor03", "file": "RetratoDoctor03.jpg", "kind": "retrato", "gender": "m" },
+    { "tag": "RetratoDoctora01", "file": "RetratoDoctora01.jpg", "kind": "retrato", "gender": "f" },
+    { "tag": "RetratoDoctora02", "file": "RetratoDoctora02.jpg", "kind": "retrato", "gender": "f" },
+    { "tag": "RetratoDoctora03", "file": "RetratoDoctora03.jpg", "kind": "retrato", "gender": "f" },
+    { "tag": "ConsultorioDoctor01", "file": "ConsultorioDoctor01.jpg", "kind": "consultorio" },
+    { "tag": "ConsultorioDoctor02", "file": "ConsultorioDoctor02.jpg", "kind": "consultorio" },
+    { "tag": "ConsultorioDoctor03", "file": "ConsultorioDoctor03.jpg", "kind": "consultorio" },
+    { "tag": "ConsultorioDoctor04", "file": "ConsultorioDoctor04.jpg", "kind": "consultorio" },
+    { "tag": "EquipoDoctor01", "file": "EquipoDoctor01.jpg", "kind": "equipo" },
+    { "tag": "EquipoDoctor02", "file": "EquipoDoctor02.jpg", "kind": "equipo" },
+    { "tag": "SonrisaPaciente01", "file": "SonrisaPaciente01.jpg", "kind": "sonrisa" },
+    { "tag": "SonrisaPaciente02", "file": "SonrisaPaciente02.jpg", "kind": "sonrisa" },
+    { "tag": "RecepcionClinica01", "file": "RecepcionClinica01.jpg", "kind": "recepcion" },
+    { "tag": "RecepcionClinica02", "file": "RecepcionClinica02.jpg", "kind": "recepcion" }
+  ]
+}
