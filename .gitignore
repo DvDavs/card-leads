@@ -17,3 +17,6 @@ coverage/
 
 # SDD/agent tooling
 .atl/
+
+# worktrees temporales de agentes
+.claude/worktrees/
