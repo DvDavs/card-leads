@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{meta_titulo}}</title>
+  <meta name="description" content="{{meta_descripcion}}">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        primary:   'var(--primary)',
+        secondary: 'var(--secondary)',
+        accent:    'var(--accent)',
+      } } }
+    };
+  </script>
+
+  <style>
+    @keyframes fadeInUpBlur{0%{opacity:0;transform:translateY(20px);filter:blur(10px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}.animate-entry{animation:fadeInUpBlur 1s cubic-bezier(0.2,0.8,0.2,1) both}.delay-75{animation-delay:75ms}.delay-100{animation-delay:100ms}.delay-150{animation-delay:150ms}.delay-200{animation-delay:200ms}.delay-300{animation-delay:300ms}.delay-500{animation-delay:500ms}.delay-700{animation-delay:700ms}
+  </style>
+  <style>
+    /* Sequence animation intro keyframe (used by [animation:animationIn_...] classes). */
+    @keyframes animationIn {
+      0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0px); }
+    }
+  </style>
+  <script>
+    /* Reveal-on-scroll: IntersectionObserver que activa las clases .animate-on-scroll
+       cuando entran al viewport. Self-contained (IntersectionObserver nativo). */
+    (function () {
+      const style = document.createElement("style");
+      style.textContent = `
+.animate-on-scroll { animation-play-state: paused !important; }
+.animate-on-scroll.animate { animation-play-state: running !important; }
+`;
+      document.head.appendChild(style);
+      const once = true;
+      if (!window.__inViewIO) {
+        window.__inViewIO = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("animate");
+              if (once) window.__inViewIO.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.2, rootMargin: "0px 0px -10% 0px" });
+      }
+      window.initInViewAnimations = function (selector = ".animate-on-scroll") {
+        document.querySelectorAll(selector).forEach((el) => {
+          window.__inViewIO.observe(el);
+        });
+      };
+      document.addEventListener("DOMContentLoaded", () => initInViewAnimations());
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap">
+
+  <style>
+    /* ===== Doble paleta (patron dc) =====
+       :root = paleta ORIGINAL del diseno (burgundy/wine/rose). Es el default
+       (toggle OFF). :root[data-brand] = paleta de MARCA medida del lead (gana
+       cuando el visor prende el toggle; el script lo inyecta build-web).
+       El verde de WhatsApp (#25D366) es FUNCIONAL: nunca se tokeniza.
+       Beige/charcoal/slate son neutros de estructura: quedan FIJOS para que una
+       paleta clara del lead no rompa el contraste. Sobre superficies de marca se
+       usa var(--on-*). */
+    :root{
+      --primary:#7A1E3A;    /* burgundy */
+      --secondary:#4A1024;  /* wine */
+      --accent:#9F1239;     /* rose-800 (acento de marca) */
+      --on-primary:#FFFFFF;
+      --on-secondary:#FFFFFF;
+      --on-accent:#FFFFFF;
+      --rose:#FBE8EC;       /* superficie clara tenida de marca */
+      --ring-brand:color-mix(in srgb, var(--primary) 15%, transparent);
+      --beige:#F7F1EA;      /* neutro FIJO */
+      --charcoal:#1F2933;   /* neutro FIJO */
+      --muted:#6B7280;      /* neutro FIJO */
+    }
+    :root[data-brand]{
+      --primary:{{{colors.primary}}};
+      --secondary:{{{colors.secondary}}};
+      --accent:{{{colors.accent}}};
+      --on-primary:{{{colorsText.primary}}};
+      --on-secondary:{{{colorsText.secondary}}};
+      --on-accent:{{{colorsText.accent}}};
+      --rose:color-mix(in srgb, var(--primary) 12%, #ffffff);
+      {{#hasBackground}}--card-bg:{{{colors.background}}};{{/hasBackground}}
+      {{#hasSurface}}--card-surface:{{{colors.surface}}};{{/hasSurface}}
+    }
+    body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--beige) !important;color:var(--charcoal) !important;}
+    .font-geist{font-family:'Geist',sans-serif !important;}
+    .font-sora{font-family:'Sora',sans-serif !important;}
+    .font-heading{font-family:"Playfair Display",ui-serif,Georgia,Cambria,"Times New Roman",Times,serif;letter-spacing:-0.02em;}
+    .shadow-soft{box-shadow:0 14px 44px rgba(31,41,51,.10);}
+    .shadow-soft-lg{box-shadow:0 28px 88px rgba(31,41,51,.14);}
+    .glass{background:rgba(255,255,255,.78);backdrop-filter:blur(14px);}
+    .bg-rose-soft{background:var(--rose);}
+    .bg-brand-grad{background:linear-gradient(135deg,var(--primary),var(--secondary));}
+    .bg-brand-grad-rev{background:linear-gradient(135deg,var(--secondary),var(--primary));}
+    .text-on-primary{color:var(--on-primary);}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:var(--on-primary);}
+    .btn-primary:hover{filter:brightness(1.05);}
+  </style>
+
+  <style id="storydesign-parallax-style">
+    .parallax-layer{will-change:transform;transform:translate3d(0,0,0);}
+    .parallax-float{animation:storyFloat 7s ease-in-out infinite;}
+    @keyframes storyFloat{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-10px,0)}100%{transform:translate3d(0,0,0)}}
+    @media (prefers-reduced-motion: reduce){
+      .parallax-layer{transform:none !important;}
+      .parallax-float{animation:none !important;}
+    }
+  </style>
+  <script id="storydesign-parallax-script">
+    /* Motor de parallax propio (self-contained, rAF nativo). Mueve los [data-parallax]
+       segun el scroll. Respeta prefers-reduced-motion via el CSS de arriba. */
+    (function(){
+      function initStoryParallax(){
+        var els = Array.prototype.slice.call(document.querySelectorAll('[data-parallax]'));
+        if(!els.length) return;
+        var ticking=false;
+        function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+        function update(){
+          ticking=false;
+          var wh = window.innerHeight || 0;
+          els.forEach(function(el){
+            var speed = parseFloat(el.getAttribute('data-parallax'));
+            if(isNaN(speed)) speed = 0.12;
+            var scaleAttr = el.getAttribute('data-parallax-scale');
+            var scale = scaleAttr ? parseFloat(scaleAttr) : 1;
+            if(isNaN(scale)) scale = 1;
+            var rect = el.getBoundingClientRect();
+            var progress = (rect.top + rect.height/2 - wh/2) / (wh/2);
+            progress = clamp(progress, -1.25, 1.25);
+            var y = -progress * speed * 40;
+            el.style.transform = 'translate3d(0,'+y.toFixed(2)+'px,0) scale('+scale+')';
+          });
+        }
+        function onScroll(){
+          if(!ticking){
+            ticking=true;
+            window.requestAnimationFrame(update);
+          }
+        }
+        window.addEventListener('scroll', onScroll, {passive:true});
+        window.addEventListener('resize', onScroll, {passive:true});
+        update();
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initStoryParallax);
+      else initStoryParallax();
+    })();
+  </script>
+
+  <style id="premium-motion">
+    @keyframes fadeUp{0%{opacity:0;transform:translateY(30px) scale(0.98);filter:blur(4px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}.animate-fade-up{animation:fadeUp 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards;opacity:0}.delay-100{animation-delay:0.1s}.delay-200{animation-delay:0.2s}.delay-300{animation-delay:0.3s}.delay-400{animation-delay:0.4s}.delay-500{animation-delay:0.5s}@keyframes zoomOut{0%{transform:scale(1.15)}100%{transform:scale(1)}}.animate-bg-zoom{animation:zoomOut 12s cubic-bezier(0.2,0.8,0.2,1) forwards}.glass-panel{background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.hover-lift{transition:transform 0.4s cubic-bezier(0.2,0.8,0.2,1),box-shadow 0.4s ease}.hover-lift:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(31,41,51,0.12)}@keyframes pulseWa{0%{box-shadow:0 0 0 0 rgba(37,211,102,0.5)}70%{box-shadow:0 0 0 20px rgba(37,211,102,0)}100%{box-shadow:0 0 0 0 rgba(37,211,102,0)}}.animate-pulse-wa{animation:pulseWa 2s infinite}
+  </style>
+  <style id="hero-slider-styles">
+    @keyframes heroSlideFade {
+      0% { opacity: 1; transform: scale(1.033); }
+      40% { opacity: 1; transform: scale(1.166); }
+      50% { opacity: 0; transform: scale(1.2); }
+      90% { opacity: 0; transform: scale(1.0); }
+      100% { opacity: 1; transform: scale(1.033); }
+    }
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      animation: heroSlideFade 16s linear infinite;
+      will-change: transform, opacity;
+    }
+    .hero-slide:nth-child(2) {
+      animation-delay: -8s;
+    }
+    @media (prefers-reduced-motion: reduce){
+      .hero-slide{animation:none !important;}
+    }
+  </style>
+  <style id="custom-nav-anim-style">
+    .nav-hide-anim { animation: hideNav 0.7s ease-in-out forwards; }
+    .nav-hide-anim #nav-logo-container,
+    .nav-hide-anim .nav-content-fade { animation: fadeOut 0.3s ease forwards; }
+    .nav-show-anim { animation: showNav 0.4s ease-out forwards; }
+    .nav-show-anim #nav-logo-container,
+    .nav-show-anim .nav-content-fade { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes hideNav { 0%, 45% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100%); opacity: 0; } }
+    @keyframes showNav { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+  </style>
+  <style id="custom-load-sequence">
+    @keyframes seqBg { 0% { opacity: 0; transform: scale(1.05); filter: blur(5px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+    @keyframes seqText { 0% { opacity: 0; transform: translateY(20px); filter: blur(4px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+    @keyframes seqNav { 0% { opacity: 0; transform: translateX(-30px); filter: blur(4px); } 100% { opacity: 1; transform: translateX(0); filter: blur(0); } }
+    .seq-bg { opacity: 0; animation: seqBg 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+    .seq-h1 { opacity: 0; animation: seqText 1s cubic-bezier(0.2,0.8,0.2,1) 0.6s forwards; }
+    .seq-p  { opacity: 0; animation: seqText 1s cubic-bezier(0.2,0.8,0.2,1) 0.8s forwards; }
+    .seq-btn { opacity: 0; animation: seqText 1s cubic-bezier(0.2,0.8,0.2,1) 1.0s forwards; }
+    .seq-nav { opacity: 0; animation: seqNav 1s cubic-bezier(0.2,0.8,0.2,1) 1.4s forwards; }
+    .seq-nav-1 { opacity: 0; animation: seqNav 0.8s cubic-bezier(0.2,0.8,0.2,1) 1.5s forwards; }
+    .seq-nav-2 { opacity: 0; animation: seqNav 0.8s cubic-bezier(0.2,0.8,0.2,1) 1.6s forwards; }
+    .seq-nav-3 { opacity: 0; animation: seqNav 0.8s cubic-bezier(0.2,0.8,0.2,1) 1.7s forwards; }
+    @media (prefers-reduced-motion: reduce){
+      .seq-bg,.seq-h1,.seq-p,.seq-btn,.seq-nav,.seq-nav-1,.seq-nav-2,.seq-nav-3{animation:none !important;opacity:1 !important;}
+    }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden selection:bg-[#FBE8EC] bg-[#F5F7FA] relative antialiased text-slate-900">
+
+<!-- Background Gradients (auras decorativas fijas, brand-tinted) -->
+<div class="fixed z-0 pointer-events-none inset-0">
+  <div class="absolute inset-0 bg-[radial-gradient(1100px_700px_at_18%_8%,rgba(251,232,236,.95),transparent_62%),radial-gradient(900px_620px_at_85%_18%,rgba(122,30,58,.14),transparent_60%),radial-gradient(900px_620px_at_50%_95%,rgba(74,16,36,.12),transparent_60%)] parallax-layer" data-parallax="0.22"></div>
+  <div class="absolute inset-0 opacity-[0.28] parallax-layer" style="background-size: 28px 28px;" data-parallax="0.12"></div>
+</div>
+
+<!-- Navigation (smart hide/show on scroll) -->
+<nav class="fixed top-0 z-50 w-full pt-4 px-3 sm:px-6 transition-all duration-300" style="position: fixed;">
+  <div class="sm:px-6 sm:py-3 flex seq-nav bg-white/70 max-w-7xl border-white/60 border rounded-full mr-auto ml-auto pt-2.5 pr-4 pb-2.5 pl-4 shadow-[0_8px_32px_rgba(31,41,51,0.06)] backdrop-blur-2xl gap-x-4 gap-y-4 items-center justify-between">
+    <a href="#inicio" class="flex items-center gap-3 seq-nav-1">
+      <span class="inline-flex w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-grad items-center justify-center text-on-primary text-[15px] font-semibold font-geist shadow-sm nav-content-fade">{{inicial}}</span>
+      <div class="leading-tight nav-content-fade">
+        <div class="text-[14px] sm:text-[15px] font-semibold text-[#1F2933]/80 tracking-tight font-geist">
+          {{nombre}}
+        </div>
+      </div>
+    </a>
+
+    <div class="hidden lg:flex items-center gap-1 text-[14px] text-slate-600 nav-content-fade seq-nav-2">
+      <a href="#servicos" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-primary font-geist">Servicios</a>
+      <a href="#sobre" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-primary font-geist whitespace-nowrap">Quiénes Somos</a>
+      <a href="#depoimentos" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-primary font-geist">Testimonios</a>
+      <a href="#faq" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-primary font-geist">Preguntas</a>
+      <a href="#contato" class="px-4 py-2 rounded-full transition-all duration-300 font-medium hover:bg-white hover:shadow-[0_4px_12px_rgba(31,41,51,0.06)] hover:text-primary font-geist">Contacto</a>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3 nav-content-fade seq-nav-3">
+      {{#tiene_telefono}}
+      <a href="{{telefono_href}}" class="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-full ring-1 transition-all duration-300 shadow-[0_2px_8px_rgba(31,41,51,0.04)] bg-white/80 ring-slate-200/60 text-slate-900 hover:bg-white hover:scale-105 whitespace-nowrap">
+        <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span class="text-[13px] font-medium font-geist">{{telefono}}</span>
+      </a>
+      {{/tiene_telefono}}
+      {{#tiene_whatsapp}}
+      <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#25D366] font-medium shadow-[0_4px_12px_rgba(37,211,102,0.25)] hover:scale-105 hover:brightness-110 transition-all text-white whitespace-nowrap">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        <span class="text-[14px] font-medium font-geist">WhatsApp 24h</span>
+      </a>
+      {{/tiene_whatsapp}}
+    </div>
+  </div>
+</nav>
+
+<!-- Hero: full-bleed 2-image crossfade slider -->
+<div class="absolute top-0 left-0 w-full h-[155vh] lg:h-[130vh] pointer-events-none z-0 overflow-hidden parallax-layer [mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_65%,transparent_100%)]" data-parallax="0.25">
+  <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(74,16,36,0.5),rgba(31,41,51,0.4))] z-10"></div>
+  <div class="absolute inset-0 w-full h-full z-0">
+    <img src="{{img_hero_01}}" class="hero-slide contrast-125 saturate-110" alt="{{nombre}}">
+    <img src="{{img_hero_02}}" class="hero-slide contrast-125 saturate-110" alt="{{nombre}}">
+  </div>
+  <div class="absolute inset-0 z-10 pointer-events-none opacity-20 parallax-layer" data-parallax="0.1" style="background-image: radial-gradient(circle, rgba(255, 255, 255, 0.8) 1px, transparent 1px); background-size: 80px 80px; animation: 20s linear 0s infinite normal none running storyFloat;"></div>
+</div>
+<main id="inicio" class="max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-20 relative flex flex-col justify-center min-h-[95vh] z-10">
+  <div class="flex flex-col items-start max-w-3xl w-full">
+    {{#tiene_badge_disponibilidad}}
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-white text-sm font-light font-geist mb-6 seq-h1">
+      <span class="w-2 h-2 rounded-full bg-[#25D366]"></span>
+      {{badge_disponibilidad}}
+    </div>
+    {{/tiene_badge_disponibilidad}}
+
+    <h1 class="text-[40px] sm:text-6xl lg:text-[72px] leading-[1.05] font-semibold text-gray-200 tracking-tight font-geist mb-6 drop-shadow-md seq-h1" style="mask-image: linear-gradient(180deg, transparent, black 35%, black 80%, transparent); -webkit-mask-image: linear-gradient(180deg, transparent, black 35%, black 80%, transparent);">
+      {{hero_titulo}}
+    </h1>
+
+    {{#tiene_hero_subtitulo}}
+    <p class="text-[17px] sm:text-xl leading-relaxed font-semibold text-gray-200/95 font-geist max-w-2xl mb-10 drop-shadow-md seq-p">
+      {{hero_subtitulo}}
+    </p>
+    {{/tiene_hero_subtitulo}}
+
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-14 items-stretch sm:items-center w-full seq-btn">
+      {{#tiene_whatsapp}}
+      <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="group relative z-0 inline-flex w-full sm:w-auto items-center justify-center gap-2.5 overflow-hidden rounded-2xl px-8 py-4 text-[16px] font-medium shadow-[0_8px_30px_rgba(37,211,102,0.3)] transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_40px_-10px_rgba(37,211,102,0.8)] focus:outline-none text-white">
+        <style>
+          @keyframes beam-spin { to { transform: rotate(360deg); } }
+          @keyframes dots-move { 0% { background-position: 0 0; } 100% { background-position: 24px 24px; } }
+          @media (prefers-reduced-motion: reduce){
+            [style*="beam-spin"],[style*="dots-move"]{animation:none !important;}
+          }
+        </style>
+        <div class="absolute inset-0 overflow-hidden rounded-2xl p-[1px]">
+          <div class="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0_300deg,#ffffff_360deg)]" style="animation: beam-spin 3s linear infinite;"></div>
+          <div class="absolute inset-[1px] rounded-[15px] bg-[#25D366]"></div>
+        </div>
+        <div class="absolute inset-[2px] overflow-hidden rounded-[14px] bg-[#25D366]">
+          <div class="absolute inset-0 bg-gradient-to-b to-transparent from-white/20"></div>
+          <div class="absolute inset-0 opacity-30 mix-blend-overlay" style="background-image: radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px); background-size: 12px 12px; animation: dots-move 8s linear infinite"></div>
+          <div class="pointer-events-none absolute bottom-0 left-1/2 h-1/2 w-2/3 -translate-x-1/2 rounded-full blur-2xl transition-colors duration-500 group-hover:bg-white/40 bg-white/20"></div>
+        </div>
+        <svg class="w-5 h-5 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        <span class="relative z-10 font-light font-geist">{{hero_cta}}</span>
+        <svg class="w-4 h-4 relative z-10 opacity-70 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      {{/tiene_whatsapp}}
+
+      {{#tiene_telefono}}
+      <a href="{{telefono_href}}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-2xl px-8 py-4 text-[16px] font-semibold text-secondary shadow-soft-lg hover:scale-105 transition-all duration-300 bg-white">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span class="font-light font-geist">Llamar ahora</span>
+      </a>
+      {{/tiene_telefono}}
+    </div>
+
+    {{#tiene_stats}}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl animate-fade-up delay-400">
+      {{#stats}}
+      <div class="glass-panel rounded-2xl px-5 py-4">
+        <div class="text-2xl font-semibold text-white font-geist">{{valor}}</div>
+        <div class="text-xs text-white/80 font-light font-geist mt-1">{{etiqueta}}</div>
+      </div>
+      {{/stats}}
+    </div>
+    {{/tiene_stats}}
+  </div>
+
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-20 opacity-80 animate-bounce pointer-events-none">
+    <span class="text-white/80 text-[10px] uppercase tracking-[0.2em] font-light font-geist">Ver más</span>
+    <svg class="w-6 h-6 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+  </div>
+</main>
+
+<!-- Trust / value props (4 cards) -->
+{{#tiene_propuestas}}
+<section class="sm:px-6 sm:py-16 [--fx-filter:blur(16px)_liquid-glass(2.5,10)_saturate(1.25)_noise(0.5,1,0)] max-w-7xl mx-auto px-4 py-12 relative">
+  <div class="text-center mb-10 sm:mb-12">
+    <h2 class="animate-on-scroll blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none sm:text-4xl lg:text-5xl text-3xl font-bold text-gray-100 tracking-tight font-sora opacity-0 mb-3 translate-y-6" style="mask-image: linear-gradient(90deg, transparent, black 25%, black 70%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 25%, black 70%, transparent);">
+      Confianza Clínica y Respuesta Rápida
+    </h2>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    {{#propuestas}}
+    <div class="group rounded-3xl ring-1 p-6 shadow-soft animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none hover:-translate-y-[6px] hover:shadow-[0_24px_60px_-20px_rgba(122,30,58,0.25)] hover:duration-500 bg-white ring-slate-200">
+      <div class="flex items-start gap-3">
+        <span class="inline-flex w-11 h-11 rounded-2xl bg-rose-soft ring-1 ring-[var(--ring-brand)] items-center justify-center">
+          <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <div>
+          <div class="tracking-tight text-xl text-[#1F2933] font-geist font-medium">{{titulo}}</div>
+          <p class="mt-1 text-sm leading-relaxed font-light text-slate-600 font-geist">{{descripcion}}</p>
+        </div>
+      </div>
+    </div>
+    {{/propuestas}}
+  </div>
+</section>
+{{/tiene_propuestas}}
+
+<!-- About / Sobre la clínica -->
+<section id="sobre" class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+  <div class="rounded-[32px] ring-1 shadow-soft-lg overflow-hidden animate-on-scroll opacity-0 translate-y-12 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none bg-white ring-slate-200">
+    <div class="grid grid-cols-1 lg:grid-cols-12">
+      <div class="lg:col-span-5 relative">
+        <div class="absolute inset-0 bg-[radial-gradient(700px_420px_at_15%_15%,rgba(251,232,236,.95),transparent_60%),radial-gradient(700px_420px_at_90%_40%,rgba(122,30,58,.20),transparent_55%)] parallax-layer" data-parallax="0.14" data-parallax-scale="1.03"></div>
+        <div class="relative p-7 sm:p-10">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-soft text-secondary text-sm ring-1 ring-[var(--ring-brand)] font-light font-geist">
+            <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+            Sobre la clínica
+          </div>
+          <h2 class="mt-5 text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+            Un centro de referencia en urgencias odontológicas
+          </h2>
+          {{#tiene_bio}}
+          <p class="mt-4 leading-relaxed text-[15px] sm:text-[16px] font-light text-slate-700 font-geist">
+            {{bio}}
+          </p>
+          {{/tiene_bio}}
+          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="p-4 rounded-2xl ring-1 bg-white/70 ring-slate-200">
+              <div class="flex items-center gap-2 text-primary">
+                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <span class="text-sm font-light font-geist">Atención humanizada</span>
+              </div>
+              <div class="mt-1 text-xs font-light text-slate-600 font-geist">Usted entiende lo que está pasando y cuál es el siguiente paso.</div>
+            </div>
+            <div class="p-4 rounded-2xl ring-1 bg-white/70 ring-slate-200">
+              <div class="flex items-center gap-2 text-primary">
+                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>
+                <span class="text-sm font-light font-geist">Conducta profesional</span>
+              </div>
+              <div class="mt-1 text-xs font-light text-slate-600 font-geist">Diagnóstico y procedimientos con rigor técnico.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lg:col-span-7 relative parallax-layer" data-parallax="0.1">
+        <img src="{{img_consultorio_01}}" alt="Ambiente clínico de {{nombre}}" class="w-full h-full object-cover min-h-[320px]">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#4A1024]/55 via-transparent to-transparent"></div>
+        <!-- Glass badge strip (identidad fija: disponibilidad y bioseguridad) -->
+        <div class="absolute bottom-6 left-6 right-6">
+          <div class="glass rounded-3xl ring-1 p-5 shadow-soft ring-white/30">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="flex items-center gap-2 text-slate-800">
+                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="text-sm font-light font-geist">24/7</span>
+              </div>
+              <div class="flex items-center gap-2 text-slate-800">
+                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+                <span class="text-sm font-light font-geist">Radiografía digital</span>
+              </div>
+              <div class="flex items-center gap-2 text-slate-800">
+                <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                <span class="text-sm font-light font-geist">Bioseguridad</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Services / Servicios de urgencia (data-driven) -->
+{{#tiene_servicios}}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16" id="servicos">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+        Servicios de urgencia
+      </h2>
+      <p class="mt-3 max-w-2xl font-light text-slate-600 font-geist">
+        Atención enfocada en lo que más se presenta en la guardia odontológica — con evaluación, explicación clara y un plan seguro para resolver el dolor y estabilizar el cuadro.
+      </p>
+    </div>
+    {{#tiene_whatsapp}}
+    <div class="flex gap-3">
+      <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        WhatsApp
+      </a>
+    </div>
+    {{/tiene_whatsapp}}
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    {{#servicios}}
+    <div class="rounded-3xl ring-1 p-6 shadow-soft hover-lift animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none bg-white ring-slate-200">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex w-9 h-9 rounded-xl bg-rose-soft ring-1 ring-[var(--ring-brand)] items-center justify-center text-[13px] font-semibold text-primary font-geist">{{n}}</span>
+        <h3 class="tracking-tight font-light font-geist text-[#1F2933]">{{nombre}}</h3>
+      </div>
+      {{#tiene_descripcion}}
+      <p class="mt-3 text-sm font-light text-slate-600 font-geist">{{descripcion}}</p>
+      {{/tiene_descripcion}}
+    </div>
+    {{/servicios}}
+  </div>
+</section>
+{{/tiene_servicios}}
+
+<!-- FAQ accordion (data-driven, hasta 9) -->
+{{#tiene_faq}}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16" id="faq">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="lg:col-span-5">
+      <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+        Preguntas frecuentes
+      </h2>
+      <p class="mt-3 font-light text-slate-600 font-geist">
+        Preguntas comunes en situaciones de urgencia odontológica. Si prefiere, hable directamente con el equipo de guardia.
+      </p>
+      {{#tiene_whatsapp}}
+      <div class="mt-6 flex gap-3">
+        <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          Consultar por WhatsApp
+        </a>
+      </div>
+      {{/tiene_whatsapp}}
+    </div>
+
+    <div class="lg:col-span-7 parallax-layer animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none" data-parallax="0.08">
+      <div class="space-y-3" data-accordion="">
+        {{#faq}}
+        <details class="group rounded-3xl ring-1 shadow-soft p-6 open:shadow-soft-lg bg-white ring-slate-200">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+            <span class="text-primary font-light font-geist">{{pregunta}}</span>
+            <svg class="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </summary>
+          <p class="mt-3 text-sm leading-relaxed font-light text-slate-600 font-geist">{{respuesta}}</p>
+        </details>
+        {{/faq}}
+      </div>
+    </div>
+  </div>
+</section>
+{{/tiene_faq}}
+
+<!-- Emergency CTA band -->
+{{#tiene_cta_urgencia}}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16">
+  <div class="rounded-[32px] bg-brand-grad-rev shadow-soft-lg overflow-hidden relative ring-1 ring-[var(--ring-brand)] animate-on-scroll opacity-0 scale-[0.98] blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:scale-100 [&amp;.animate]:blur-none">
+    <div class="absolute inset-0 opacity-35 parallax-layer" style="background-image:radial-gradient(900px 420px at 15% 20%, rgba(251,232,236,.55), transparent 62%), radial-gradient(800px 420px at 85% 30%, rgba(255,255,255,.22), transparent 62%);" data-parallax="0.15"></div>
+    <div class="relative p-8 sm:p-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-7">
+      <div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full ring-1 text-sm font-light bg-white/15 ring-white/20 text-on-primary font-geist">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+          Si es urgente, no espere
+        </div>
+        <h2 class="sm:text-5xl animate-on-scroll blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none text-3xl font-semibold text-on-primary tracking-tight font-geist opacity-0 mt-5 translate-y-6">
+          {{cta_urgencia.titulo}}
+        </h2>
+        {{#cta_urgencia}}{{#subtexto}}
+        <p class="mt-3 max-w-2xl text-[15px] sm:text-[16px] font-light text-on-primary/90 font-geist">
+          {{subtexto}}
+        </p>
+        {{/subtexto}}{{/cta_urgencia}}
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        {{#tiene_whatsapp}}
+        <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all w-full sm:w-auto font-light text-white font-geist">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          Hablar por WhatsApp
+        </a>
+        {{/tiene_whatsapp}}
+        {{#tiene_telefono}}
+        <a href="{{telefono_href}}" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-secondary shadow-soft transition-colors w-full sm:w-auto font-light bg-white hover:bg-white/90 font-geist">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94"/><path d="M14.05 6A5 5 0 0 1 18 10"/></svg>
+          Llamar ahora
+        </a>
+        {{/tiene_telefono}}
+      </div>
+    </div>
+  </div>
+</section>
+{{/tiene_cta_urgencia}}
+
+<!-- Pagos y cobertura (Q&A generico, texto fijo) -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+  <div class="rounded-[32px] ring-1 shadow-soft-lg overflow-hidden bg-white ring-slate-200">
+    <div class="p-8 sm:p-12">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+          Pagos y cobertura
+        </h2>
+        <p class="mt-3 max-w-2xl mx-auto font-light text-slate-600 font-geist">
+          Resuelva rápidamente las principales dudas sobre pagos y atención de urgencia. Si prefiere, hable ahora con el equipo de guardia.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">¿Aceptan seguro dental?</h3>
+          <p class="text-sm font-light text-slate-600 font-geist">Atendemos pacientes particulares y orientamos sobre el reembolso de seguros cuando corresponda. Confirme el proceso por WhatsApp.</p>
+        </div>
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">¿Cómo funciona la atención de urgencia?</h3>
+          <p class="text-sm font-light text-slate-600 font-geist">Evaluación rápida, examen y conducta enfocada en aliviar el dolor y estabilizar el cuadro con seguridad y explicación clara.</p>
+        </div>
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">¿Cuáles son las formas de pago?</h3>
+          <p class="text-sm font-light text-slate-600 font-geist">Efectivo, tarjeta de débito y crédito, y transferencia. Si necesita financiación en cuotas, le informamos las opciones disponibles en la guardia.</p>
+        </div>
+        <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-6 ring-slate-200">
+          <h3 class="text-lg text-[#1F2933] mb-2 font-light font-geist">¿Cómo inicio mi atención ahora?</h3>
+          <p class="text-sm font-light text-slate-600 font-geist">Escriba por WhatsApp y describa los síntomas. Organizamos la llegada y le orientamos sobre los próximos pasos.</p>
+        </div>
+      </div>
+      {{#tiene_whatsapp}}
+      <div class="mt-8 flex justify-center">
+        <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          Consultar por WhatsApp
+        </a>
+      </div>
+      {{/tiene_whatsapp}}
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials + rating badge -->
+{{#tiene_testimonios}}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16" id="depoimentos">
+  <div class="rounded-[32px] ring-1 shadow-soft-lg overflow-hidden p-8 sm:p-12 bg-white ring-slate-200">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
+      <div>
+        <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+          Testimonios
+        </h2>
+        <p class="mt-3 max-w-2xl font-light text-slate-600 font-geist">
+          Opiniones de pacientes atendidos en urgencias. Claridad, cercanía y resolución con seguridad.
+        </p>
+      </div>
+      {{#tiene_calificacion}}
+      <div class="inline-flex items-center gap-1 text-primary bg-rose-soft px-5 py-2.5 rounded-full ring-1 ring-[var(--ring-brand)] shadow-sm">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="ml-2 text-sm text-primary font-light font-geist">{{calificacion.valor}} en la atención</span>
+      </div>
+      {{/tiene_calificacion}}
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {{#testimonios}}
+      <div class="rounded-3xl bg-[#F7F1EA] ring-1 p-8 animate-on-scroll opacity-0 translate-y-8 blur-[2px] transition-all duration-1000 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none ring-slate-200">
+        <p class="text-[16px] leading-relaxed font-light text-slate-800 font-geist">“{{cita}}”</p>
+        <div class="mt-6 flex items-center justify-between gap-3">
+          <div class="text-sm text-[#1F2933] font-light font-geist">{{autor}}</div>
+          {{#tiene_rol}}<div class="text-xs font-light text-slate-600 font-geist">{{rol}}</div>{{/tiene_rol}}
+        </div>
+      </div>
+      {{/testimonios}}
+    </div>
+  </div>
+</section>
+{{/tiene_testimonios}}
+
+<!-- Contact + map + footer -->
+<footer id="contato" class="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
+  <div class="rounded-[28px] ring-1 shadow-soft-lg overflow-hidden bg-white ring-slate-200">
+    <div class="grid grid-cols-1 lg:grid-cols-12">
+      <div class="lg:col-span-6 p-7 sm:p-10">
+        <h2 class="text-3xl sm:text-4xl tracking-tight text-[#1F2933] animate-on-scroll opacity-0 translate-y-6 blur-[2px] transition-all duration-700 ease-out [&amp;.animate]:opacity-100 [&amp;.animate]:translate-y-0 [&amp;.animate]:blur-none font-geist font-semibold">
+          Contacto y ubicación
+        </h2>
+        <p class="mt-3 font-light text-slate-600 font-geist">
+          Atención 24/7 para urgencias odontológicas. Para agilizar, escriba por WhatsApp e indique síntomas, ubicación y horario.
+        </p>
+
+        <div class="mt-7 space-y-4">
+          {{#tiene_direccion}}
+          <div class="flex items-start gap-3">
+            <span class="inline-flex w-10 h-10 rounded-2xl bg-rose-soft items-center justify-center ring-1 ring-[var(--ring-brand)]">
+              <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            <div>
+              <div class="text-sm text-primary font-light font-geist">Dirección</div>
+              <a href="{{mapa_url}}" target="_blank" rel="noopener" class="text-sm font-light text-slate-600 hover:text-primary font-geist">{{direccion}}</a>
+            </div>
+          </div>
+          {{/tiene_direccion}}
+          {{#tiene_telefono}}
+          <div class="flex items-start gap-3">
+            <span class="inline-flex w-10 h-10 rounded-2xl bg-rose-soft items-center justify-center ring-1 ring-[var(--ring-brand)]">
+              <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <div>
+              <div class="text-sm text-primary font-light font-geist">Teléfono de guardia</div>
+              <a class="text-sm hover:text-primary font-light text-slate-700 font-geist" href="{{telefono_href}}">{{telefono}}</a>
+            </div>
+          </div>
+          {{/tiene_telefono}}
+          {{#tiene_whatsapp}}
+          <div class="flex items-start gap-3">
+            <span class="inline-flex w-10 h-10 rounded-2xl bg-rose-soft items-center justify-center ring-1 ring-[var(--ring-brand)]">
+              <svg class="w-4 h-4 text-[#25D366]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            </span>
+            <div>
+              <div class="text-sm text-primary font-light font-geist">WhatsApp 24h</div>
+              <a class="text-sm hover:text-primary font-light text-slate-700 font-geist" href="{{whatsapp_url}}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+            </div>
+          </div>
+          {{/tiene_whatsapp}}
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {{#tiene_whatsapp}}
+          <a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#25D366] shadow-soft hover:brightness-110 transition-all font-light text-white font-geist">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            WhatsApp
+          </a>
+          {{/tiene_whatsapp}}
+          {{#tiene_telefono}}
+          <a href="{{telefono_href}}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-grad shadow-soft hover:brightness-110 transition-all font-light text-on-primary font-geist">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94"/><path d="M14.05 6A5 5 0 0 1 18 10"/></svg>
+            Llamar ahora
+          </a>
+          {{/tiene_telefono}}
+        </div>
+
+        {{#tiene_whatsapp}}
+        <div class="mt-10 rounded-3xl bg-rose-soft ring-1 ring-[var(--ring-brand)] p-6">
+          <div class="tracking-tight text-primary font-light font-geist">Solicitar contacto</div>
+          <p class="mt-1 text-sm font-light text-slate-600 font-geist">
+            Déjenos su WhatsApp con código de área. Le responderemos lo antes posible durante la guardia.
+          </p>
+          <form class="mt-4 flex gap-2" onsubmit="event.preventDefault(); window.open('{{whatsapp_url}}'+encodeURIComponent(' Mi numero de contacto: '+this.phone.value),'_blank','noopener');">
+            <input name="phone" type="tel" required="" placeholder="Su WhatsApp (código de área + número)" class="w-full px-4 py-3 rounded-2xl ring-1 focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_40%,transparent)] text-sm bg-white ring-slate-200">
+            <button type="submit" class="px-6 py-3 rounded-2xl bg-brand-grad shadow-soft hover:brightness-110 transition-all text-sm whitespace-nowrap font-light text-on-primary font-geist">Enviar</button>
+          </form>
+        </div>
+        {{/tiene_whatsapp}}
+      </div>
+
+      {{#tiene_direccion}}
+      <div class="lg:col-span-6 bg-[#F5F7FA] ring-1 ring-slate-200/60">
+        <div class="p-4 sm:p-6 h-full flex flex-col">
+          <div class="rounded-3xl overflow-hidden ring-1 shadow-soft flex-1 min-h-[300px] ring-slate-200 bg-white">
+            <div class="h-full w-full">
+              <iframe title="Mapa de ubicación" class="w-full h-full" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="{{{mapa_embed_url}}}"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{/tiene_direccion}}
+    </div>
+
+    <div class="border-t px-7 sm:px-10 py-7 border-slate-200">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="text-xs text-slate-500 font-light font-geist">
+          © {{anio}} {{nombre}}.{{#tiene_responsable_tecnico}} Responsable Técnico: {{responsable_tecnico}}.{{/tiene_responsable_tecnico}}
+          {{#demo_es_ejemplo}}<span class="block sm:inline sm:ml-2 text-slate-400">Página de demostración — contenido de muestra.</span>{{/demo_es_ejemplo}}
+        </div>
+        <div class="flex items-center gap-4 text-xs text-slate-500">
+          <a href="#" class="font-light hover:text-slate-700 font-geist">Política de Privacidad</a>
+          <a href="#" class="font-light hover:text-slate-700 font-geist">Términos</a>
+          {{#tiene_instagram}}<a href="{{instagram_url}}" target="_blank" rel="noopener" class="font-light hover:text-primary font-geist">Instagram</a>{{/tiene_instagram}}
+          {{#tiene_facebook}}<a href="{{facebook_url}}" target="_blank" rel="noopener" class="font-light hover:text-primary font-geist">Facebook</a>{{/tiene_facebook}}
+          {{#tiene_tiktok}}<a href="{{tiktok_url}}" target="_blank" rel="noopener" class="font-light hover:text-primary font-geist">TikTok</a>{{/tiene_tiktok}}
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Sticky pulsing WhatsApp float button -->
+{{#tiene_whatsapp}}
+<a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="fixed bottom-6 right-6 z-[100] flex items-center justify-center w-[60px] h-[60px] bg-[#25D366] rounded-full shadow-[0_8px_30px_rgba(37,211,102,0.4)] animate-pulse-wa hover:scale-110 transition-transform text-white" aria-label="WhatsApp">
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path>
+  </svg>
+</a>
+{{/tiene_whatsapp}}
+
+<script id="smart-nav-script">
+  /* Smart nav: oculta la barra al bajar, la muestra al subir. Self-contained. */
+  (function() {
+    function initSmartNav() {
+      let lastScrollY = window.scrollY;
+      const nav = document.querySelector('nav');
+      if (!nav) return;
+
+      let isNavClick = false;
+      let clickTimeout;
+
+      const navLinks = nav.querySelectorAll('a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          isNavClick = true;
+          clearTimeout(clickTimeout);
+          clickTimeout = setTimeout(() => { isNavClick = false; }, 1500);
+        });
+      });
+
+      window.addEventListener('scroll', () => {
+        if (isNavClick) { lastScrollY = window.scrollY; return; }
+
+        if (window.scrollY > 120) {
+          if (window.scrollY > lastScrollY) {
+            if (!nav.classList.contains('nav-hide-anim')) {
+              nav.classList.remove('nav-show-anim');
+              nav.classList.add('nav-hide-anim');
+            }
+          } else {
+            if (nav.classList.contains('nav-hide-anim')) {
+              nav.classList.remove('nav-hide-anim');
+              nav.classList.add('nav-show-anim');
+            }
+          }
+        } else {
+          if (nav.classList.contains('nav-hide-anim')) {
+            nav.classList.remove('nav-hide-anim');
+            nav.classList.add('nav-show-anim');
+          }
+        }
+        lastScrollY = window.scrollY;
+      }, { passive: true });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSmartNav);
+    } else {
+      initSmartNav();
+    }
+  })();
+</script>
+
+</body></html>
