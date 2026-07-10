@@ -85,6 +85,14 @@ function withBusinessData(prompt: string, input: EnrichInput): string {
     `- nombre del negocio: ${input.businessName || "(sin nombre)"}`,
   ];
   if (input.personName) lines.push(`- persona / profesional: ${input.personName}`);
+  if (input.personGender)
+    lines.push(
+      `- genero de la persona (para concordancia y balance del equipo demo): ${
+        input.personGender === "f"
+          ? "femenino (la doctora / la profesional)"
+          : "masculino (el doctor / el profesional)"
+      }`,
+    );
   if (input.tagline) lines.push(`- lema / tagline: ${input.tagline}`);
   if (input.location) lines.push(`- ubicacion: ${input.location}`);
   lines.push(
