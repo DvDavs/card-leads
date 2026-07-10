@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{meta_titulo}}</title>
+  <meta name="description" content="{{meta_descripcion}}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        primary:   'var(--primary)',
+        secondary: 'var(--secondary)',
+        accent:    'var(--accent)',
+      } } }
+    };
+  </script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Paleta ORIGINAL del diseno (default, toggle OFF). Hardcodeada. */
+    :root {
+      --primary: #2563eb;
+      --secondary: #1e40af;
+      --accent: #eab308;
+      --on-primary: #ffffff;
+      --on-secondary: #ffffff;
+      --on-accent: #1a1a1a;
+    }
+    /* Paleta de MARCA del lead (toggle ON). El atributo data-brand lo pone/saca
+       el script que inyecta build-web al escribir la pagina (ver LEEME §4/§8). */
+    :root[data-brand] {
+      --primary: {{{colors.primary}}};
+      --secondary: {{{colors.secondary}}};
+      --accent: {{{colors.accent}}};
+      --on-primary: {{{colorsText.primary}}};
+      --on-secondary: {{{colorsText.secondary}}};
+      --on-accent: {{{colorsText.accent}}};
+    }
+
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::selection { background: color-mix(in srgb, var(--primary) 18%, white); color: var(--primary); }
+
+    /* Menu movil por checkbox hack (sin JS). */
+    #mobile-menu-toggle:checked ~ #mobile-menu { display: block; }
+
+    /* Chip azul unico (logo). Tinte suave que se llena de color al hacer hover del padre .group. */
+    .brand-chip { background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); transition: background-color .3s ease, color .3s ease; }
+    .group:hover .brand-chip { background: var(--primary); color: var(--on-primary); }
+
+    /* Boton solido de marca (CTAs de telefono). */
+    .brand-btn { background: var(--primary); color: var(--on-primary); }
+    .brand-btn:hover { filter: brightness(0.92); }
+
+    /* Patron de la banda de mision, inline (antes: transparenttextures.com, dominio externo prohibido). */
+    .mission-pattern {
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.55) 1px, transparent 1.6px);
+      background-size: 18px 18px;
+    }
+
+    /* Identidad del diseno: chips multicolor fijos (NO se mapean a la paleta de marca).
+       Ciclo de 4 colores para los accesos rapidos: azul de marca, rosa, esmeralda, violeta.
+       nth-of-type funciona sobre el DOM ya renderizado, asi que el ciclo aplica
+       sin importar cuantos servicios traiga el lead. */
+    .qlink-card:nth-of-type(4n+1) .qlink-chip { background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); }
+    .qlink-card:nth-of-type(4n+1):hover .qlink-chip { background: var(--primary); color: var(--on-primary); }
+    .qlink-card:nth-of-type(4n+2) .qlink-chip { background: #fff1f2; color: #f43f5e; }
+    .qlink-card:nth-of-type(4n+2):hover .qlink-chip { background: #f43f5e; color: #fff; }
+    .qlink-card:nth-of-type(4n+3) .qlink-chip { background: #ecfdf5; color: #10b981; }
+    .qlink-card:nth-of-type(4n+3):hover .qlink-chip { background: #10b981; color: #fff; }
+    .qlink-card:nth-of-type(4n+4) .qlink-chip { background: #faf5ff; color: #a855f7; }
+    .qlink-card:nth-of-type(4n+4):hover .qlink-chip { background: #a855f7; color: #fff; }
+    .qlink-chip { transition: background-color .3s ease, color .3s ease; }
+
+    /* Mismo ciclo (3 colores) para las 3 tarjetas de servicio detallado. */
+    .svc-card:nth-of-type(3n+1) .svc-chip { background: color-mix(in srgb, var(--primary) 14%, white); }
+    .svc-card:nth-of-type(3n+1) .svc-chip, .svc-card:nth-of-type(3n+1) .svc-check { color: var(--primary); }
+    .svc-card:nth-of-type(3n+1):hover { border-color: color-mix(in srgb, var(--primary) 35%, white); }
+    .svc-card:nth-of-type(3n+2) .svc-chip { background: #ffe4e6; }
+    .svc-card:nth-of-type(3n+2) .svc-chip, .svc-card:nth-of-type(3n+2) .svc-check { color: #f43f5e; }
+    .svc-card:nth-of-type(3n+2):hover { border-color: #fecdd3; }
+    .svc-card:nth-of-type(3n+3) .svc-chip { background: #d1fae5; }
+    .svc-card:nth-of-type(3n+3) .svc-chip, .svc-card:nth-of-type(3n+3) .svc-check { color: #10b981; }
+    .svc-card:nth-of-type(3n+3):hover { border-color: #a7f3d0; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-600 antialiased">
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="#home" class="flex items-center gap-2 group">
+        <div class="brand-chip p-2 rounded-xl">
+          <iconify-icon icon="solar:health-linear" width="24" height="24"></iconify-icon>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-semibold text-slate-900 tracking-tight leading-none text-lg">{{nombre}}</span>
+          {{#tiene_tagline}}<span class="text-xs text-slate-500 font-medium tracking-wide uppercase">{{tagline}}</span>{{/tiene_tagline}}
+        </div>
+      </a>
+
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#home" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Inicio</a>
+        {{#tiene_bio}}<a href="#about" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Conozca a {{nombre}}</a>{{/tiene_bio}}
+        {{#tiene_servicios}}<a href="#services" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Servicios</a>{{/tiene_servicios}}
+        <a href="#contact" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Contacto</a>
+      </div>
+
+      <!-- CTA & Mobile Toggle -->
+      <div class="flex items-center gap-4">
+        {{#tiene_telefono}}
+        <a href="{{telefono_href}}" class="hidden md:flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-slate-800 transition-all hover:shadow-lg active:scale-95">
+          <iconify-icon icon="solar:phone-calling-linear" width="18"></iconify-icon>
+          <span>{{telefono}}</span>
+        </a>
+        {{/tiene_telefono}}
+        <label for="mobile-menu-toggle" class="md:hidden cursor-pointer p-2 text-slate-600 hover:text-primary">
+          <iconify-icon icon="solar:hamburger-menu-linear" width="24" height="24"></iconify-icon>
+        </label>
+      </div>
+    </div>
+
+    <!-- Mobile Menu (Hidden by default, toggled via checkbox hack) -->
+    <input type="checkbox" id="mobile-menu-toggle" class="hidden">
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-100 absolute w-full left-0 top-full px-6 py-4 shadow-xl">
+      <div class="flex flex-col gap-4">
+        <a href="#home" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Inicio</a>
+        {{#tiene_bio}}<a href="#about" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Nosotros</a>{{/tiene_bio}}
+        {{#tiene_servicios}}<a href="#services" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Servicios</a>{{/tiene_servicios}}
+        <a href="#contact" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Contacto</a>
+        {{#tiene_telefono}}
+        <a href="{{telefono_href}}" class="brand-btn text-center w-full py-3 rounded-lg font-medium text-sm mt-2">
+          {{hero_cta}}
+        </a>
+        {{/tiene_telefono}}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden" style="background-image: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 6%, white), white)">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div class="space-y-8 max-w-2xl">
+        {{#tiene_hero_badge}}
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" style="background: color-mix(in srgb, var(--primary) 10%, white); border: 1px solid color-mix(in srgb, var(--primary) 22%, white); color: var(--primary)">
+          <span class="relative flex w-2 h-2">
+            <span class="absolute inline-flex w-full h-full rounded-full animate-ping opacity-60" style="background: var(--primary)"></span>
+            <span class="relative inline-flex rounded-full w-2 h-2" style="background: var(--primary)"></span>
+          </span>
+          {{hero_badge}}
+        </div>
+        {{/tiene_hero_badge}}
+        <h1 class="text-4xl md:text-6xl font-semibold text-slate-900 tracking-tight leading-[1.1]">
+          {{hero_titulo}}
+          <br>
+          <span class="text-primary">{{nombre}}</span>
+        </h1>
+        {{#tiene_hero_subtitulo}}
+        <p class="text-xl text-slate-500 font-medium leading-relaxed">{{hero_subtitulo}}</p>
+        {{/tiene_hero_subtitulo}}
+        <div class="flex flex-col sm:flex-row gap-4 pt-4">
+          {{#tiene_telefono}}
+          <a href="{{telefono_href}}" class="brand-btn flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-medium transition-all hover:shadow-xl active:scale-95">
+            <iconify-icon icon="solar:phone-calling-linear" width="20"></iconify-icon>
+            {{hero_cta}} &ndash; {{telefono}}
+          </a>
+          {{/tiene_telefono}}
+          <a href="#contact" class="flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-full text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95">
+            Cont&aacute;ctenos
+            <iconify-icon icon="solar:arrow-right-linear" width="20"></iconify-icon>
+          </a>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="absolute -inset-4 rounded-full blur-3xl opacity-30" style="background-image: linear-gradient(to right, color-mix(in srgb, var(--primary) 25%, white), color-mix(in srgb, var(--accent) 25%, white))"></div>
+        <!-- Retrato / imagen del hero -->
+        <div class="relative rounded-3xl overflow-hidden shadow-2xl bg-white aspect-[4/3] flex items-center justify-center border border-slate-100 group">
+          <img src="{{img_hero_01}}" alt="{{nombre}}" class="object-cover w-full h-full opacity-90 group-hover:scale-105 transition-transform duration-700">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {{#tiene_servicios}}
+  <!-- Services Quick Links (Floating Cards) -->
+  <section class="mt-[-60px] relative z-10 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {{#servicios}}
+        <a href="#services" class="qlink-card bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center gap-3">
+          <div class="qlink-chip w-12 h-12 rounded-full flex items-center justify-center">
+            <iconify-icon icon="solar:shield-check-linear" width="24"></iconify-icon>
+          </div>
+          <span class="text-sm font-semibold text-slate-700">{{nombre}}</span>
+        </a>
+        {{/servicios}}
+        <!-- Tarjeta estatica: no es un servicio, es la CTA de reserva -->
+        <a href="#contact" class="bg-slate-900 p-6 rounded-2xl shadow-lg shadow-slate-900/20 border border-slate-800 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group flex flex-col items-center text-center gap-3 col-span-2 md:col-span-1">
+          <div class="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center group-hover:bg-white group-hover:text-slate-900 transition-colors">
+            <iconify-icon icon="solar:calendar-add-linear" width="24"></iconify-icon>
+          </div>
+          <span class="text-sm font-semibold text-white">Reservar Ahora</span>
+        </a>
+      </div>
+    </div>
+  </section>
+  {{/tiene_servicios}}
+
+  {{#tiene_bio}}
+  <!-- Meet the doctor -->
+  <section class="bg-slate-50 pt-24 pb-24" id="about">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div class="order-2 md:order-1 relative">
+          <div class="absolute -top-4 -left-4 w-24 h-24 rounded-full blur-2xl" style="background: color-mix(in srgb, var(--primary) 18%, white)"></div>
+          <img src="{{img_consultorio_01}}" alt="{{nombre}}" class="relative rounded-2xl shadow-xl border border-white object-cover w-full h-auto">
+          {{#tiene_credenciales}}
+          <div class="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-lg max-w-xs border border-slate-100 hidden md:block space-y-2">
+            <div class="flex items-center gap-3">
+              <iconify-icon icon="solar:medal-star-linear" class="text-2xl" style="color: var(--accent)"></iconify-icon>
+              <span class="font-semibold text-slate-900">Credenciales</span>
+            </div>
+            <ul class="text-xs text-slate-500 space-y-1 pl-1">
+              {{#credenciales}}<li><span class="font-medium text-slate-700">{{clave}}:</span> {{valor}}</li>{{/credenciales}}
+            </ul>
+          </div>
+          {{/tiene_credenciales}}
+        </div>
+        <div class="order-1 md:order-2 space-y-6">
+          <div class="flex items-center gap-2">
+            <span class="h-px w-8 bg-primary"></span>
+            <span class="text-sm font-semibold text-primary uppercase tracking-wider">Sobre Nosotros</span>
+          </div>
+          <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Conozca a {{nombre}}</h2>
+          <div class="space-y-4 text-slate-600 leading-relaxed">
+            <p>{{bio}}</p>
+            {{#tiene_cita_destacada}}<p class="font-medium text-slate-800">{{cita_destacada}}</p>{{/tiene_cita_destacada}}
+          </div>
+          <div class="pt-4">
+            <a href="#contact" class="text-primary font-semibold hover:opacity-80 inline-flex items-center gap-2 transition-opacity">
+              Reservar una cita
+              <iconify-icon icon="solar:arrow-right-linear"></iconify-icon>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  {{/tiene_bio}}
+
+  {{#tiene_mision}}
+  <!-- Mission Statement -->
+  <section class="py-20 relative overflow-hidden" style="background: var(--primary); color: var(--on-primary)">
+    <div class="absolute inset-0 opacity-10 mission-pattern"></div>
+    <div class="max-w-4xl mx-auto px-6 text-center relative z-10 space-y-8">
+      <iconify-icon icon="solar:heart-angle-linear" class="text-5xl opacity-80"></iconify-icon>
+      <h2 class="text-3xl md:text-4xl font-semibold tracking-tight">Nuestra Misi&oacute;n</h2>
+      <p class="text-xl md:text-2xl font-medium leading-relaxed opacity-90">&ldquo;{{mision}}&rdquo;</p>
+      <div class="w-16 h-1 mx-auto rounded-full" style="background: color-mix(in srgb, var(--on-primary) 30%, transparent)"></div>
+    </div>
+  </section>
+  {{/tiene_mision}}
+
+  {{#tiene_servicios}}
+  <!-- Services Detailed -->
+  <section id="services" class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
+        <span class="text-sm font-semibold text-primary uppercase tracking-wider">Qu&eacute; hacemos</span>
+        <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Resumen de Servicios</h2>
+        <p class="text-slate-500">Atenci&oacute;n dental integral para toda la familia bajo un mismo techo.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        {{#servicios}}
+        <div class="svc-card bg-slate-50 rounded-2xl p-8 border border-slate-100 transition-colors">
+          <div class="svc-chip w-12 h-12 rounded-xl flex items-center justify-center mb-6">
+            <iconify-icon icon="solar:stethoscope-linear" width="24"></iconify-icon>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900 mb-4">{{nombre}}</h3>
+          {{#tiene_descripcion}}<p class="text-sm text-slate-500 mb-6">{{descripcion}}</p>{{/tiene_descripcion}}
+          <ul class="space-y-3">
+            <li class="flex items-center gap-3 text-sm text-slate-700">
+              <iconify-icon icon="solar:check-circle-linear" class="svc-check"></iconify-icon>
+              Diagn&oacute;stico y plan personalizado
+            </li>
+            <li class="flex items-center gap-3 text-sm text-slate-700">
+              <iconify-icon icon="solar:check-circle-linear" class="svc-check"></iconify-icon>
+              Equipo con protocolos de higiene
+            </li>
+            <li class="flex items-center gap-3 text-sm text-slate-700">
+              <iconify-icon icon="solar:check-circle-linear" class="svc-check"></iconify-icon>
+              Explicaci&oacute;n clara en cada paso
+            </li>
+            <li class="flex items-center gap-3 text-sm text-slate-700">
+              <iconify-icon icon="solar:check-circle-linear" class="svc-check"></iconify-icon>
+              Seguimiento posterior a la consulta
+            </li>
+          </ul>
+        </div>
+        {{/servicios}}
+      </div>
+      <!-- Extra service tags: mismo servicios[], vista compacta -->
+      <div class="mt-12 flex flex-wrap justify-center gap-3">
+        {{#servicios}}<span class="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">{{nombre}}</span>{{/servicios}}
+      </div>
+    </div>
+  </section>
+  {{/tiene_servicios}}
+
+  {{#tiene_educacion_paciente}}
+  <!-- Why Regular Visits Matter (Education) -->
+  <section class="py-24 bg-slate-900 text-slate-300">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+      <div class="space-y-8">
+        <h2 class="text-3xl md:text-4xl font-semibold text-white tracking-tight">Por Qu&eacute; Son Importantes las Visitas Dentales Regulares</h2>
+        <div class="space-y-6 text-lg leading-relaxed">
+          {{#educacion_paciente}}
+          <div>
+            <p class="text-white font-semibold mb-1">{{titulo}}</p>
+            <p>{{descripcion}}</p>
+          </div>
+          {{/educacion_paciente}}
+        </div>
+        {{#tiene_telefono}}
+        <a href="{{telefono_href}}" class="brand-btn inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-all hover:shadow-lg">
+          <iconify-icon icon="solar:phone-calling-linear" width="20"></iconify-icon>
+          {{hero_cta}} &ndash; {{telefono}}
+        </a>
+        {{/tiene_telefono}}
+      </div>
+      {{#tiene_faq}}
+      <div class="relative">
+        <div class="absolute inset-0 blur-3xl rounded-full opacity-20 bg-primary"></div>
+        <div class="relative bg-slate-800 p-8 rounded-3xl border border-slate-700">
+          <h3 class="text-white font-semibold text-xl mb-6 flex items-center gap-2">
+            <iconify-icon icon="solar:question-circle-linear" class="text-primary"></iconify-icon>
+            Preguntas Frecuentes
+          </h3>
+          <div class="space-y-4">
+            {{#faq}}
+            <details class="group bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50 open:bg-slate-700 transition-all">
+              <summary class="flex justify-between items-center gap-4 p-4 cursor-pointer list-none font-medium text-white hover:opacity-80 transition-opacity">
+                {{pregunta}}
+                <iconify-icon icon="solar:alt-arrow-down-linear" class="group-open:rotate-180 transition-transform shrink-0"></iconify-icon>
+              </summary>
+              <div class="p-4 pt-0 text-sm text-slate-400">{{respuesta}}</div>
+            </details>
+            {{/faq}}
+          </div>
+        </div>
+      </div>
+      {{/tiene_faq}}
+    </div>
+  </section>
+  {{/tiene_educacion_paciente}}
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-24" style="background: color-mix(in srgb, var(--primary) 5%, white)">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-sm font-semibold text-primary uppercase tracking-wider">P&oacute;ngase en Contacto</span>
+        <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mt-2">{{cta_titulo}}</h2>
+        {{#tiene_cta_subtexto}}<p class="text-slate-500 mt-3 max-w-2xl mx-auto">{{cta_subtexto}}</p>{{/tiene_cta_subtexto}}
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Info -->
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-8 md:col-span-1">
+          {{#tiene_direccion}}
+          <div>
+            <div class="flex items-center gap-3 mb-2 text-primary">
+              <iconify-icon icon="solar:map-point-linear" width="24"></iconify-icon>
+              <h3 class="font-semibold text-slate-900">Direcci&oacute;n</h3>
+            </div>
+            <address class="not-italic text-slate-600 text-sm leading-relaxed pl-9">{{direccion}}</address>
+            <a href="{{mapa_url}}" target="_blank" rel="noopener noreferrer" class="text-primary inline-flex items-center gap-1 text-sm font-medium mt-2 ml-9 underline underline-offset-2 hover:opacity-80 transition-opacity">
+              C&oacute;mo llegar
+            </a>
+          </div>
+          {{/tiene_direccion}}
+
+          {{#tiene_telefono}}
+          <div>
+            <div class="flex items-center gap-3 mb-2 text-primary">
+              <iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon>
+              <h3 class="font-semibold text-slate-900">Tel&eacute;fono</h3>
+            </div>
+            <a href="{{telefono_href}}" class="block text-slate-600 text-sm pl-9 hover:opacity-80 transition-opacity">{{telefono}}</a>
+          </div>
+          {{/tiene_telefono}}
+
+          {{#tiene_email}}
+          <div>
+            <div class="flex items-center gap-3 mb-2 text-primary">
+              <iconify-icon icon="solar:letter-linear" width="24"></iconify-icon>
+              <h3 class="font-semibold text-slate-900">Correo</h3>
+            </div>
+            <a href="mailto:{{email}}" class="block text-slate-600 text-sm pl-9 break-all underline underline-offset-2 hover:opacity-80 transition-opacity">{{email}}</a>
+          </div>
+          {{/tiene_email}}
+
+          {{#tiene_telefono}}
+          <div class="pt-2">
+            <a href="{{telefono_href}}" class="brand-btn w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-colors">
+              Llamar para Reservar
+            </a>
+          </div>
+          {{/tiene_telefono}}
+        </div>
+
+        <!-- Hours -->
+        {{#tiene_horario}}
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 md:col-span-2">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="text-primary"><iconify-icon icon="solar:clock-circle-linear" width="24"></iconify-icon></span>
+            <h3 class="font-semibold text-slate-900">Horario de Atenci&oacute;n</h3>
+            {{#horario_referencial}}<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background: color-mix(in srgb, var(--accent) 22%, white); color: var(--accent)">Referencial</span>{{/horario_referencial}}
+          </div>
+          <div class="grid sm:grid-cols-2 gap-x-12 gap-y-1">
+            {{#horario_lineas}}
+            <div class="flex items-center gap-3 py-2 border-b border-slate-50 text-sm text-slate-700">
+              <iconify-icon icon="solar:check-circle-linear" class="text-primary"></iconify-icon>
+              {{.}}
+            </div>
+            {{/horario_lineas}}
+          </div>
+          {{#horario_referencial}}<p class="text-xs text-slate-400 mt-4">Horario sugerido, sujeto a confirmaci&oacute;n.</p>{{/horario_referencial}}
+        </div>
+        {{/tiene_horario}}
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-100 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 text-primary">
+            <iconify-icon icon="solar:health-linear" width="24"></iconify-icon>
+            <span class="font-semibold text-slate-900 tracking-tight">{{nombre}}</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">{{footer_bio}}</p>
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="font-semibold text-slate-900 text-sm">Navegaci&oacute;n</h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li><a href="#home" class="hover:text-primary transition-colors">Inicio</a></li>
+            {{#tiene_bio}}<li><a href="#about" class="hover:text-primary transition-colors">Nosotros</a></li>{{/tiene_bio}}
+            {{#tiene_servicios}}<li><a href="#services" class="hover:text-primary transition-colors">Servicios</a></li>{{/tiene_servicios}}
+            <li><a href="#contact" class="hover:text-primary transition-colors">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="font-semibold text-slate-900 text-sm">Contacto</h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            {{#tiene_direccion}}<li>{{direccion}}</li>{{/tiene_direccion}}
+            {{#tiene_telefono}}<li><a href="{{telefono_href}}" class="hover:text-primary transition-colors">{{telefono}}</a></li>{{/tiene_telefono}}
+            {{#tiene_email}}<li><a href="mailto:{{email}}" class="break-all hover:text-primary transition-colors">{{email}}</a></li>{{/tiene_email}}
+          </ul>
+        </div>
+
+        {{#tiene_redes}}
+        <div class="space-y-4">
+          <h4 class="font-semibold text-slate-900 text-sm">Redes Sociales</h4>
+          <div class="flex gap-4 text-slate-400">
+            {{#tiene_facebook}}<a href="{{facebook_url}}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="hover:text-primary transition-colors"><iconify-icon icon="brandico:facebook-rect" width="20"></iconify-icon></a>{{/tiene_facebook}}
+            {{#tiene_instagram}}<a href="{{instagram_url}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="hover:text-primary transition-colors"><iconify-icon icon="brandico:instagram" width="20"></iconify-icon></a>{{/tiene_instagram}}
+            {{#tiene_tiktok}}<a href="{{tiktok_url}}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="hover:text-primary transition-colors"><iconify-icon icon="ph:tiktok-logo" width="20"></iconify-icon></a>{{/tiene_tiktok}}
+          </div>
+        </div>
+        {{/tiene_redes}}
+      </div>
+
+      <div class="border-t border-slate-100 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-xs text-slate-400">&copy; {{anio}} {{nombre}}. Todos los derechos reservados.</p>
+        {{#demo_es_ejemplo}}<p class="text-xs text-slate-400">P&aacute;gina de demostraci&oacute;n &mdash; contenido de muestra.</p>{{/demo_es_ejemplo}}
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
