@@ -32,6 +32,14 @@ export type Status = z.infer<typeof StatusSchema>;
 export const ChannelSchema = z.enum(["telegram", "manual"]);
 export type Channel = z.infer<typeof ChannelSchema>;
 
+// PersonGenderSchema: genero de LA PERSONA del negocio (no del negocio en si),
+// inferido por el LLM de nombre/foto/honorifico en `extract` y confirmable a
+// mano en `verify` (mismo patron que RubroSchema). Se usa unicamente para
+// elegir fotos DE MUESTRA en la web demo (nunca una cara real generada, ver
+// brand.photo_path) -- no es un dato que se le pida al negocio.
+export const PersonGenderSchema = z.enum(["m", "f"]);
+export type PersonGender = z.infer<typeof PersonGenderSchema>;
+
 /**
  * migrateContact — MIGRACION en carga: los data.json viejos guardaban un solo
  * `contact.phone` (string). Ahora un consultorio puede tener varios telefonos,
@@ -67,6 +75,112 @@ export const ContactSchema = z.preprocess(
   }),
 );
 
+/**
+ * DemoContentSchema — bloques de contenido de MUESTRA para la web demo que se
+ * le muestra al negocio como propuesta comercial (perfil tipo doctor:
+ * experiencia, educacion, investigacion; tipo negocio: mision, higiene,
+ * confianza). Es la contraparte "con forma fija" del copy de marketing libre:
+ * cada campo es un bloque que `build-web` puede renderizar directo (listas de
+ * stats, equipo, experiencia laboral, FAQs de paciente, etc.). Todo es
+ * contenido DE EJEMPLO -- no dato real verificado de la tarjeta -- por eso
+ * vive separado de `business`/`content` (cuelga de `GeneratedCopySchema.demo`)
+ * y CADA campo es opcional: ni el LLM ni el humano tienen que llenarlo entero
+ * para que el lead siga siendo valido.
+ */
+export const DemoContentSchema = z.object({
+  // stats: numeros de vitrina ("+10 anios", "500 pacientes atendidos").
+  stats: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
+  // team: miembros del equipo mostrados en la demo. `gender` elige la foto DE
+  // MUESTRA (nunca una cara real generada, ver brand.photo_path).
+  team: z
+    .array(z.object({ name: z.string(), role: z.string(), gender: PersonGenderSchema }))
+    .optional(),
+  experience: z
+    .array(
+      z.object({
+        role: z.string(),
+        place: z.string(),
+        period: z.string(),
+        description: z.string(),
+        current: z.boolean(),
+      }),
+    )
+    .optional(),
+  education: z
+    .array(
+      z.object({
+        degree: z.string(),
+        institution: z.string(),
+        period: z.string(),
+        details: z.array(z.string()),
+      }),
+    )
+    .optional(),
+  research: z
+    .array(z.object({ tag: z.string(), title: z.string(), description: z.string() }))
+    .optional(),
+  skills: z.array(z.string()).optional(),
+  languages: z.array(z.object({ language: z.string(), level: z.string() })).optional(),
+  mission: z.string().optional(),
+  patient_education: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
+  sedation: z
+    .object({ title: z.string(), description: z.string(), points: z.array(z.string()) })
+    .optional(),
+  hygiene: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
+  urgency: z.object({ headline: z.string(), subtext: z.string() }).optional(),
+  availability_badge: z.string().optional(),
+  rating: z.object({ value: z.string(), count_label: z.string() }).optional(),
+  trust_items: z.array(z.string()).optional(),
+});
+export type DemoContent = z.infer<typeof DemoContentSchema>;
+
+/**
+ * GeneratedCopySchema — el bloque de copy de MARKETING que produce la etapa
+ * `enrich`. Todo es texto GENERADO por el LLM a partir de los datos YA
+ * verificados (no medido, no leido de la tarjeta): headlines, bio, value props,
+ * FAQs, testimonios de ejemplo, CTA. Vive SEPARADO de los datos reales
+ * (`business`/`contact`/`socials`/`brand`) a proposito, para que sea obvio que
+ * es generado y para que a futuro `verify` pueda mostrarlo/editarlo. Se genera
+ * UNA vez y se persiste; `build-web` lee de aca, no regenera (mismo lead, misma
+ * web, sin costo ni no-determinismo). El LLM NUNCA aporta datos de contacto,
+ * numeros duros (stats) ni credenciales: solo prosa.
+ */
+export const GeneratedCopySchema = z.object({
+  hero_headline: z.string(), // H1, frase corta de marketing
+  hero_subheadline: z.string(), // pitch bajo el H1, 1-2 frases
+  hero_badge: z.string().optional(), // pill corta ("Aceptando pacientes")
+  bio: z.string(), // 1 parrafo sobre el profesional/negocio
+  pull_quote: z.string().optional(), // cita en 1ra persona, 1 frase
+  // value_props: reemplazan a los "stats" (numeros inventados, se descartaron a
+  // proposito): claims CUALITATIVOS, no cuantitativos.
+  value_props: z.array(z.object({ title: z.string(), description: z.string() })),
+  // service_descriptions: una descripcion por servicio REAL. El nombre debe
+  // matchear un servicio de `content.services` (autoridad = verify); la etapa
+  // descarta cualquier descripcion cuyo nombre no exista. El LLM NO cambia la
+  // lista de servicios, solo le pega texto.
+  service_descriptions: z.array(z.object({ name: z.string(), description: z.string() })),
+  faqs: z.array(z.object({ question: z.string(), answer: z.string() })),
+  // testimonials: reseñas de EJEMPLO (autor generico). Fabricadas: se registran
+  // en `sample_fields` para que verify las marque como ejemplo editable.
+  testimonials: z.array(
+    z.object({ quote: z.string(), author: z.string(), role: z.string().optional() }),
+  ),
+  cta_headline: z.string(),
+  cta_subtext: z.string(),
+  footer_tagline: z.string(),
+  meta_title: z.string().optional(), // <title> para SEO
+  meta_description: z.string().optional(),
+  generated_at: z.string(), // ISO — cuando se genero el copy
+  // sample_fields: nombres de campos cuyo contenido es EJEMPLO/placeholder (hoy
+  // "testimonials"), no dato real. Para que verify/publicacion los marquen.
+  sample_fields: z.array(z.string()).optional(),
+  // demo: bloques de contenido de MUESTRA con forma fija para la web demo. Ver
+  // DemoContentSchema. Opcional => copy generado antes de esta pieza (y
+  // data.json viejos) siguen validando sin migracion.
+  demo: DemoContentSchema.optional(),
+});
+export type GeneratedCopy = z.infer<typeof GeneratedCopySchema>;
+
 export const LeadSchema = z.object({
   slug: z.string().min(1), // llave. ej "dr-perez-cardiologo"
   status: StatusSchema,
@@ -85,6 +199,10 @@ export const LeadSchema = z.object({
     name: z.string(),
     person_name: z.string().optional(),
     tagline: z.string().optional(),
+    // person_gender: ver PersonGenderSchema mas arriba. Opcional: si el modelo
+    // no puede inferirlo (o el humano no lo confirma en verify) queda sin
+    // definir; data.json viejos (sin esta clave) siguen validando.
+    person_gender: PersonGenderSchema.optional(),
     attrs: z.record(z.string()), // atributos libres por rubro
   }),
 
@@ -146,6 +264,10 @@ export const LeadSchema = z.object({
     services: z.array(z.string()),
     about: z.string().optional(),
     highlights: z.array(z.string()).optional(),
+    // generated_copy: copy de marketing generado por la etapa `enrich`. Ver
+    // GeneratedCopySchema. Opcional => data.json previos a enrich siguen
+    // validando (back-compat, no hace falta migracion).
+    generated_copy: GeneratedCopySchema.optional(),
   }),
 
   generated: z.object({

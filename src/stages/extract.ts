@@ -34,6 +34,9 @@ function computeNeeds(
   const needs: string[] = [];
 
   if (!val(lead.business.name)) needs.push("falta nombre del negocio");
+  if (!lead.business.person_gender) {
+    needs.push("genero de la persona sin confirmar (para fotos de muestra en la web demo)");
+  }
   const noPhone = !(lead.contact.phones && lead.contact.phones.length);
   if (noPhone && !val(lead.contact.whatsapp)) needs.push("falta telefono / whatsapp");
   if (!val(lead.contact.email)) needs.push("falta email");
@@ -102,6 +105,9 @@ export function applyExtraction(
     name: val(b.name) ?? lead.business.name,
     ...(val(b.person_name) ? { person_name: val(b.person_name)! } : {}),
     ...(val(b.tagline) ? { tagline: val(b.tagline)! } : {}),
+    // person_gender: solo se pisa si el modelo trajo "m"/"f" (nunca borra un
+    // valor ya cargado con un null del modelo, mismo criterio que el resto).
+    ...(b.person_gender ? { person_gender: b.person_gender } : {}),
   };
 
   const phones = (c.phones ?? []).map((v) => v.trim()).filter(Boolean);

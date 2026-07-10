@@ -1,7 +1,14 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { SURFACE_ROLES, textColorFor } from "../lib/colors.js";
-import { parseLead, RubroSchema, type Lead, type Rubro } from "../lib/schema.js";
+import {
+  parseLead,
+  PersonGenderSchema,
+  RubroSchema,
+  type Lead,
+  type PersonGender,
+  type Rubro,
+} from "../lib/schema.js";
 import { readLead, writeLead } from "../lib/storage.js";
 
 /**
@@ -24,11 +31,15 @@ const CLEAR_KEY = "-";
 /** Los rubros validos, derivados del enum (unica fuente de verdad). */
 const RUBROS = RubroSchema.options;
 
+/** Los generos validos, derivados del enum (unica fuente de verdad). */
+const GENDERS = PersonGenderSchema.options;
+
 /** Rutas de los campos editables del Lead. El string es la "direccion" del campo. */
 export type LeadFieldPath =
   | "business.name"
   | "business.person_name"
   | "business.tagline"
+  | "business.person_gender"
   | "rubro"
   | "contact.phones"
   | "contact.whatsapp"
@@ -75,6 +86,16 @@ function parseRubro(value: string | string[] | null): Rubro {
   return parsed.data;
 }
 
+/** Parsea/valida un genero. Lanza si esta fuera del enum, para que el caller re-pregunte. */
+function parseGender(value: string | string[] | null): PersonGender {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  const parsed = PersonGenderSchema.safeParse(candidate?.trim());
+  if (!parsed.success) {
+    throw new Error(`genero invalido: "${String(candidate)}". Validos: ${GENDERS.join(", ")}`);
+  }
+  return parsed.data;
+}
+
 // Pequenos updaters inmutables por grupo, para no repetir el spread anidado.
 function withBusiness(lead: Lead, patch: Partial<Lead["business"]>): Lead {
   return { ...lead, business: { ...lead.business, ...patch } };
@@ -115,6 +136,12 @@ export function applyCorrection(
       return withBusiness(lead, { person_name: normStr(value) });
     case "business.tagline":
       return withBusiness(lead, { tagline: normStr(value) });
+    // opcional: null vacia (queda undefined); cualquier otro valor se valida
+    // contra el enum (m/f), mismo criterio que "rubro".
+    case "business.person_gender":
+      return withBusiness(lead, {
+        person_gender: value === null ? undefined : parseGender(value),
+      });
 
     case "rubro":
       return { ...lead, rubro: parseRubro(value) };
@@ -255,6 +282,8 @@ function currentString(lead: Lead, path: LeadFieldPath): string | undefined {
       return lead.business.person_name;
     case "business.tagline":
       return lead.business.tagline;
+    case "business.person_gender":
+      return lead.business.person_gender;
     case "contact.whatsapp":
       return lead.contact.whatsapp;
     case "contact.email":
@@ -327,6 +356,29 @@ async function promptRubro(rl: Rl, lead: Lead): Promise<Lead> {
 }
 
 /**
+ * promptGender — recorre el genero de la persona: valida contra el enum (m/f)
+ * y re-pregunta si el valor no esta. A diferencia de rubro es OPCIONAL: se
+ * puede vaciar con CLEAR_KEY (el modelo lo infiere de nombre/foto/honorifico
+ * y puede fallar; solo se usa para elegir fotos de muestra en la web demo).
+ */
+async function promptGender(rl: Rl, lead: Lead): Promise<Lead> {
+  console.log(`\n─ Genero de la persona (para fotos de muestra en la web demo)`);
+  console.log(`  actual: ${lead.business.person_gender ?? "(vacio)"}`);
+  console.log(`  validos: ${GENDERS.join(", ")}`);
+  console.log(`  [Enter]=mantener  '${CLEAR_KEY}'=vaciar  o escribi uno de la lista`);
+  for (;;) {
+    const ans = (await rl.question("  > ")).trim();
+    if (ans === "") return lead;
+    if (ans === CLEAR_KEY) return applyCorrection(lead, "business.person_gender", null);
+    try {
+      return applyCorrection(lead, "business.person_gender", ans);
+    } catch {
+      console.log(`  ✗ "${ans}" no es un genero valido. Elegi: ${GENDERS.join(", ")}`);
+    }
+  }
+}
+
+/**
  * promptListField — recorre un campo LISTA (telefonos, servicios): muestra la
  * lista actual y deja aceptar toda, vaciar, o reemplazarla entera separando por
  * comas. Es v1: no edita elemento por elemento, reemplaza la lista completa.
@@ -357,6 +409,7 @@ function printSummary(lead: Lead): void {
   console.log("\n══ Resumen ══");
   console.log(`  Negocio:   ${g(val(lead.business.name))}`);
   console.log(`  Persona:   ${g(lead.business.person_name)}`);
+  console.log(`  Genero:    ${g(lead.business.person_gender)}`);
   console.log(`  Tagline:   ${g(lead.business.tagline)}`);
   console.log(`  Rubro:     ${lead.rubro}`);
   const phones = lead.contact.phones ?? [];
@@ -409,6 +462,9 @@ export async function verify(slug: string): Promise<Lead | null> {
     console.log("\n── Campos generales ──");
     draft = await promptStringField(rl, draft, NAME);
     draft = await promptStringField(rl, draft, PERSON);
+    // genero: lo infiere el modelo (nombre/foto/honorifico) y puede fallar;
+    // se confirma aca porque decide las fotos de muestra de la web demo.
+    draft = await promptGender(rl, draft);
     draft = await promptStringField(rl, draft, TAGLINE);
     draft = await promptRubro(rl, draft);
     draft = await promptStringField(rl, draft, ADDRESS);

@@ -98,6 +98,20 @@ describe("parseExtraction", () => {
     const bad = { ...SAMPLE, rubro: "abogado" };
     expect(parseExtraction(JSON.stringify(bad)).ok).toBe(false);
   });
+
+  it("acepta person_gender 'm'/'f' o null en business", () => {
+    const withGender = { ...SAMPLE, business: { ...SAMPLE.business, person_gender: "m" } };
+    const r = parseExtraction(JSON.stringify(withGender));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.business?.person_gender).toBe("m");
+    const withNull = { ...SAMPLE, business: { ...SAMPLE.business, person_gender: null } };
+    expect(parseExtraction(JSON.stringify(withNull)).ok).toBe(true);
+  });
+
+  it("falla si person_gender esta fuera del enum", () => {
+    const bad = { ...SAMPLE, business: { ...SAMPLE.business, person_gender: "hombre" } };
+    expect(parseExtraction(JSON.stringify(bad)).ok).toBe(false);
+  });
 });
 
 describe("applyExtraction", () => {
@@ -220,6 +234,41 @@ describe("applyExtraction", () => {
     const withColors = { ...SAMPLE, colors: { primary: "#123456" } };
     const lead = applyExtraction(ingestedLead(), parseOk(withColors));
     expect(lead.brand.colors.primary).toBeUndefined();
+  });
+
+  describe("person_gender (genero de la persona, para fotos de muestra en la web demo)", () => {
+    it("mapea el genero que trajo el modelo", () => {
+      const lead = applyExtraction(
+        ingestedLead(),
+        parseOk({ ...SAMPLE, business: { ...SAMPLE.business, person_gender: "m" } }),
+      );
+      expect(lead.business.person_gender).toBe("m");
+      expect(() => parseLead(lead)).not.toThrow();
+    });
+
+    it("no pisa un genero ya cargado cuando el modelo manda null", () => {
+      const base = ingestedLead({ business: { name: "", attrs: {}, person_gender: "f" } });
+      const lead = applyExtraction(base, parseOk({ business: { person_gender: null } }));
+      expect(lead.business.person_gender).toBe("f");
+    });
+
+    it("omite el campo (no lo deja en null) cuando el modelo manda null y no habia dato", () => {
+      const lead = applyExtraction(ingestedLead(), parseOk({ business: { person_gender: null } }));
+      expect(lead.business.person_gender).toBeUndefined();
+    });
+
+    it("anota en needs que el genero quedo sin confirmar cuando falta", () => {
+      const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE));
+      expect(lead.meta.needs.join(" | ")).toContain("genero de la persona sin confirmar");
+    });
+
+    it("no anota el aviso de genero cuando el modelo si lo trajo", () => {
+      const lead = applyExtraction(
+        ingestedLead(),
+        parseOk({ ...SAMPLE, business: { ...SAMPLE.business, person_gender: "f" } }),
+      );
+      expect(lead.meta.needs.join(" | ")).not.toContain("genero de la persona");
+    });
   });
 
   describe("servicios por defecto (rubroConfig), cuando la tarjeta no los lista", () => {

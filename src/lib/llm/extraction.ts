@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RubroSchema } from "../schema.js";
+import { PersonGenderSchema, RubroSchema } from "../schema.js";
 
 /**
  * extraction.ts — el CONTRATO de la salida del modelo de vision.
@@ -24,6 +24,10 @@ export const ExtractionSchema = z.object({
       name: str,
       person_name: str,
       tagline: str,
+      // genero de LA PERSONA (no del negocio): lo infiere el modelo de nombre,
+      // foto u honorifico. Se usa solo para elegir fotos de muestra en la web
+      // demo; si no queda claro, null (ver extract-card.md).
+      person_gender: PersonGenderSchema.nullish(),
     })
     .nullish(),
   // el modelo puede sugerir/corregir el rubro que se puso al ingerir
