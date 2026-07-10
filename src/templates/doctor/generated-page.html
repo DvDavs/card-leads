@@ -1,413 +1,396 @@
-<html lang="es" class="scroll-smooth"><head>
-
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dra. Laiba Shoukat | Doctora en Fisioterapia</title>
-<meta name="description" content="Portafolio de la Dra. Laiba Shoukat, Doctora en Fisioterapia especializada en trastornos musculoesqueléticos y rehabilitación.">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{metaDescription}}">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
-<meta name="disabled-font-classes" content="font-geist,font-roboto,font-montserrat,font-playfair,font-instrument-serif,font-merriweather,font-bricolage,font-jakarta,font-manrope,font-space-grotesk,font-work-sans,font-pt-serif,font-geist-mono,font-space-mono,font-quicksand,font-nunito,font-newsreader,font-google-sans-flex,font-oswald">
-<link id="all-fonts-link-font-dm-sans" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-dm-sans">.font-dm-sans { font-family: 'DM Sans', sans-serif !important; }</style><link id="all-fonts-link-font-poppins" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"><style id="all-fonts-style-font-poppins">.font-poppins { font-family: 'Poppins', sans-serif !important; }</style></head>
-<body class="bg-slate-50 text-slate-600 antialiased font-sans selection:bg-medical-100 selection:text-medical-900">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&amp;family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  /* Paleta de MARCA del lead (colores medidos de la tarjeta + texto legible WCAG,
+     calculados en verify). Se consumen como CSS vars para tematizar todo el perfil
+     con CUALQUIER paleta, sin asumir colores concretos. El diseno base es un
+     "curriculum de una pagina" limpio sobre slate-50; el azul-teal original del
+     mockup se reemplaza por estas variables. */
+  :root {
+    --brand-primary: {{colors.primary}};
+    --brand-primary-text: {{colorsText.primary}};
+    --brand-secondary: {{colors.secondary}};
+    --brand-secondary-text: {{colorsText.secondary}};
+    --brand-accent: {{colors.accent}};
+    --brand-accent-text: {{colorsText.accent}};
+  }
+  body { font-family: 'DM Sans', sans-serif; }
+  .font-poppins { font-family: 'Poppins', sans-serif; }
+  .font-sans { font-family: 'DM Sans', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+  ::selection { background: color-mix(in srgb, var(--brand-primary) 20%, white); color: var(--brand-primary); }
+  /* Tintes suaves de marca (color-mix evita el problema del alpha sobre var()). */
+  .brand-soft { background: color-mix(in srgb, var(--brand-primary) 10%, white); color: var(--brand-primary); }
+  .brand-soft-accent { background: color-mix(in srgb, var(--brand-accent) 14%, white); color: var(--brand-primary); }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-600 antialiased">
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
-        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-            <a href="#" class="text-lg font-medium tracking-tight text-gray-900 hover:text-medical-600 transition-colors font-sans">
-                Dra. Laiba Shoukat
+    <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+            <a href="#" class="flex items-center gap-2 min-w-0">
+                <span class="w-8 h-8 rounded-lg flex items-center justify-center brand-soft shrink-0">
+                    <iconify-icon icon="lucide:activity" width="18"></iconify-icon>
+                </span>
+                <span class="text-base font-medium tracking-tight text-slate-900 truncate font-poppins">{{heroName}}</span>
             </a>
 
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex gap-8 text-sm font-medium text-gray-500">
-                <a href="#about" class="hover:text-medical-600 transition-colors font-sans">Acerca de</a>
-                <a href="#experience" class="hover:text-medical-600 transition-colors font-sans">Experiencia</a>
-                <a href="#education" class="hover:text-medical-600 transition-colors font-sans">Educación</a>
-                <a href="#research" class="hover:text-medical-600 transition-colors font-sans">Investigación</a>
-                <a href="#contact" class="hover:text-medical-600 transition-colors font-sans">Contacto</a>
+            <div class="hidden md:flex gap-8 text-sm font-medium text-slate-500">
+                {{#hasAbout}}<a href="#about" class="hover:text-slate-900 transition-colors font-sans">Acerca de</a>{{/hasAbout}}
+                {{#hasServices}}<a href="#services" class="hover:text-slate-900 transition-colors font-sans">Servicios</a>{{/hasServices}}
+                {{#hasTestimonials}}<a href="#reviews" class="hover:text-slate-900 transition-colors font-sans">Reseñas</a>{{/hasTestimonials}}
+                <a href="#contact" class="hover:text-slate-900 transition-colors font-sans">Contacto</a>
             </div>
 
-            <!-- Mobile Menu Toggle (Simplified for single file) -->
-            <button class="md:hidden text-gray-600">
-                <iconify-icon icon="lucide:menu" width="24" stroke-width="1.5"></iconify-icon>
-            </button>
+            {{#hasWhatsapp}}
+            <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="hidden md:inline-flex items-center justify-center px-4 py-2 text-xs font-medium tracking-wide rounded-lg transition-opacity hover:opacity-90 shrink-0 font-sans" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                Agendar por WhatsApp
+            </a>
+            {{/hasWhatsapp}}
         </div>
     </nav>
 
-    <main class="pt-24 pb-20">
+    <main class="pt-24">
 
-        <!-- Hero Section -->
+        <!-- Hero -->
         <section class="max-w-5xl mx-auto px-6 mb-24">
             <div class="flex flex-col md:flex-row gap-12 items-center">
                 <div class="flex-1 space-y-6">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-medical-50 border border-medical-100 text-medical-600 text-xs font-medium uppercase tracking-wide font-sans">
+                    {{#hasHeroBadge}}
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide brand-soft-accent">
                         <span class="relative flex h-2 w-2">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-medical-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2 w-2 bg-medical-500"></span>
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style="background: var(--brand-accent)"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2" style="background: var(--brand-accent)"></span>
                         </span>
-                        Disponible para Consultas
+                        {{heroBadge}}
                     </div>
+                    {{/hasHeroBadge}}
 
-                    <h1 class="text-4xl md:text-6xl tracking-tight text-gray-900 leading-[1.1] font-light font-poppins">
-                        Restaurando el Movimiento, <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-medical-600 to-blue-800 font-light font-poppins">Mejorando la Vida.</span>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl tracking-tight text-slate-900 leading-[1.1] font-light font-poppins">
+                        {{heroHeadline}}
                     </h1>
 
-                    <p class="text-lg text-gray-500 max-w-xl leading-relaxed font-sans">
-                        Soy Doctora en Fisioterapia especializada en rehabilitación musculoesquelética y planificación de tratamientos basada en evidencia. Dedicada a ayudar a los pacientes a recuperar su independencia funcional a través de una atención personalizada.
-                    </p>
+                    {{#hasHeroSubheadline}}
+                    <p class="text-lg text-slate-500 max-w-xl leading-relaxed font-sans">{{heroSubheadline}}</p>
+                    {{/hasHeroSubheadline}}
 
                     <div class="flex flex-wrap gap-4 pt-2">
-                        <a href="#contact" class="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-medical-600 text-white text-sm font-medium hover:bg-medical-900 transition-all shadow-sm hover:shadow-md font-sans">
-                            Agendar Consulta
+                        {{#hasWhatsapp}}
+                        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90 shadow-sm font-sans" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                            Agendar por WhatsApp
+                            <iconify-icon icon="lucide:message-circle" width="16"></iconify-icon>
                         </a>
-                        <a href="#research" class="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-all font-sans">
-                            Ver Investigación
+                        {{/hasWhatsapp}}
+                        {{#hasServices}}
+                        <a href="#services" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-100 hover:border-slate-300 transition-all font-sans">
+                            Ver Servicios
                         </a>
-                    </div>
-
-                    <div class="flex flex-wrap gap-6 text-sm text-gray-500 pt-6 border-t border-gray-100">
-                        <div class="flex items-center gap-2 font-sans">
-                            <iconify-icon icon="lucide:map-pin" class="text-medical-600" width="16" stroke-width="1.5"></iconify-icon>
-                            Islamabad, Pakistan
-                        </div>
-                        <div class="flex items-center gap-2 font-sans">
-                            <iconify-icon icon="lucide:mail" class="text-medical-600" width="16" stroke-width="1.5"></iconify-icon>
-                            laibashoukat9180@gmail.com
-                        </div>
+                        {{/hasServices}}
                     </div>
                 </div>
 
-                <!-- Profile Photo Placeholder -->
-                <div class="relative w-full max-w-xs md:max-w-sm aspect-[3/4] md:aspect-square flex-shrink-0 group">
-                    <div class="absolute inset-0 bg-medical-200 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-500 ease-out"></div>
-                    <div class="absolute inset-0 bg-gray-200 rounded-2xl -rotate-2 group-hover:-rotate-3 transition-transform duration-500 ease-out"></div>
-                    <div class="relative h-full w-full rounded-2xl overflow-hidden shadow-xl border border-white/50">
-                        <!-- Replace src with actual photo path -->
-                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&amp;fit=crop&amp;q=80&amp;w=800" alt="Dra. Laiba Shoukat" class="h-full w-full object-cover object-center grayscale hover:grayscale-0 transition-all duration-700">
+                <!-- Retrato: foto/logo real, o placeholder de iniciales sobre gradiente de
+                     marca (NUNCA foto stock). Conserva las tarjetas apiladas del mockup. -->
+                <div class="relative w-full max-w-xs md:max-w-sm aspect-[4/5] flex-shrink-0 group">
+                    <div class="absolute inset-0 rounded-3xl rotate-3 group-hover:rotate-6 transition-transform duration-500 ease-out" style="background: color-mix(in srgb, var(--brand-primary) 18%, white)"></div>
+                    <div class="absolute inset-0 rounded-3xl -rotate-2 group-hover:-rotate-3 transition-transform duration-500 ease-out bg-slate-200"></div>
+                    <div class="relative h-full w-full rounded-3xl overflow-hidden shadow-xl border border-white/60">
+                        {{#hasImage}}
+                        <img src="{{imageSrc}}" alt="{{heroName}}" class="h-full w-full object-cover object-center">
+                        {{/hasImage}}
+                        {{^hasImage}}
+                        <div class="w-full h-full min-h-[320px] flex items-center justify-center" style="background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-accent))">
+                            <span class="text-8xl font-semibold font-poppins select-none" style="color: var(--brand-primary-text)">{{initial}}</span>
+                        </div>
+                        {{/hasImage}}
+
+                        {{#hasTagline}}
+                        <div class="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-2xl border border-slate-200 shadow-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center brand-soft shrink-0">
+                                    <iconify-icon icon="lucide:stethoscope" width="20"></iconify-icon>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wide font-sans">Especialidad</p>
+                                    <p class="text-sm font-semibold text-slate-900 tracking-tight font-sans">{{tagline}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {{/hasTagline}}
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- About Section -->
+        {{#hasAbout}}
+        <!-- Acerca de: bio + pull quote, y las credenciales/Educacion como tarjeta lateral -->
         <section id="about" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
-            <h2 class="text-sm font-semibold tracking-wider text-gray-400 uppercase mb-8 font-sans">Acerca de Mí</h2>
+            <h2 class="text-sm font-semibold tracking-wider text-slate-400 uppercase mb-8 font-sans">Acerca de</h2>
             <div class="grid md:grid-cols-3 gap-12">
                 <div class="md:col-span-2">
-                    <p class="text-gray-600 leading-relaxed text-lg mb-6 font-sans">
-                        Egresada apasionada de fisioterapia, con sólida experiencia clínica y en investigación. Hábil en la evaluación de pacientes, la planificación de tratamientos y el diseño de programas de rehabilitación. Mi principal experiencia en investigación se centra en los trastornos musculoesqueléticos, con conocimientos en rehabilitación neurológica y fisiología del ejercicio.
-                    </p>
-                    <p class="text-gray-600 leading-relaxed text-lg font-sans">
-                        He publicado investigaciones revisadas por pares sobre fisioterapia musculoesquelética, lo que demuestra un firme compromiso con la práctica basada en evidencia. Me esfuerzo por combinar la experiencia clínica con una atención compasiva para optimizar los resultados de los pacientes.
-                    </p>
+                    {{#hasBio}}<p class="text-slate-600 leading-relaxed text-lg mb-6 font-sans">{{bio}}</p>{{/hasBio}}
+                    {{#hasPullQuote}}
+                    <blockquote class="border-l-4 pl-6 py-1 text-xl font-medium text-slate-800 italic leading-relaxed font-poppins" style="border-color: var(--brand-accent)">
+                        {{pullQuote}}
+                    </blockquote>
+                    {{/hasPullQuote}}
                 </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 class="font-medium text-gray-900 mb-4 flex items-center gap-2 font-sans">
-                        <iconify-icon icon="lucide:languages" class="text-medical-600" width="18" stroke-width="1.5"></iconify-icon>
-                        Idiomas
+
+                {{#hasAttrs}}
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <h3 class="font-medium text-slate-900 mb-5 flex items-center gap-2 font-sans">
+                        <iconify-icon icon="lucide:graduation-cap" width="18" style="color: var(--brand-primary)"></iconify-icon>
+                        Formación y credenciales
                     </h3>
-                    <ul class="space-y-3">
-                        <li class="flex justify-between items-center text-sm">
-                            <span class="font-sans">Inglés</span>
-                            <span class="text-gray-400 font-sans">Fluido</span>
-                        </li>
-                        <li class="flex justify-between items-center text-sm">
-                            <span class="font-sans">Urdu</span>
-                            <span class="text-gray-400 font-sans">Nativo</span>
-                        </li>
-                        <li class="flex justify-between items-center text-sm">
-                            <span class="font-sans">Panyabí</span>
-                            <span class="text-gray-400 font-sans">Nativo</span>
-                        </li>
-                        <li class="flex justify-between items-center text-sm">
-                            <span class="font-sans">Cachemiro</span>
-                            <span class="text-gray-400 font-sans">Conversacional</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Work Experience -->
-        <section id="experience" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
-            <div class="flex items-center gap-3 mb-8">
-                <iconify-icon icon="lucide:briefcase" class="text-medical-600" width="24" stroke-width="1.5"></iconify-icon>
-                <h2 class="text-2xl tracking-tight text-gray-900 font-light font-poppins">Experiencia Laboral</h2>
-            </div>
-
-            <div class="relative border-l border-gray-200 ml-3 space-y-12">
-                <!-- Job 1 -->
-                <div class="relative pl-8 md:pl-12">
-                    <span class="absolute -left-[5px] top-2 h-2.5 w-2.5 rounded-full bg-medical-500 ring-4 ring-white"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
-                        <h3 class="text-lg font-medium text-gray-900 font-sans">Fisioterapeuta</h3>
-                        <span class="text-sm font-medium text-medical-600 bg-medical-50 px-2 py-1 rounded font-sans">07/2025 — Actualidad</span>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-3 font-sans">HBS General Hospital • Islamabad, Pakistan</div>
-                    <p class="text-gray-600 leading-relaxed max-w-3xl font-sans">
-                        Me desempeño como fisioterapeuta aplicando habilidades clínicas para brindar un diagnóstico y tratamiento precisos. Adquiriendo experiencia en la planificación y dirección de evaluaciones, así como en tratamientos según las necesidades y preferencias de cada paciente, garantizando siempre un consentimiento informado válido.
-                    </p>
-                </div>
-
-                <!-- Job 2 -->
-                <div class="relative pl-8 md:pl-12">
-                    <span class="absolute -left-[5px] top-2 h-2.5 w-2.5 rounded-full bg-gray-300 ring-4 ring-white"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
-                        <h3 class="text-lg font-medium text-gray-900 font-sans">Fisioterapeuta en Prácticas</h3>
-                        <span class="text-sm text-gray-500 font-sans">09/2023 — 10/2023</span>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-3 font-sans">Kulsum International Hospital • Islamabad, Pakistan</div>
-                    <p class="text-gray-600 leading-relaxed max-w-3xl font-sans">
-                        Colaboré en la exploración y el diagnóstico en múltiples departamentos, incluyendo Musculoesquelético, Neurocirugía, UCI, UCC y Consulta Externa. Mantuve la fuerza muscular y la movilidad articular en pacientes encamados para promover su independencia funcional.
-                    </p>
-                </div>
-
-                <!-- Job 3 -->
-                <div class="relative pl-8 md:pl-12">
-                    <span class="absolute -left-[5px] top-2 h-2.5 w-2.5 rounded-full bg-gray-300 ring-4 ring-white"></span>
-                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-2">
-                        <h3 class="text-lg font-medium text-gray-900 font-sans">Interna Rotativa / Observadora</h3>
-                        <span class="text-sm text-gray-500 font-sans">08/2022 — 09/2022</span>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-3 font-sans">Abdul Haq Medical Complex • Rawalpindi, Pakistan</div>
-                    <p class="text-gray-600 leading-relaxed max-w-3xl font-sans">
-                        Apliqué ejercicios manuales y terapéuticos para mejorar la funcionalidad. Instruí y motivé a los pacientes a realizar actividades físicas, incluyendo ejercicios no manuales, actividades funcionales ambulatorias y el uso de dispositivos de asistencia como muletas y bastones.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Education -->
-        <section id="education" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
-            <div class="flex items-center gap-3 mb-8">
-                <iconify-icon icon="lucide:graduation-cap" class="text-medical-600" width="24" stroke-width="1.5"></iconify-icon>
-                <h2 class="text-2xl tracking-tight text-gray-900 font-light font-poppins">Educación</h2>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- Degree 1 -->
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
+                    <dl class="space-y-4">
+                        {{#attrs}}
                         <div>
-                            <h3 class="font-medium text-gray-900 font-sans">Doctor of Physical Therapy (DPT)</h3>
-                            <p class="text-sm text-gray-500 font-sans">Abasyn University Islamabad</p>
+                            <dt class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1 font-sans">{{key}}</dt>
+                            <dd class="text-sm text-slate-700 leading-relaxed font-sans">{{value}}</dd>
                         </div>
-                        <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded font-sans">2020-2025</span>
-                    </div>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li class="flex items-center gap-2 font-sans">
-                            <iconify-icon icon="lucide:check" class="text-medical-500" width="14"></iconify-icon>
-                            CGPA 3.13/4.00
-                        </li>
-                        <li class="flex items-center gap-2 font-sans">
-                            <iconify-icon icon="lucide:check" class="text-medical-500" width="14"></iconify-icon>
-                            175/175 Créditos Completados
-                        </li>
-                    </ul>
+                        {{/attrs}}
+                    </dl>
                 </div>
-
-                <!-- Degree 2 -->
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-medium text-gray-900 font-sans">HSSC (Pre-Medical)</h3>
-                            <p class="text-sm text-gray-500 font-sans">BISE Rawalpindi</p>
-                        </div>
-                        <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded font-sans">2018-2020</span>
-                    </div>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li class="flex items-center gap-2 font-sans">
-                            <iconify-icon icon="lucide:check" class="text-medical-500" width="14"></iconify-icon>
-                            Calificación: A+ (918/1100)
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Degree 3 -->
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow md:col-span-2">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-medium text-gray-900 font-sans">SSC (Bio-Science)</h3>
-                            <p class="text-sm text-gray-500 font-sans">BISE Lahore</p>
-                        </div>
-                        <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded font-sans">2015-2017</span>
-                    </div>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li class="flex items-center gap-2 font-sans">
-                            <iconify-icon icon="lucide:check" class="text-medical-500" width="14"></iconify-icon>
-                            Calificación: A+ (976/1100)
-                        </li>
-                    </ul>
-                </div>
+                {{/hasAttrs}}
             </div>
         </section>
+        {{/hasAbout}}
 
-        <!-- Research & Publications -->
-        <section id="research" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+        {{#hasValueProps}}
+        <!-- Diferenciadores (reemplaza cualquier stat inventado del mockup) -->
+        <section class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
             <div class="flex items-center gap-3 mb-8">
-                <iconify-icon icon="lucide:book-open" class="text-medical-600" width="24" stroke-width="1.5"></iconify-icon>
-                <h2 class="text-2xl tracking-tight text-gray-900 font-light font-poppins">Investigación y Publicaciones</h2>
+                <iconify-icon icon="lucide:sparkles" width="24" style="color: var(--brand-primary)"></iconify-icon>
+                <h2 class="text-2xl tracking-tight text-slate-900 font-light font-poppins">Por qué elegirnos</h2>
             </div>
-
-            <div class="space-y-6">
-                <!-- Publication -->
-                <div class="group block p-6 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-medical-300 transition-all">
-                    <div class="flex flex-col md:flex-row gap-4 justify-between md:items-start">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-medical-100 text-medical-700 font-sans">Publicado</span>
-                            </div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-2 group-hover:text-medical-700 transition-colors font-sans">
-                                Prevalence of cervicogenic headache and risk factors associated with hijab wearing women
-                            </h3>
-                            <p class="text-sm text-gray-500 mb-4 font-sans">
-                                Autores: Maliha Latif, Ghasif Ali, Sania Zahra, Ammara Hayat Khan, <strong class="font-sans">Syeda Laiba Shoukat</strong>, Zainab Hussain, Saman Shams
-                            </p>
-                        </div>
-                        <a href="https://msrajournalreview.com/index.php/Journal/article/view/449" target="_blank" class="flex-shrink-0 inline-flex items-center gap-2 text-sm font-medium text-medical-600 hover:underline font-sans">
-                            Leer Artículo <iconify-icon icon="lucide:external-link" width="14"></iconify-icon>
-                        </a>
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#valueProps}}
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-4 brand-soft">
+                        <iconify-icon icon="lucide:check-circle-2" width="22"></iconify-icon>
                     </div>
+                    <h3 class="text-lg font-medium text-slate-900 mb-2 font-sans">{{title}}</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed font-sans">{{description}}</p>
                 </div>
-
-                <!-- FYP -->
-                <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 font-sans">Proyecto de Tesis</span>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2 font-sans">
-                        Prevalence of hamstring tightness among nurses in Islamabad
-                    </h3>
-                    <p class="text-gray-600 text-sm leading-relaxed font-sans">
-                        <strong class="font-sans">Hallazgos:</strong> el 53.7% de las enfermeras presentó acortamiento de isquiotibiales, lo que indica un alto riesgo de problemas musculoesqueléticos. Esta prevalencia se atribuye a la falta de ejercicio y a las jornadas laborales prolongadas.
-                    </p>
-                </div>
+                {{/valueProps}}
             </div>
         </section>
+        {{/hasValueProps}}
 
-        <!-- Professional Skills -->
-        <section id="skills" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
-            <h2 class="text-sm font-semibold tracking-wider text-gray-400 uppercase mb-8 font-sans">Competencias Profesionales</h2>
-            <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
-                <div class="flex flex-wrap gap-3">
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Evaluación Clínica
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Terapia Manual
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Electroterapia
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Planificación de Rehabilitación
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Prescripción de Ejercicio
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Terapia de Ventosas
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Vendaje Neuromuscular
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        Rehabilitación Musculoesquelética
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 hover:border-medical-300 hover:text-medical-700 transition-colors cursor-default font-sans">
-                        MS Office
-                    </span>
+        {{#hasServices}}
+        <!-- Servicios (las "competencias/skills" del CV mapeadas a servicios reales) -->
+        <section id="services" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="flex items-center gap-3 mb-8">
+                <iconify-icon icon="lucide:plus-circle" width="24" style="color: var(--brand-primary)"></iconify-icon>
+                <h2 class="text-2xl tracking-tight text-slate-900 font-light font-poppins">Servicios</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#services}}
+                <div class="group bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-xs font-semibold tracking-wider font-poppins" style="color: var(--brand-accent)">{{n}}</span>
+                        <h3 class="text-lg font-medium text-slate-900 font-sans">{{name}}</h3>
+                    </div>
+                    {{#hasDescription}}<p class="text-sm text-slate-500 leading-relaxed font-sans">{{description}}</p>{{/hasDescription}}
                 </div>
+                {{/services}}
             </div>
         </section>
+        {{/hasServices}}
 
-        <!-- Contact Section -->
+        {{#hasTestimonials}}
+        <!-- Reseñas — aviso "de ejemplo" ligado a la seccion (no solo al pie) -->
+        <section id="reviews" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+                <div class="flex items-center gap-3">
+                    <iconify-icon icon="lucide:message-square-quote" width="24" style="color: var(--brand-primary)"></iconify-icon>
+                    <h2 class="text-2xl tracking-tight text-slate-900 font-light font-poppins">Lo que dicen los pacientes</h2>
+                </div>
+                {{#testimonialsAreSample}}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold brand-soft-accent">
+                    <iconify-icon icon="lucide:info" width="14"></iconify-icon>
+                    Testimonios de ejemplo
+                </span>
+                {{/testimonialsAreSample}}
+            </div>
+            {{#testimonialsAreSample}}
+            <p class="text-sm text-slate-400 mb-10 max-w-2xl font-sans">Reseñas ilustrativas para mostrar el diseño. Se reemplazan por testimonios reales del negocio antes de publicar.</p>
+            {{/testimonialsAreSample}}
+            {{^testimonialsAreSample}}<div class="mb-10"></div>{{/testimonialsAreSample}}
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#testimonials}}
+                <figure class="relative bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    {{#testimonialsAreSample}}<span class="absolute top-4 right-4 text-[10px] uppercase tracking-wider font-semibold text-slate-300 font-sans">Ejemplo</span>{{/testimonialsAreSample}}
+                    <div class="mb-4" style="color: var(--brand-accent)">
+                        <iconify-icon icon="lucide:quote" width="26"></iconify-icon>
+                    </div>
+                    <blockquote class="text-slate-600 text-sm leading-relaxed mb-5 font-sans">“{{quote}}”</blockquote>
+                    <figcaption class="text-sm font-semibold text-slate-900 font-sans">
+                        {{author}}{{#role}}<span class="block text-xs font-normal text-slate-400 mt-0.5 font-sans">{{role}}</span>{{/role}}
+                    </figcaption>
+                </figure>
+                {{/testimonials}}
+            </div>
+        </section>
+        {{/hasTestimonials}}
+
+        {{#hasFaqs}}
+        <!-- Preguntas frecuentes -->
+        <section id="faq" class="max-w-3xl mx-auto px-6 mb-24 scroll-mt-24">
+            <div class="flex items-center gap-3 mb-8">
+                <iconify-icon icon="lucide:help-circle" width="24" style="color: var(--brand-primary)"></iconify-icon>
+                <h2 class="text-2xl tracking-tight text-slate-900 font-light font-poppins">Preguntas frecuentes</h2>
+            </div>
+            <div class="space-y-4">
+                {{#faqs}}
+                <details class="group bg-white border border-slate-100 rounded-xl px-6 py-4 shadow-sm">
+                    <summary class="flex items-center justify-between cursor-pointer list-none text-slate-900 font-medium font-sans">
+                        {{question}}
+                        <iconify-icon icon="lucide:chevron-down" width="20" class="text-slate-400 transition-transform group-open:rotate-180 shrink-0 ml-4"></iconify-icon>
+                    </summary>
+                    <p class="text-sm text-slate-500 leading-relaxed mt-4 font-sans">{{answer}}</p>
+                </details>
+                {{/faqs}}
+            </div>
+        </section>
+        {{/hasFaqs}}
+
+        <!-- Contacto / CTA — panel de contacto REAL (sin formulario sin backend) -->
         <section id="contact" class="max-w-5xl mx-auto px-6 mb-24 scroll-mt-24">
-            <div class="grid md:grid-cols-2 gap-16">
+            <div class="grid md:grid-cols-2 gap-12 lg:gap-16 items-stretch">
                 <div>
-                    <h2 class="text-3xl tracking-tight text-gray-900 mb-6 font-light font-poppins">Contáctame</h2>
-                    <p class="text-gray-600 mb-8 font-sans">
-                        No dudes en contactarme para consultas, colaboraciones o dudas profesionales. Actualmente resido en Islamabad, Pakistan.
-                    </p>
-
-                    <div class="space-y-6">
+                    <h2 class="text-3xl tracking-tight text-slate-900 mb-6 font-light font-poppins">Contacto</h2>
+                    <div class="space-y-5">
+                        {{#hasPhone}}
                         <div class="flex items-start gap-4">
-                            <div class="p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-medical-600">
-                                <iconify-icon icon="lucide:phone" width="20" stroke-width="1.5"></iconify-icon>
+                            <div class="p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm shrink-0" style="color: var(--brand-primary)">
+                                <iconify-icon icon="lucide:phone" width="20"></iconify-icon>
                             </div>
                             <div>
-                                <h3 class="font-medium text-gray-900 text-sm font-sans">Teléfono</h3>
-                                <a href="tel:+923120510269" class="text-gray-500 hover:text-medical-600 transition-colors font-sans">(+92) 312 0510269</a>
+                                <h3 class="font-medium text-slate-900 text-sm font-sans">Teléfono</h3>
+                                <a href="{{phoneTelHref}}" class="text-slate-500 hover:text-slate-900 transition-colors font-sans">{{phoneDisplay}}</a>
                             </div>
                         </div>
+                        {{/hasPhone}}
 
+                        {{#hasEmail}}
                         <div class="flex items-start gap-4">
-                            <div class="p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-medical-600">
-                                <iconify-icon icon="lucide:mail" width="20" stroke-width="1.5"></iconify-icon>
+                            <div class="p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm shrink-0" style="color: var(--brand-primary)">
+                                <iconify-icon icon="lucide:mail" width="20"></iconify-icon>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="font-medium text-slate-900 text-sm font-sans">Correo</h3>
+                                <a href="mailto:{{email}}" class="text-slate-500 hover:text-slate-900 transition-colors font-sans break-all">{{email}}</a>
+                            </div>
+                        </div>
+                        {{/hasEmail}}
+
+                        {{#hasAddress}}
+                        <div class="flex items-start gap-4">
+                            <div class="p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm shrink-0" style="color: var(--brand-primary)">
+                                <iconify-icon icon="lucide:map-pin" width="20"></iconify-icon>
                             </div>
                             <div>
-                                <h3 class="font-medium text-gray-900 text-sm font-sans">Correo Electrónico</h3>
-                                <a href="mailto:laibashoukat9180@gmail.com" class="text-gray-500 hover:text-medical-600 transition-colors font-sans">laibashoukat9180@gmail.com</a>
+                                <h3 class="font-medium text-slate-900 text-sm font-sans">Ubicación</h3>
+                                <p class="text-slate-500 font-sans">{{addressText}}</p>
+                                <a href="{{mapsUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-medium mt-1 underline underline-offset-2 font-sans" style="color: var(--brand-primary)">
+                                    Cómo llegar
+                                    <iconify-icon icon="lucide:arrow-up-right" width="14"></iconify-icon>
+                                </a>
                             </div>
                         </div>
+                        {{/hasAddress}}
 
+                        {{#hasHours}}
                         <div class="flex items-start gap-4">
-                            <div class="p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-medical-600">
-                                <iconify-icon icon="lucide:map-pin" width="20" stroke-width="1.5"></iconify-icon>
+                            <div class="p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm shrink-0" style="color: var(--brand-primary)">
+                                <iconify-icon icon="lucide:clock" width="20"></iconify-icon>
                             </div>
                             <div>
-                                <h3 class="font-medium text-gray-900 text-sm font-sans">Ubicación</h3>
-                                <p class="text-gray-500 font-sans">Ghauri Town, Sharifabad,Islamabad, Pakistan</p>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-medium text-slate-900 text-sm font-sans">Horario</h3>
+                                    {{#hoursReferential}}<span class="text-[10px] px-2 py-0.5 rounded-full font-medium brand-soft-accent">Referencial</span>{{/hoursReferential}}
+                                </div>
+                                <ul class="text-slate-500 text-sm leading-relaxed space-y-0.5 mt-1 font-sans">
+                                    {{#hoursLines}}<li>{{.}}</li>{{/hoursLines}}
+                                </ul>
+                                {{#hoursReferential}}<p class="text-[11px] text-slate-400 mt-1.5 font-sans">Horario sugerido, sujeto a confirmación.</p>{{/hoursReferential}}
                             </div>
                         </div>
+                        {{/hasHours}}
                     </div>
                 </div>
 
-                <!-- Contact Form -->
-                <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-lg shadow-gray-200/50">
-                    <form class="space-y-4" onsubmit="event.preventDefault(); alert('El envío de mensajes se conectaría a un backend.');">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label for="firstName" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Nombre</label>
-                                <input type="text" id="firstName" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-all text-sm">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="lastName" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Apellido</label>
-                                <input type="text" id="lastName" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-all text-sm">
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label for="email" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Correo Electrónico</label>
-                            <input type="email" id="email" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-all text-sm">
-                        </div>
-                        <div class="space-y-2">
-                            <label for="message" class="text-xs font-medium text-gray-700 uppercase tracking-wide font-sans">Mensaje</label>
-                            <textarea id="message" rows="4" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition-all text-sm"></textarea>
-                        </div>
-                        <button type="submit" class="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm font-sans">
-                            Enviar Mensaje
-                        </button>
-                    </form>
+                <!-- Tarjeta CTA de marca (reemplaza el formulario sin backend) -->
+                <div class="rounded-3xl p-8 lg:p-10 flex flex-col justify-center shadow-2xl shadow-slate-200/60" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                    <h3 class="text-2xl font-medium tracking-tight mb-3 font-poppins">{{ctaHeadline}}</h3>
+                    {{#hasCtaSubtext}}<p class="opacity-80 mb-8 font-sans">{{ctaSubtext}}</p>{{/hasCtaSubtext}}
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        {{#hasWhatsapp}}
+                        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold rounded-xl bg-white transition-transform hover:scale-[1.02] font-sans" style="color: var(--brand-primary)">
+                            <iconify-icon icon="lucide:message-circle" width="18"></iconify-icon>
+                            WhatsApp
+                        </a>
+                        {{/hasWhatsapp}}
+                        {{#hasPhone}}
+                        <a href="{{phoneTelHref}}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold rounded-xl border border-white/30 hover:bg-white/10 transition-colors font-sans">
+                            <iconify-icon icon="lucide:phone" width="18"></iconify-icon>
+                            {{phoneDisplay}}
+                        </a>
+                        {{/hasPhone}}
+                    </div>
+                    {{#hasSocials}}
+                    <div class="flex items-center gap-4 pt-8 mt-8 border-t border-white/20">
+                        {{#hasInstagram}}<a href="{{instagramUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="opacity-70 hover:opacity-100 transition-opacity"><iconify-icon icon="lucide:instagram" width="20"></iconify-icon></a>{{/hasInstagram}}
+                        {{#hasFacebook}}<a href="{{facebookUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="opacity-70 hover:opacity-100 transition-opacity"><iconify-icon icon="lucide:facebook" width="20"></iconify-icon></a>{{/hasFacebook}}
+                        {{#hasTiktok}}<a href="{{tiktokUrl}}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="opacity-70 hover:opacity-100 transition-opacity"><iconify-icon icon="lucide:music" width="20"></iconify-icon></a>{{/hasTiktok}}
+                    </div>
+                    {{/hasSocials}}
                 </div>
             </div>
         </section>
 
     </main>
 
-    <footer class="border-t border-gray-200 bg-white">
-        <div class="max-w-5xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-center md:text-left">
-                <p class="font-medium text-gray-900 font-sans">Dra. Laiba Shoukat</p>
-                <p class="text-sm text-gray-500 mt-1 font-sans">Doctora en Fisioterapia</p>
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
+                <div class="text-center md:text-left">
+                    <div class="flex items-center gap-2 justify-center md:justify-start mb-1">
+                        <span class="w-6 h-6 rounded flex items-center justify-center brand-soft shrink-0">
+                            <iconify-icon icon="lucide:activity" width="14"></iconify-icon>
+                        </span>
+                        <p class="font-medium text-slate-900 font-poppins">{{heroName}}</p>
+                    </div>
+                    {{#hasFooterTagline}}<p class="text-sm text-slate-500 font-sans">{{footerTagline}}</p>{{/hasFooterTagline}}
+                </div>
+                {{#hasWhatsapp}}
+                <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium rounded-xl transition-opacity hover:opacity-90 font-sans" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                    <iconify-icon icon="lucide:message-circle" width="16"></iconify-icon>
+                    Contactar por WhatsApp
+                </a>
+                {{/hasWhatsapp}}
             </div>
-            <div class="text-sm text-gray-400 font-sans">
-                © 2025 Dra. Laiba Shoukat. Todos los derechos reservados.
+            <div class="border-t border-slate-100 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p class="text-xs text-slate-400 font-sans">© {{year}} {{heroName}}.</p>
+                <p class="text-xs text-slate-400 font-sans">Sitio de demostración — contiene datos de ejemplo con fines ilustrativos.</p>
             </div>
         </div>
     </footer>
 
-
-</body></html>
+</body>
+</html>

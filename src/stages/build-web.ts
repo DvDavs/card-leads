@@ -18,9 +18,13 @@ import {
  * `enrich` (`content.generated_copy`, se LEE de disco, NO se regenera). Escribe
  * `leads/<slug>/web/index.html` y guarda la ruta en `generated.web_url`.
  *
- * Hoy solo esta implementado el rubro `doctor` con una plantilla
- * (`dr_arefin`). El diseno queda listo para sumar mas plantillas/rubros:
- * agregar una entrada en WEB_TEMPLATE_FILE + su .html parametrizado.
+ * Hoy solo esta implementado el rubro `doctor`, con una LISTA CURADA de 4
+ * plantillas (`dr_arefin`, `doctor`, `dental2`, `swarnim_dental`), todas
+ * parametrizadas contra `buildWebView`. `build-web` rellena las 4 y arma un
+ * visor swipeable (`web/index.html`) para que el cliente elija diseno, igual
+ * que las digital cards (build-cards). Agregar una plantilla = parametrizarla
+ * contra `buildWebView`, ponerla en `doctor/` y sumar su entrada a
+ * WEB_TEMPLATES.
  *
  * A diferencia de las digital cards (build-cards), la web NO necesita ser
  * self-contained: vive en internet y luego migra al server del cliente. Tailwind
@@ -49,14 +53,49 @@ const HOURS_NEEDS_PREFIX = "horario sugerido por rubro";
 const SAMPLE_TESTIMONIALS_KEY = "testimonials";
 
 /**
- * Plantilla web por rubro (relativa a `src/templates/`). Solo `doctor` esta
- * implementado; el resto lanza un error claro hasta que tenga su .html. El
- * mapeo rubro -> carpeta ya vive en `rubroConfig(rubro).webTemplate`; aca se fija
- * el ARCHIVO concreto dentro de esa carpeta.
+ * Una plantilla web curada del rubro: su archivo dentro de la carpeta del
+ * rubro + etiqueta legible y publico objetivo para el chip del visor.
  */
-const WEB_TEMPLATE_FILE: Partial<Record<Rubro, string>> = {
-  doctor: "doctor/dr_arefin.html",
+interface WebTemplate {
+  /** Nombre de archivo dentro de la carpeta del rubro (ej. "dr_arefin.html"). */
+  file: string;
+  /** Etiqueta corta del diseno para el chip del visor (ej. "Lujo"). */
+  name: string;
+  /** Publico objetivo / matiz del diseno, para el chip del visor. */
+  audience: string;
+}
+
+/**
+ * Plantillas web por rubro. Es una LISTA CURADA a proposito (NO un glob de la
+ * carpeta): `src/templates/doctor/` tiene ademas mockups crudos sin parametrizar
+ * (index.html, generated-page.html, dr_lekota_clinic.html, ...) que NO consumen
+ * `buildWebView` y romperian el render. Solo estas 4 estan parametrizadas contra
+ * el view object de `buildWebView`. El orden aca es el orden del visor (el
+ * primero que ve el cliente).
+ *
+ * Agregar una plantilla nueva = (1) parametrizarla contra `buildWebView` (usar
+ * SOLO las claves que devuelve esa funcion), (2) ponerla en `src/templates/
+ * doctor/`, (3) sumar su entrada a esta lista. Nada mas: `build-web` la detecta.
+ *
+ * Solo `doctor` esta implementado; un rubro sin lista lanza un error claro.
+ */
+const WEB_TEMPLATES: Partial<Record<Rubro, { folder: string; templates: WebTemplate[] }>> = {
+  doctor: {
+    folder: "doctor",
+    templates: [
+      { file: "dr_arefin.html", name: "Clasico", audience: "Medicos y consultorios" },
+      { file: "doctor.html", name: "Lujo", audience: "Especialistas premium" },
+      { file: "dental2.html", name: "Moderno", audience: "Clinicas dentales" },
+      { file: "swarnim_dental.html", name: "Limpio", audience: "Consultorios y clinicas" },
+      { file: "urgencias_24h.html", name: "Urgencias 24h", audience: "Urgencias y consultorios" },
+      { file: "dr_lekota_clinic.html", name: "Familiar", audience: "Clinicas y medicina familiar" },
+      { file: "generated-page.html", name: "Perfil", audience: "Profesional individual" },
+    ],
+  },
 };
+
+/** Nombre del visor swipeable dentro de la carpeta del rubro. */
+const VIEWER_TEMPLATE = "_viewer.html";
 
 const WEB_TEMPLATES_DIR = new URL("../templates/", import.meta.url);
 
@@ -344,22 +383,19 @@ export function buildWebView(
 /* Carga de plantilla + escritura                                      */
 /* ------------------------------------------------------------------ */
 
-async function loadWebTemplate(rubro: Rubro): Promise<string> {
-  const rel = WEB_TEMPLATE_FILE[rubro];
-  if (!rel) {
-    throw new Error(
-      `build-web: el rubro "${rubro}" aun no tiene plantilla web (por ahora solo "doctor").`,
-    );
-  }
-  return fs.readFile(fileURLToPath(new URL(rel, WEB_TEMPLATES_DIR)), "utf8");
+/** Lee una plantilla (o el visor) de la carpeta del rubro bajo src/templates/. */
+async function loadTemplateFile(folder: string, file: string): Promise<string> {
+  return fs.readFile(fileURLToPath(new URL(`${folder}/${file}`, WEB_TEMPLATES_DIR)), "utf8");
 }
 
 /**
  * build-web — etapa CLI. Exige status "enriched" o posterior (guard ANTES de
- * tocar disco). Rellena la plantilla del rubro con `buildWebView` y escribe
- * `leads/<slug>/web/index.html`. Avanza el status a "web_built" solo si el lead
- * no estaba ya mas adelante (regenerar el artefacto no retrocede el pipeline).
- * Devuelve la ruta absoluta escrita.
+ * tocar disco). Rellena CADA plantilla curada del rubro con `buildWebView` (un
+ * solo view object sirve para las 4) y escribe `leads/<slug>/web/<file>.html`,
+ * mas un visor swipeable en `leads/<slug>/web/index.html` que las junta (mismo
+ * patron que build-cards). Avanza el status a "web_built" solo si el lead no
+ * estaba ya mas adelante (regenerar el artefacto no retrocede el pipeline).
+ * Devuelve la ruta absoluta del visor.
  */
 export async function buildWeb(slug: string): Promise<string> {
   if (!slug) throw new Error("build-web: falta el slug. Uso: build-web <slug>");
@@ -367,12 +403,31 @@ export async function buildWeb(slug: string): Promise<string> {
   const lead = await readLead(slug);
   assertWebBuildableStatus(lead.status);
 
-  const template = await loadWebTemplate(lead.rubro);
-  const view = buildWebView(lead);
-  const html = renderTemplate(template, view);
+  const config = WEB_TEMPLATES[lead.rubro];
+  if (!config) {
+    throw new Error(
+      `build-web: el rubro "${lead.rubro}" aun no tiene plantilla web (por ahora solo "doctor").`,
+    );
+  }
 
-  const relPath = path.posix.join(WEB_DIR, WEB_FILE);
-  const outPath = await writeArtifact(slug, relPath, html);
+  // Un solo view object: los 4 disenos consumen el MISMO contrato de buildWebView.
+  const view = buildWebView(lead);
+
+  // 1) Cada plantilla curada -> web/<file>.
+  for (const t of config.templates) {
+    const template = await loadTemplateFile(config.folder, t.file);
+    const html = renderTemplate(template, view);
+    await writeArtifact(slug, path.posix.join(WEB_DIR, t.file), html);
+  }
+
+  // 2) Visor swipeable -> web/index.html. Cada `file` es SOLO el basename: el
+  // visor y las paginas viven en la misma carpeta `web/`.
+  const viewerTemplate = await loadTemplateFile(config.folder, VIEWER_TEMPLATE);
+  const viewerHtml = renderTemplate(viewerTemplate, {
+    pages: config.templates.map((t) => ({ file: t.file, name: t.name, audience: t.audience })),
+  });
+  const viewerRelPath = path.posix.join(WEB_DIR, WEB_FILE);
+  const viewerPath = await writeArtifact(slug, viewerRelPath, viewerHtml);
 
   const order = StatusSchema.options;
   const status: Status =
@@ -381,8 +436,8 @@ export async function buildWeb(slug: string): Promise<string> {
   await writeLead({
     ...lead,
     status,
-    generated: { ...lead.generated, web_url: relPath },
+    generated: { ...lead.generated, web_url: viewerRelPath },
   });
 
-  return outPath;
+  return viewerPath;
 }

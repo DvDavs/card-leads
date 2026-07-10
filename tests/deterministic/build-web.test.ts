@@ -366,3 +366,114 @@ describe("render de la plantilla doctor/dr_arefin.html (contrato vista <-> HTML)
     expect(html).toContain("La atención recibida fue muy profesional"); // los testimonios igual se muestran
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* Pool CURADO de las plantillas doctor (mismo contrato buildWebView) */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Las plantillas doctor parametrizadas que rellena `build-web`, en el orden del
+ * visor. La carpeta `doctor/` tiene ademas mockups crudos sin parametrizar,
+ * stubs y un artefacto de otro contrato; SOLO estas consumen `buildWebView`.
+ * Todas comparten el MISMO view object, asi que las mismas aserciones valen
+ * para todas. Debe coincidir con `WEB_TEMPLATES.doctor` en build-web.ts.
+ */
+const DOCTOR_TEMPLATES = [
+  "dr_arefin.html",
+  "doctor.html",
+  "dental2.html",
+  "swarnim_dental.html",
+  "urgencias_24h.html",
+  "dr_lekota_clinic.html",
+  "generated-page.html",
+];
+
+async function renderDoctorTemplate(file: string, lead: Lead = enrichedLead()): Promise<string> {
+  const url = new URL(`../../src/templates/doctor/${file}`, import.meta.url);
+  const template = await fs.readFile(fileURLToPath(url), "utf8");
+  return renderTemplate(template, buildWebView(lead, 2026));
+}
+
+describe.each(DOCTOR_TEMPLATES)("plantilla doctor curada %s (contrato vista <-> HTML)", (file) => {
+  it("no deja marcadores {{ }} sin resolver ni 'undefined'", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).not.toMatch(/\{\{/);
+    expect(html).not.toContain("undefined");
+  });
+
+  it("cero fotos de stock (Unsplash)", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).not.toContain("unsplash");
+  });
+
+  it("sin stats inventados ('25K+' / 'Pacientes Satisfechos')", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).not.toMatch(/\d+\s*[kK]\+/); // caza 25K+/20K+/15K+
+    expect(html).not.toContain("Pacientes Satisfechos");
+  });
+
+  it("tematiza con las CSS vars de marca medidas", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).toContain("--brand-primary: #382d47");
+    expect(html).toContain("--brand-primary-text: #ffffff");
+    expect(html).toContain("--brand-accent: #847892");
+  });
+
+  it("muestra el copy real: headline, CTA y WhatsApp derivado", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).toContain("Atención especializada en medicina interna");
+    expect(html).toContain("Agende su próxima consulta médica");
+    expect(html).toContain("wa.me/529513487626");
+  });
+
+  it("placeholder de iniciales (sin logo/foto): gradiente de marca + inicial", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).toContain("linear-gradient(135deg, var(--brand-primary), var(--brand-accent))");
+    expect(html).toContain(">D<");
+  });
+
+  it("credenciales tal cual desde attrs (formato imperfecto)", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).toContain("Cédula profesional");
+    expect(html).toContain("120 0 70 41");
+  });
+
+  it("avisos: testimonios de ejemplo, horario referencial y disclaimer de demo", async () => {
+    const html = await renderDoctorTemplate(file);
+    expect(html).toContain("Testimonios de ejemplo");
+    expect(html).toContain(">Ejemplo<");
+    expect(html).toContain(">Referencial<");
+    expect(html).toContain("Horario sugerido, sujeto a confirmación");
+    expect(html).toContain("Sitio de demostración — contiene datos de ejemplo");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Visor web swipeable (doctor/_viewer.html)                           */
+/* ------------------------------------------------------------------ */
+
+describe("visor web doctor/_viewer.html (swipeable, lazy-load)", () => {
+  const VIEWER_URL = new URL("../../src/templates/doctor/_viewer.html", import.meta.url);
+
+  async function renderViewer(): Promise<string> {
+    const template = await fs.readFile(fileURLToPath(VIEWER_URL), "utf8");
+    return renderTemplate(template, {
+      pages: [
+        { file: "dr_arefin.html", name: "A", audience: "" },
+        { file: "doctor.html", name: "B", audience: "" },
+      ],
+    });
+  }
+
+  it("no deja marcadores {{ }} sin resolver", async () => {
+    const html = await renderViewer();
+    expect(html).not.toMatch(/\{\{/);
+  });
+
+  it("los iframes cargan lazy (data-src), sin src= directo en el markup", async () => {
+    const html = await renderViewer();
+    expect(html).toContain('data-src="dr_arefin.html"');
+    expect(html).toContain('data-src="doctor.html"');
+    expect(html).not.toMatch(/<iframe[^>]*\ssrc=/); // ningun iframe con src= de arranque
+  });
+});

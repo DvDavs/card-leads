@@ -9,7 +9,7 @@
 <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
   /* Paleta de MARCA del lead (colores medidos de la tarjeta + texto legible WCAG,
      calculados en verify). Se consumen como CSS vars para tematizar toda la web
@@ -22,7 +22,7 @@
     --brand-accent: {{colors.accent}};
     --brand-accent-text: {{colorsText.accent}};
   }
-  body { font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
@@ -30,66 +30,40 @@
   /* Tintes suaves de marca (color-mix evita el problema del alpha sobre var()). */
   .brand-soft { background: color-mix(in srgb, var(--brand-primary) 10%, white); color: var(--brand-primary); }
   .brand-soft-accent { background: color-mix(in srgb, var(--brand-accent) 14%, white); color: var(--brand-primary); }
-  .brand-ring { box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-primary) 16%, transparent) inset; }
-  /* Sombras neutras (grises, no de marca): se ven bien con cualquier paleta. */
-  .shadow-soft { box-shadow: 0 14px 44px rgba(15, 23, 42, .08); }
-  .shadow-soft-lg { box-shadow: 0 28px 80px rgba(15, 23, 42, .12); }
-  /* Entrada premium al cargar (self-contained, no framework externo). */
-  @keyframes riseIn { 0% { opacity: 0; transform: translateY(18px); } 100% { opacity: 1; transform: translateY(0); } }
-  .rise { animation: riseIn .8s cubic-bezier(.2,.8,.2,1) both; }
-  .rise-1 { animation-delay: .08s; }
-  .rise-2 { animation-delay: .16s; }
-  .rise-3 { animation-delay: .24s; }
-  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
 </style>
 </head>
 <body class="bg-white text-slate-600 antialiased">
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 pt-4 px-3 sm:px-6">
-        <div class="max-w-6xl mx-auto h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between gap-4 bg-white/80 backdrop-blur-xl border border-slate-200/70 rounded-full shadow-soft">
-            <a href="#inicio" class="flex items-center gap-2 group min-w-0">
-                <div class="w-8 h-8 rounded-xl flex items-center justify-center brand-soft shrink-0">
-                    <span class="iconify" data-icon="lucide:activity" data-width="18"></span>
+    <header class="fixed top-0 left-0 right-0 z-50 w-full p-4 md:p-6">
+        <nav class="mx-auto max-w-6xl rounded-full backdrop-blur-xl border border-slate-200/60 shadow-lg shadow-slate-200/50 bg-white/80 px-6 py-3 flex items-center justify-between gap-4">
+            <a href="#" class="flex items-center gap-2 group min-w-0">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center brand-soft shrink-0">
+                    <span class="iconify" data-icon="lucide:smile" data-width="20"></span>
                 </div>
                 <span class="text-base font-semibold tracking-tight text-slate-900 truncate">{{heroName}}</span>
             </a>
 
-            <div class="hidden lg:flex items-center gap-1 text-sm font-medium text-slate-500">
-                {{#hasAbout}}<a href="#about" class="px-4 py-2 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors">Nosotros</a>{{/hasAbout}}
-                {{#hasServices}}<a href="#services" class="px-4 py-2 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors">Servicios</a>{{/hasServices}}
-                {{#hasTestimonials}}<a href="#reviews" class="px-4 py-2 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors">Testimonios</a>{{/hasTestimonials}}
-                {{#hasFaqs}}<a href="#faq" class="px-4 py-2 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors">Preguntas</a>{{/hasFaqs}}
-                <a href="#contact" class="px-4 py-2 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors">Contacto</a>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
+                {{#hasAbout}}<a href="#about" class="hover:text-slate-900 transition-colors">Nosotros</a>{{/hasAbout}}
+                {{#hasServices}}<a href="#services" class="hover:text-slate-900 transition-colors">Servicios</a>{{/hasServices}}
+                {{#hasTestimonials}}<a href="#reviews" class="hover:text-slate-900 transition-colors">Reseñas</a>{{/hasTestimonials}}
+                <a href="#contact" class="hover:text-slate-900 transition-colors">Contacto</a>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
-                {{#hasPhone}}
-                <a href="{{phoneTelHref}}" class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-[13px] font-medium hover:bg-slate-50 transition-colors">
-                    <span class="iconify" data-icon="lucide:phone" data-width="15" style="color: var(--brand-accent)"></span>
-                    <span class="hidden md:inline">{{phoneDisplay}}</span>
-                </a>
-                {{/hasPhone}}
-                {{#hasWhatsapp}}
-                <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold tracking-wide rounded-full transition-opacity hover:opacity-90" style="background: var(--brand-primary); color: var(--brand-primary-text)">
-                    <span class="iconify" data-icon="lucide:message-circle" data-width="15"></span>
-                    WhatsApp
-                </a>
-                {{/hasWhatsapp}}
-            </div>
-        </div>
-    </nav>
+            {{#hasWhatsapp}}
+            <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="hidden md:inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-semibold tracking-wide rounded-full transition-opacity hover:opacity-90 shrink-0" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                Agendar por WhatsApp
+                <span class="iconify" data-icon="lucide:message-circle" data-width="14"></span>
+            </a>
+            {{/hasWhatsapp}}
+        </nav>
+    </header>
 
     <!-- Hero -->
-    <section id="inicio" class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
-        <!-- Halos de marca (color-mix con transparent: se adaptan a cualquier paleta) -->
-        <div class="absolute inset-0 -z-10 pointer-events-none">
-            <div class="absolute -top-32 -left-24 w-[38rem] h-[38rem] rounded-full blur-3xl" style="background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-accent) 22%, transparent), transparent)"></div>
-            <div class="absolute -top-10 right-0 w-[34rem] h-[34rem] rounded-full blur-3xl" style="background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-primary) 16%, transparent), transparent)"></div>
-        </div>
-
-        <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
-            <div class="max-w-2xl rise">
+    <section class="relative pt-40 pb-20 lg:pt-48 lg:pb-28 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div class="max-w-2xl">
                 {{#hasHeroBadge}}
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-6 brand-soft-accent">
                     <span class="relative flex h-2 w-2">
@@ -99,7 +73,7 @@
                     {{heroBadge}}
                 </div>
                 {{/hasHeroBadge}}
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold text-slate-900 tracking-tight leading-[1.1] mb-6">
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold text-slate-900 tracking-tighter leading-[1.1] mb-6">
                     {{heroHeadline}}
                 </h1>
                 {{#hasHeroSubheadline}}
@@ -107,13 +81,13 @@
                 {{/hasHeroSubheadline}}
                 <div class="flex flex-col sm:flex-row gap-4">
                     {{#hasWhatsapp}}
-                    <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-6 py-3.5 text-sm font-medium rounded-xl transition-opacity hover:opacity-90 shadow-soft" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                    <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full transition-all hover:-translate-y-0.5" style="background: var(--brand-primary); color: var(--brand-primary-text)">
                         Agendar por WhatsApp
-                        <span class="iconify ml-2" data-icon="lucide:message-circle" data-width="16"></span>
+                        <span class="iconify" data-icon="lucide:message-circle" data-width="16"></span>
                     </a>
                     {{/hasWhatsapp}}
                     {{#hasServices}}
-                    <a href="#services" class="inline-flex items-center justify-center px-6 py-3.5 text-sm font-medium text-slate-600 transition-all bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300">
+                    <a href="#services" class="inline-flex items-center justify-center px-7 py-3.5 text-sm font-medium text-slate-600 transition-all bg-white border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300">
                         Ver Servicios
                     </a>
                     {{/hasServices}}
@@ -121,7 +95,7 @@
             </div>
 
             <!-- Imagen: foto/logo real, o placeholder de iniciales sobre gradiente de marca (NUNCA foto stock) -->
-            <div class="relative lg:h-[540px] w-full rounded-3xl overflow-hidden border border-slate-200 shadow-soft-lg rise rise-2">
+            <div class="relative lg:h-[560px] w-full rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-300/40 border border-slate-200">
                 {{#hasImage}}
                 <img src="{{imageSrc}}" alt="{{heroName}}" class="object-cover w-full h-full">
                 {{/hasImage}}
@@ -135,7 +109,7 @@
                 <div class="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center brand-soft shrink-0">
-                            <span class="iconify" data-icon="lucide:stethoscope" data-width="24"></span>
+                            <span class="iconify" data-icon="lucide:smile" data-width="24"></span>
                         </div>
                         <div class="min-w-0">
                             <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Especialidad</p>
@@ -151,13 +125,9 @@
     {{#hasAbout}}
     <!-- Sobre -->
     <section id="about" class="py-24 bg-slate-50/50 border-t border-slate-200">
-        <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-5 gap-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-5 gap-12">
             <div class="lg:col-span-3">
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-5 brand-soft-accent">
-                    <span class="iconify" data-icon="lucide:building-2" data-width="16"></span>
-                    Sobre la práctica
-                </div>
-                <h2 class="text-3xl font-semibold text-slate-900 tracking-tight mb-6">Sobre {{heroName}}</h2>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-6">Sobre {{heroName}}</h2>
                 {{#hasBio}}<p class="text-slate-500 text-lg leading-relaxed mb-8">{{bio}}</p>{{/hasBio}}
                 {{#hasPullQuote}}
                 <blockquote class="border-l-4 pl-6 py-1 text-xl font-medium text-slate-800 italic leading-relaxed" style="border-color: var(--brand-accent)">
@@ -168,7 +138,7 @@
 
             {{#hasAttrs}}
             <div class="lg:col-span-2">
-                <div class="bg-white border border-slate-200 rounded-2xl p-8 shadow-soft">
+                <div class="bg-white border border-slate-200 rounded-3xl p-8">
                     <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-6 flex items-center gap-2">
                         <span class="iconify" data-icon="lucide:award" data-width="18" style="color: var(--brand-primary)"></span>
                         Formación y credenciales
@@ -189,15 +159,15 @@
     {{/hasAbout}}
 
     {{#hasValueProps}}
-    <!-- Diferenciadores (reemplazan a los stats inventados del mockup original) -->
-    <section class="py-24 border-t border-slate-200">
-        <div class="max-w-6xl mx-auto px-6">
+    <!-- Diferenciadores -->
+    <section class="py-24 lg:py-28 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-2xl mb-16">
-                <h2 class="text-3xl font-semibold text-slate-900 tracking-tight mb-4">Por qué elegirnos</h2>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-4">Por qué elegirnos</h2>
             </div>
             <div class="grid md:grid-cols-3 gap-6">
                 {{#valueProps}}
-                <div class="p-8 bg-white border border-slate-200 rounded-2xl shadow-soft transition-transform hover:-translate-y-1">
+                <div class="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6 brand-soft">
                         <span class="iconify" data-icon="lucide:check-circle-2" data-width="24"></span>
                     </div>
@@ -212,15 +182,16 @@
 
     {{#hasServices}}
     <!-- Servicios -->
-    <section id="services" class="py-24 bg-slate-50/50 border-t border-slate-200">
-        <div class="max-w-6xl mx-auto px-6">
+    <section id="services" class="py-24 lg:py-28 bg-slate-50/50 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-2xl mb-16">
-                <h2 class="text-3xl font-semibold text-slate-900 tracking-tight mb-4">Servicios</h2>
-                <p class="text-slate-500 text-lg">Atención profesional enfocada en tu bienestar.</p>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-4">Nuestros <span style="color: var(--brand-primary)">Servicios</span></h2>
+                <p class="text-slate-500 text-lg">Atención dental integral, pensada para el cuidado de tu sonrisa.</p>
             </div>
-            <div class="grid md:grid-cols-3 gap-6">
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {{#services}}
-                <div class="group p-8 bg-white border border-slate-200 rounded-2xl shadow-soft hover:shadow-xl hover:shadow-slate-900/5 transition-all duration-300">
+                <div class="group relative p-8 bg-white border border-slate-100 rounded-3xl hover:shadow-xl hover:shadow-slate-900/5 transition-all duration-300">
+                    <span class="absolute top-6 right-6 text-xs font-bold text-slate-300">{{n}}</span>
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6 brand-soft group-hover:scale-110 transition-transform">
                         <span class="iconify" data-icon="lucide:plus" data-width="24"></span>
                     </div>
@@ -235,10 +206,10 @@
 
     {{#hasTestimonials}}
     <!-- Reseñas — aviso "de ejemplo" ligado a la seccion (no solo al pie) -->
-    <section id="reviews" class="py-24 border-t border-slate-200">
-        <div class="max-w-6xl mx-auto px-6">
+    <section id="reviews" class="py-24 lg:py-28 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-wrap items-center gap-3 mb-4">
-                <h2 class="text-3xl font-semibold text-slate-900 tracking-tight">Lo que dicen los pacientes</h2>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight">Lo que dicen los pacientes</h2>
                 {{#testimonialsAreSample}}
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold brand-soft-accent">
                     <span class="iconify" data-icon="lucide:info" data-width="14"></span>
@@ -252,7 +223,7 @@
             {{^testimonialsAreSample}}<div class="mb-12"></div>{{/testimonialsAreSample}}
             <div class="grid md:grid-cols-3 gap-6">
                 {{#testimonials}}
-                <figure class="relative p-8 bg-white border border-slate-200 rounded-2xl shadow-soft">
+                <figure class="relative p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
                     {{#testimonialsAreSample}}<span class="absolute top-4 right-4 text-[10px] uppercase tracking-wider font-semibold text-slate-300">Ejemplo</span>{{/testimonialsAreSample}}
                     <div class="mb-4" style="color: var(--brand-accent)">
                         <span class="iconify" data-icon="lucide:quote" data-width="28"></span>
@@ -270,12 +241,12 @@
 
     {{#hasFaqs}}
     <!-- FAQs -->
-    <section id="faq" class="py-24 bg-slate-50/50 border-t border-slate-200">
-        <div class="max-w-3xl mx-auto px-6">
-            <h2 class="text-3xl font-semibold text-slate-900 tracking-tight mb-12">Preguntas frecuentes</h2>
+    <section id="faq" class="py-24 lg:py-28 bg-slate-50/50 border-t border-slate-200">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-12">Preguntas <span style="color: var(--brand-primary)">frecuentes</span></h2>
             <div class="space-y-4">
                 {{#faqs}}
-                <details class="group bg-white border border-slate-200 rounded-xl px-6 py-4 shadow-soft">
+                <details class="group bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm">
                     <summary class="flex items-center justify-between cursor-pointer list-none text-slate-900 font-medium">
                         {{question}}
                         <span class="iconify text-slate-400 transition-transform group-open:rotate-180 shrink-0 ml-4" data-icon="lucide:chevron-down" data-width="20"></span>
@@ -289,24 +260,21 @@
     {{/hasFaqs}}
 
     <!-- Contacto / CTA -->
-    <section id="contact" class="py-24 border-t border-slate-200">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="grid lg:grid-cols-5 gap-0 rounded-[32px] overflow-hidden shadow-soft-lg relative" style="background: var(--brand-primary); color: var(--brand-primary-text)">
-                <!-- Textura decorativa neutra (blanco translucido, no depende de la paleta) -->
-                <div class="absolute inset-0 opacity-30 pointer-events-none" style="background-image: radial-gradient(700px 340px at 12% 18%, rgba(255,255,255,.22), transparent 60%), radial-gradient(700px 360px at 88% 30%, rgba(255,255,255,.12), transparent 60%)"></div>
-
-                <div class="lg:col-span-3 p-10 lg:p-12 flex flex-col justify-center relative">
-                    <h2 class="text-3xl font-semibold tracking-tight mb-3">{{ctaHeadline}}</h2>
+    <section id="contact" class="py-24 lg:py-28 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-5 gap-0 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/60" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                <div class="lg:col-span-3 p-10 lg:p-14 flex flex-col justify-center">
+                    <h2 class="text-3xl lg:text-4xl font-semibold tracking-tight mb-3">{{ctaHeadline}}</h2>
                     {{#hasCtaSubtext}}<p class="opacity-80 text-lg mb-8 max-w-md">{{ctaSubtext}}</p>{{/hasCtaSubtext}}
                     <div class="flex flex-col sm:flex-row gap-4">
                         {{#hasWhatsapp}}
-                        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold rounded-xl bg-white transition-transform hover:scale-[1.02]" style="color: var(--brand-primary)">
+                        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full bg-white transition-transform hover:scale-[1.02]" style="color: var(--brand-primary)">
                             <span class="iconify" data-icon="lucide:message-circle" data-width="18"></span>
                             WhatsApp
                         </a>
                         {{/hasWhatsapp}}
                         {{#hasPhone}}
-                        <a href="{{phoneTelHref}}" class="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold rounded-xl border border-white/30 hover:bg-white/10 transition-colors">
+                        <a href="{{phoneTelHref}}" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full border border-white/30 hover:bg-white/10 transition-colors">
                             <span class="iconify" data-icon="lucide:phone" data-width="18"></span>
                             {{phoneDisplay}}
                         </a>
@@ -314,7 +282,7 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 p-10 lg:p-12 space-y-7 relative" style="background: rgba(0,0,0,0.12)">
+                <div class="lg:col-span-2 p-10 lg:p-14 space-y-7" style="background: rgba(0,0,0,0.12)">
                     {{#hasAddress}}
                     <div class="flex gap-3">
                         <span class="iconify opacity-70 shrink-0 mt-0.5" data-icon="lucide:map-pin" data-width="18"></span>
@@ -369,19 +337,19 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 pt-16 pb-8">
-        <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-12">
                 <div class="max-w-sm">
                     <div class="flex items-center gap-2 mb-4">
-                        <div class="w-6 h-6 rounded flex items-center justify-center brand-soft shrink-0">
-                            <span class="iconify" data-icon="lucide:activity" data-width="14"></span>
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center brand-soft shrink-0">
+                            <span class="iconify" data-icon="lucide:smile" data-width="14"></span>
                         </div>
                         <span class="text-sm font-semibold tracking-tight text-slate-900 truncate">{{heroName}}</span>
                     </div>
                     {{#hasFooterTagline}}<p class="text-slate-500 text-sm leading-relaxed">{{footerTagline}}</p>{{/hasFooterTagline}}
                 </div>
                 {{#hasWhatsapp}}
-                <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium rounded-xl transition-opacity hover:opacity-90 self-start md:self-auto" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium rounded-full transition-opacity hover:opacity-90 self-start md:self-auto" style="background: var(--brand-primary); color: var(--brand-primary-text)">
                     <span class="iconify" data-icon="lucide:message-circle" data-width="16"></span>
                     Contactar por WhatsApp
                 </a>
@@ -394,12 +362,5 @@
             </div>
         </div>
     </footer>
-
-    {{#hasWhatsapp}}
-    <!-- WhatsApp flotante (color de marca, no verde hardcodeado) -->
-    <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" class="fixed bottom-6 right-6 z-[100] flex items-center justify-center w-14 h-14 rounded-full shadow-soft-lg hover:scale-110 transition-transform" style="background: var(--brand-primary); color: var(--brand-primary-text)">
-        <span class="iconify" data-icon="lucide:message-circle" data-width="26"></span>
-    </a>
-    {{/hasWhatsapp}}
 </body>
 </html>
