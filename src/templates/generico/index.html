@@ -3,66 +3,240 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{name}}</title>
+    <title>{{pageTitle}}</title>
+    <meta name="description" content="{{metaDescription}}" />
+    <meta name="theme-color" content="#e9ecf1" />
+    <meta property="og:title" content="{{pageTitle}}" />
+    <meta property="og:description" content="{{metaDescription}}" />
+    <meta property="og:type" content="website" />
+    <script type="application/ld+json">{{{jsonLd}}}</script>
     <style>
+      /* Diseno "Credencial": la tarjeta fisica convertida en credencial digital.
+         Card blanca flotante sobre fondo neutro, banda de marca arriba y avatar
+         superpuesto. Todo el color viene de brand.colors + brand.colorsText del
+         lead (parametrico); los neutros son fijos y seguros en contraste. */
       :root {
-        --primary: {{colors.primary}};
-        --secondary: {{colors.secondary}};
-        --accent: {{colors.accent}};
+        --primary: {{{colors.primary}}};
+        --primary-text: {{{colorsText.primary}}};
+        --secondary: {{{colors.secondary}}};
+        --accent: {{{colors.accent}}};
+        --accent-text: {{{colorsText.accent}}};
+        --font-display: {{{fontFamily}}};
+        --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --ink: #1f2430;
+        --ink-soft: #454c59;
+        --ink-muted: #6b7280;
+        --hairline: #eef0f4;
       }
       * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { -webkit-text-size-adjust: 100%; }
       body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        background: var(--primary);
-        color: #fff;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        padding: 3rem 1rem;
+        font-family: var(--font-body);
+        background: #e9ecf1;
+        color: var(--ink);
+        min-height: 100svh;
+        padding: 1.25rem 1rem 2rem;
+        -webkit-font-smoothing: antialiased;
       }
-      .card { width: 100%; max-width: 30rem; text-align: center; }
-      h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
-      .tagline { color: var(--accent); font-weight: 600; margin-bottom: 1rem; }
-      .about { color: #d1d5db; margin-bottom: 2rem; line-height: 1.5; }
-      .links { display: flex; flex-direction: column; gap: 0.75rem; }
-      .links a {
-        display: block;
-        padding: 0.9rem 1rem;
-        border-radius: 0.75rem;
-        background: var(--secondary);
-        color: #fff;
+      @media (min-width: 640px) {
+        body { padding-top: 3rem; }
+      }
+      .card {
+        max-width: 26rem;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 28px 56px -16px rgb(16 24 40 / 0.22);
+        animation: rise 0.55s cubic-bezier(0.22, 0.75, 0.3, 1) both;
+      }
+
+      /* banda de marca, como una credencial */
+      .band {
+        height: 8.25rem;
+        background:
+          radial-gradient(18rem 10rem at 85% -20%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%),
+          linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, var(--secondary)));
+      }
+      .id {
+        text-align: center;
+        padding: 0 1.4rem;
+        margin-top: -2.9rem;
+      }
+      .avatar {
+        width: 5.75rem;
+        height: 5.75rem;
+        margin: 0 auto;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 8px 20px -6px rgb(16 24 40 / 0.3);
+        background: var(--primary);
+        color: var(--primary-text);
+        display: grid;
+        place-items: center;
+        font-family: var(--font-display);
+        font-size: 2.2rem;
+        font-weight: 700;
+      }
+      .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: #fff; }
+      h1 {
+        font-family: var(--font-display);
+        font-size: clamp(1.5rem, 5.8vw, 1.8rem);
+        line-height: 1.2;
+        margin-top: 0.85rem;
+      }
+      .person { margin-top: 0.35rem; font-size: 0.95rem; font-weight: 600; color: var(--ink-soft); }
+      .tagline {
+        display: inline-block;
+        margin-top: 0.6rem;
+        padding: 0.32rem 0.85rem;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--accent-text);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .about { margin-top: 0.7rem; font-size: 0.92rem; line-height: 1.55; color: var(--ink-muted); }
+
+      /* ---------- acciones ---------- */
+      .links { padding: 1.3rem 1.4rem 0; display: flex; flex-direction: column; gap: 0.7rem; }
+      .cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        min-height: 3.25rem;
+        border-radius: 14px;
+        background: var(--primary);
+        color: var(--primary-text);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.98rem;
+        box-shadow: 0 12px 26px -10px color-mix(in srgb, var(--primary) 65%, transparent);
+        transition: transform 0.15s ease;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.7rem;
+      }
+      .g {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 3rem;
+        border-radius: 14px;
+        background: #f4f6f9;
+        border: 1px solid #e6e9ef;
+        color: var(--ink);
         text-decoration: none;
         font-weight: 600;
-        transition: transform 0.08s ease;
+        font-size: 0.89rem;
+        transition: transform 0.15s ease, background 0.15s ease;
       }
-      .links a:hover { transform: translateY(-2px); }
-      .services { margin-top: 2rem; }
-      .services h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 0.5rem; }
-      .services ul { list-style: none; color: #e5e7eb; line-height: 1.7; }
-      footer { margin-top: 2.5rem; color: #6b7280; font-size: 0.8rem; }
+      .g svg { flex: none; width: 19px; height: 19px; color: var(--primary); }
+      @media (hover: hover) {
+        .cta:hover { transform: translateY(-2px); }
+        .g:hover { background: #eef1f6; }
+      }
+      .cta:active, .g:active { transform: scale(0.98); }
+      .cta:focus-visible, .g:focus-visible, .maps:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+      .empty { text-align: center; color: var(--ink-muted); }
+
+      /* ---------- secciones ---------- */
+      section { padding: 0 1.4rem; margin-top: 1.7rem; }
+      section + section { border-top: 1px solid var(--hairline); padding-top: 1.5rem; }
+      h2 {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--ink-muted);
+        text-align: center;
+        margin-bottom: 0.8rem;
+      }
+      .services ul { list-style: none; columns: 2; column-gap: 1.5rem; }
+      .services li {
+        break-inside: avoid;
+        padding: 0.48rem 0;
+        border-bottom: 1px solid var(--hairline);
+        font-size: 0.87rem;
+        color: var(--ink-soft);
+      }
+      .address { text-align: center; }
+      .address-lines { line-height: 1.6; font-size: 0.92rem; color: var(--ink-soft); }
+      .address-lines span { display: block; }
+      .maps {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.95rem;
+        min-height: 2.75rem;
+        padding: 0.55rem 1.25rem;
+        border-radius: 999px;
+        border: 1px solid #dfe3ea;
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .maps svg { color: var(--primary); width: 18px; height: 18px; }
+
+      footer {
+        margin-top: 1.9rem;
+        padding: 1rem 1.4rem 1.4rem;
+        border-top: 1px solid var(--hairline);
+        text-align: center;
+        font-size: 0.75rem;
+        color: #98a1af;
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition: none !important; }
+      }
     </style>
   </head>
   <body>
     <main class="card">
-      <h1>{{name}}</h1>
-      {{#tagline}}<p class="tagline">{{tagline}}</p>{{/tagline}}
-      {{#about}}<p class="about">{{about}}</p>{{/about}}
+      <div class="band" aria-hidden="true"></div>
+      <header class="id">
+        <div class="avatar" aria-hidden="true">{{#logoPath}}<img src="{{logoPath}}" alt="" />{{/logoPath}}{{^logoPath}}{{initial}}{{/logoPath}}</div>
+        <h1>{{name}}</h1>
+        {{#personName}}<p class="person">{{personName}}</p>{{/personName}}
+        {{#tagline}}<p><span class="tagline">{{tagline}}</span></p>{{/tagline}}
+        {{#about}}<p class="about">{{about}}</p>{{/about}}
+      </header>
 
-      <nav class="links">
-        {{#links}}<a href="{{url}}" data-kind="{{kind}}">{{label}}</a>{{/links}}
-        {{^hasLinks}}<a href="#">Sin enlaces todavia</a>{{/hasLinks}}
+      <nav class="links" aria-label="Contacto y enlaces">
+        {{#links}}{{#primary}}<a class="cta" href="{{url}}" data-kind="{{kind}}"{{#external}} target="_blank" rel="noopener noreferrer"{{/external}}>{{{icon}}}<span>{{label}}</span></a>{{/primary}}{{/links}}
+        <div class="grid">
+          {{#links}}{{^primary}}<a class="g" href="{{url}}" data-kind="{{kind}}"{{#external}} target="_blank" rel="noopener noreferrer"{{/external}}{{#download}} download="{{download}}"{{/download}}>{{{icon}}}<span>{{label}}</span></a>{{/primary}}{{/links}}
+        </div>
+        {{^hasLinks}}<p class="empty">Sin enlaces todavía.</p>{{/hasLinks}}
       </nav>
 
       {{#hasServices}}
-      <section class="services">
+      <section class="services" aria-label="Servicios">
         <h2>Servicios</h2>
-        <ul>
-          {{#services}}<li>{{.}}</li>{{/services}}
-        </ul>
+        <ul>{{#services}}<li>{{.}}</li>{{/services}}</ul>
       </section>
       {{/hasServices}}
 
-      <footer>{{name}}</footer>
+      {{#address}}
+      <section class="address" aria-label="Dirección">
+        <h2>Dirección</h2>
+        <p class="address-lines">{{#lines}}<span>{{.}}</span>{{/lines}}</p>
+        <a class="maps" href="{{mapsUrl}}" target="_blank" rel="noopener noreferrer">{{{mapsIcon}}}<span>Cómo llegar</span></a>
+      </section>
+      {{/address}}
+
+      <footer>© {{year}} {{name}} · Tarjeta digital</footer>
     </main>
   </body>
 </html>

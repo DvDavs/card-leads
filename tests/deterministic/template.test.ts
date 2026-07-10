@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { renderTemplate } from "../../src/lib/template.js";
-import { buildLinktreeView } from "../../src/stages/build-linktree.js";
+import { buildCardView } from "../../src/stages/build-cards.js";
 import type { Lead } from "../../src/lib/schema.js";
 
 describe("renderTemplate — basico", () => {
@@ -78,37 +78,37 @@ function sampleLead(): Lead {
   };
 }
 
-describe("linktree — template generico real", () => {
+describe("digital card — diseno credencial real", () => {
   const template = readFileSync(
-    fileURLToPath(new URL("../../src/templates/generico/index.html", import.meta.url)),
+    fileURLToPath(new URL("../../src/dc-templates/credencial.html", import.meta.url)),
     "utf8",
   );
 
   it("no deja marcadores {{ }} sin resolver", () => {
-    const html = renderTemplate(template, buildLinktreeView(sampleLead()));
+    const html = renderTemplate(template, buildCardView(sampleLead()));
     expect(html).not.toMatch(/\{\{/);
   });
 
   it("incluye nombre, tagline y about", () => {
-    const html = renderTemplate(template, buildLinktreeView(sampleLead()));
+    const html = renderTemplate(template, buildCardView(sampleLead()));
     expect(html).toContain("Dr. Pérez");
     expect(html).toContain("Cardiología");
     expect(html).toContain("Atención cardiológica.");
   });
 
-  it("arma el link de WhatsApp con el numero pelado", () => {
-    const html = renderTemplate(template, buildLinktreeView(sampleLead()));
-    expect(html).toContain('href="https://wa.me/525512345678"');
+  it("arma el link de WhatsApp con el numero pelado y mensaje precargado", () => {
+    const html = renderTemplate(template, buildCardView(sampleLead()));
+    expect(html).toContain('href="https://wa.me/525512345678?text=');
   });
 
   it("lista los servicios", () => {
-    const html = renderTemplate(template, buildLinktreeView(sampleLead()));
+    const html = renderTemplate(template, buildCardView(sampleLead()));
     expect(html).toContain("<li>Consulta</li>");
     expect(html).toContain("<li>Electrocardiograma</li>");
   });
 
   it("inyecta el color primario de la marca", () => {
-    const html = renderTemplate(template, buildLinktreeView(sampleLead()));
+    const html = renderTemplate(template, buildCardView(sampleLead()));
     expect(html).toContain("--primary: #0a1f44");
   });
 
@@ -116,7 +116,9 @@ describe("linktree — template generico real", () => {
     const lead = sampleLead();
     lead.contact = {};
     lead.socials = {};
-    const html = renderTemplate(template, buildLinktreeView(lead));
-    expect(html).toContain("Sin enlaces todavia");
+    // sin nombre tampoco hay vCard ("Guardar contacto"), que cuenta como enlace
+    lead.business = { name: "", attrs: {} };
+    const html = renderTemplate(template, buildCardView(lead));
+    expect(html).toContain("Sin enlaces todavía");
   });
 });

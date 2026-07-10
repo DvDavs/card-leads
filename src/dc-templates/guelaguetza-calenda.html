@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{metaDescription}}">
+<script type="application/ld+json">{{{jsonLd}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  DISEÑO GUELAGUETZA · "Calenda" (globo de calenda + china oaxaqueña)
+  Paleta y arte ESTÁTICOS: ignora colors/colorsText del pipeline a propósito.
+  Se ofrece igual en todos los rubros; solo cambian los datos.
+  Sus imágenes (assets/guelaguetza/*) son EXCLUSIVAS de los diseños guelaguetza-*.
+  SÍ lleva capa MOTIF (swap por rubro con los bloques de _motifs.html), pero teñida
+  con un color FIJO de esta paleta — los colores del diseño nunca cambian.
+-->
+<style>
+:root{
+  /* Paleta FIJA de este diseno (es su propio "original" — ver comentario de
+     cabecera). --uva-text es la tinta sobre --uva (avatar/CTA); default
+     blanco, coherente con el morado oscuro original. */
+  --uva:#5b1e8e; --magenta:#c2185b; --oro:#f2b705; --jade:#0e8b8b; --barro:#e2571b;
+  --bg:#f8f4fc; --ink:#2c1445; --ink-soft:#8d7ba3; --card:#ffffff; --line:#e6dcf1;
+  --uva-text:#ffffff;
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Solo el rol "primario" (--uva) se mapea a la marca — el
+   resto del arte (confeti, picado, PNG) es fijo, no se puede recolorear por
+   CSS. --uva-text usa colorsText.primary para no perder contraste si la
+   marca es un color claro. */
+:root[data-brand]{
+  --uva:{{{colors.primary}}};
+  --uva-text:{{{colorsText.primary}}};
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Schibsted Grotesk',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100dvh}
+a{color:var(--ink);text-decoration:none}
+a:hover{color:var(--uva)}
+
+/* ===== capa de motivos (swap por rubro; color FIJO uva) ===== */
+.motif{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;color:var(--uva)}
+.m{position:absolute;display:block}
+.m1{width:180px;top:40%;right:-72px;opacity:.08;transform:rotate(12deg)}
+.m2{width:58px;top:170px;left:-14px;opacity:.10;transform:rotate(-10deg)}
+.m3{width:210px;top:62%;left:-92px;opacity:.07}
+.m4{width:110px;bottom:200px;right:-26px;opacity:.08;transform:rotate(-8deg)}
+.m5{width:72px;top:64px;left:-16px;opacity:.09;transform:rotate(18deg)}
+@keyframes drift{0%,100%{translate:0 0;rotate:0deg}50%{translate:0 -10px;rotate:2deg}}
+.m{animation:drift 10s ease-in-out infinite}
+.m2{animation-duration:12s;animation-delay:-3s}
+.m3{animation-duration:14s;animation-delay:-6s}
+.m4{animation-duration:11s;animation-delay:-2s}
+.m5{animation-duration:13s;animation-delay:-5s}
+@media (prefers-reduced-motion:reduce){.m{animation:none}}
+
+/* confeti fijo, detrás de todo */
+.confeti{position:fixed;inset:0;z-index:0;pointer-events:none;background:
+  radial-gradient(4px 4px at 8% 12%,#c2185b 50%,transparent 51%),
+  radial-gradient(3px 3px at 88% 8%,#0e8b8b 50%,transparent 51%),
+  radial-gradient(4px 4px at 72% 22%,#f2b705 50%,transparent 51%),
+  radial-gradient(3px 3px at 16% 38%,#5b1e8e 50%,transparent 51%),
+  radial-gradient(4px 4px at 92% 46%,#e2571b 50%,transparent 51%),
+  radial-gradient(3px 3px at 6% 64%,#f2b705 50%,transparent 51%),
+  radial-gradient(4px 4px at 84% 70%,#c2185b 50%,transparent 51%),
+  radial-gradient(3px 3px at 22% 86%,#0e8b8b 50%,transparent 51%),
+  radial-gradient(4px 4px at 64% 92%,#5b1e8e 50%,transparent 51%);
+  opacity:.5}
+@keyframes twinkle{0%,100%{opacity:.5}50%{opacity:.22}}
+.confeti{animation:twinkle 7s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.confeti{animation:none}}
+
+.picado{display:block;width:100%;height:24px;position:relative;z-index:1}
+@keyframes sway{0%,100%{transform:rotate(0deg)}50%{transform:rotate(1.6deg)}}
+.picado path{transform-origin:top center;animation:sway 5s ease-in-out infinite}
+.picado path:nth-child(even){animation-delay:-2.5s}
+
+.globo{position:fixed;top:34px;right:-22px;width:130px;z-index:0;pointer-events:none;filter:drop-shadow(0 14px 20px rgba(44,20,69,.2))}
+@keyframes flota{0%,100%{translate:0 0;rotate:-3deg}50%{translate:0 -14px;rotate:3deg}}
+.globo{animation:flota 8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.picado path,.globo{animation:none}}
+
+.wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;padding:26px 24px 0;display:flex;flex-direction:column;gap:30px}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.rise{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+.d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}.d4{animation-delay:.32s}
+@media (prefers-reduced-motion:reduce){.rise{animation:none}}
+
+.identity{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:8px}
+.avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;background:#fff;border:3px solid var(--uva);box-shadow:0 10px 26px -14px rgba(91,30,142,.6)}
+.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:38px;color:var(--uva-text);background:var(--uva)}
+h1{margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(32px,8.6vw,40px);letter-spacing:-.01em;line-height:1.05}
+.tag{margin:0;font-size:15px;font-weight:500;color:var(--ink-soft);max-width:34ch;text-wrap:pretty}
+.org{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--magenta)}
+
+.actions{display:flex;flex-direction:column;gap:10px}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:999px;background:var(--uva);color:var(--uva-text);font-size:14.5px;font-weight:600;box-shadow:0 14px 30px -16px rgba(91,30,142,.8);transition:transform .2s ease,box-shadow .2s ease}
+.cta:hover{color:var(--uva-text);transform:translateY(-2px);box-shadow:0 18px 34px -16px rgba(91,30,142,.9)}
+.row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:500;transition:border-color .2s ease,transform .2s ease}
+.row:hover{border-color:var(--uva);transform:translateY(-1px)}
+.row .k{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);flex:none;width:64px}
+.row .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .ar{flex:none;color:var(--magenta)}
+.vcard{align-self:center;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--line);padding:4px 2px}
+
+.sect{display:flex;flex-direction:column;gap:12px}
+.sect h2{margin:0;display:flex;align-items:center;gap:10px;font-size:10.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--uva)}
+.sect h2::before{content:'';background:conic-gradient(from 0deg,var(--magenta) 0 120deg,var(--oro) 120deg 240deg,var(--jade) 240deg 360deg);border-radius:50%;width:12px;height:12px}
+.svcs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.svcs li{display:flex;align-items:baseline;gap:12px;padding:10px 2px;border-bottom:1px dotted var(--line);font-size:14.5px}
+.svcs li::before{content:'';flex:none;width:7px;height:7px;border-radius:2px;rotate:45deg;background:var(--uva);translate:0 -2px}
+.svcs li:nth-child(4n+2)::before{background:var(--magenta)}
+.svcs li:nth-child(4n+3)::before{background:var(--oro)}
+.svcs li:nth-child(4n+4)::before{background:var(--jade)}
+.svcs li:nth-child(n+7){display:none}
+.more-t:checked ~ .svcs li{display:flex}
+.more{align-self:flex-start;margin-top:2px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--uva);cursor:pointer;border-bottom:1px solid currentColor;padding-bottom:2px}
+.sect:not(:has(.svcs li:nth-child(7))) .more{display:none}
+.more .hide{display:none}
+.more-t:checked ~ .more .show{display:none}
+.more-t:checked ~ .more .hide{display:inline}
+
+.attrs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.attr{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;flex-direction:column;gap:3px}
+.attr b{font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+.attr span{font-size:13px;font-weight:500}
+.about p{margin:0;font-size:14px;line-height:1.6;color:#4d3567;text-wrap:pretty}
+
+.socials{display:flex;justify-content:center;gap:20px}
+.soc{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.soc:hover{color:var(--uva)}
+
+footer{display:flex;flex-direction:column;align-items:center;gap:0;text-align:center;padding-bottom:28px}
+.china{width:150px;height:auto;margin-bottom:0;filter:drop-shadow(0 14px 18px rgba(44,20,69,.18))}
+.piso{width:112px;height:10px;border-radius:50%;background:rgba(44,20,69,.14);filter:blur(2px);margin:-4px 0 12px}
+footer p{margin:0;font-size:11px;letter-spacing:.06em;color:var(--ink-soft)}
+@media (min-width:720px){.wrap{max-width:500px}}
+</style>
+</head>
+<body>
+
+<div class="confeti" aria-hidden="true"></div>
+<img class="globo" src="assets/guelaguetza/globo-oaxaca.png" alt="" aria-hidden="true">
+<svg class="picado" viewBox="0 0 390 24" preserveAspectRatio="none" aria-hidden="true">
+  <line x1="0" y1="2" x2="390" y2="2" stroke="#2c1445" stroke-opacity=".25" stroke-width="1.5"/>
+  <path d="M4 2h26l-13 17z" fill="#5b1e8e"/>
+  <path d="M36 2h26l-13 17z" fill="#c2185b"/>
+  <path d="M68 2h26l-13 17z" fill="#f2b705"/>
+  <path d="M100 2h26l-13 17z" fill="#0e8b8b"/>
+  <path d="M132 2h26l-13 17z" fill="#e2571b"/>
+  <path d="M164 2h26l-13 17z" fill="#5b1e8e"/>
+  <path d="M196 2h26l-13 17z" fill="#c2185b"/>
+  <path d="M228 2h26l-13 17z" fill="#f2b705"/>
+  <path d="M260 2h26l-13 17z" fill="#0e8b8b"/>
+  <path d="M292 2h26l-13 17z" fill="#e2571b"/>
+  <path d="M324 2h26l-13 17z" fill="#5b1e8e"/>
+  <path d="M356 2h26l-13 17z" fill="#c2185b"/>
+</svg>
+
+<!-- MOTIF:START (rubro=nutriologo) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="34"/><circle cx="50" cy="50" r="26"/><path d="M50 24v52M24 50h52M32 32l36 36M68 32 32 68"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 30c-16-10-32 2-30 20 2 20 14 34 30 34s28-14 30-34c2-18-14-30-30-20Z"/><path d="M50 30c0-8 4-12 10-14"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 84C22 66 22 34 50 14c28 20 28 52 0 70Z"/><path d="M50 22v56"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 12C64 34 76 48 76 62a26 26 0 1 1-52 0c0-14 12-28 26-50Z"/></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 80C40 60 55 40 80 20"/><path d="M38 62c-2-10 2-18 12-20 2 10-2 18-12 20Z"/><path d="M56 44c-2-10 2-18 12-20 2 10-2 18-12 20Z"/></svg>
+</div>
+<!-- MOTIF:END -->
+
+<main class="wrap">
+
+  <header class="identity rise">
+    {{#photoPath}}<img class="avatar" src="{{photoPath}}" alt="{{heroName}}">{{/photoPath}}
+    {{^photoPath}}
+      {{#logoPath}}<img class="avatar" src="{{logoPath}}" alt="{{heroName}}">{{/logoPath}}
+      {{^logoPath}}<div class="avatar avatar-ini">{{initial}}</div>{{/logoPath}}
+    {{/photoPath}}
+    <h1>{{heroName}}</h1>
+    {{#tagline}}<p class="tag">{{tagline}}</p>{{/tagline}}
+    {{#hasOrgLine}}<p class="org">{{orgName}}</p>{{/hasOrgLine}}
+  </header>
+
+  <section class="actions rise d1" aria-label="Contacto directo">
+    {{#hasPhone}}
+    <a class="cta" href="{{whatsappUrl}}" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.5.5c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.3 1.1 2.3 1.5 2.7 1.6.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.3.6.4 0 .2 0 .7-.2 1.2Z"/></svg>
+      Escribir por WhatsApp
+    </a>
+    <a class="row" href="{{phoneTelHref}}"><span class="k">Tel</span><span class="v">{{phoneDisplay}}</span><span class="ar">→</span></a>
+    {{/hasPhone}}
+    {{#hasEmail}}<a class="row" href="mailto:{{email}}"><span class="k">Correo</span><span class="v">{{email}}</span><span class="ar">→</span></a>{{/hasEmail}}
+    {{#hasAddressLine}}<a class="row" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="k">Visita</span><span class="v">{{addressLine}}</span><span class="ar">→</span></a>{{/hasAddressLine}}
+    {{#hasWebsite}}<a class="row" href="{{website}}" target="_blank" rel="noopener"><span class="k">Web</span><span class="v">Visitar sitio</span><span class="ar">→</span></a>{{/hasWebsite}}
+    {{#vcard}}<a class="vcard" href="{{vcard}}" download>Guardar contacto</a>{{/vcard}}
+  </section>
+
+  {{#hasServices}}
+  <section class="sect rise d2" aria-label="Servicios">
+    <h2>Servicios</h2>
+    <input type="checkbox" id="more" class="more-t" hidden>
+    <ul class="svcs">
+      {{#services}}<li>{{.}}</li>{{/services}}
+    </ul>
+    <label class="more" for="more"><span class="show">Ver todos</span><span class="hide">Ver menos</span></label>
+  </section>
+  {{/hasServices}}
+
+  {{#about}}
+  <section class="sect about rise d2" aria-label="Acerca de">
+    <h2>Acerca de</h2>
+    <p>{{about}}</p>
+  </section>
+  {{/about}}
+
+  {{#hasAttrs}}
+  <section class="sect rise d3" aria-label="Información">
+    <h2>Información</h2>
+    <div class="attrs">
+      {{#attrs}}<div class="attr"><b>{{key}}</b><span>{{value}}</span></div>{{/attrs}}
+    </div>
+  </section>
+  {{/hasAttrs}}
+
+  {{#hasSocials}}
+  <nav class="socials rise d3" aria-label="Redes sociales">
+    {{#hasInstagram}}<a class="soc" href="{{instagramUrl}}" target="_blank" rel="noopener">Instagram</a>{{/hasInstagram}}
+    {{#hasFacebook}}<a class="soc" href="{{facebookUrl}}" target="_blank" rel="noopener">Facebook</a>{{/hasFacebook}}
+    {{#hasTiktok}}<a class="soc" href="{{tiktokUrl}}" target="_blank" rel="noopener">TikTok</a>{{/hasTiktok}}
+  </nav>
+  {{/hasSocials}}
+
+  <footer class="rise d4">
+    <img class="china" src="assets/guelaguetza/china-oaxaquena.png" alt="" aria-hidden="true">
+    <div class="piso" aria-hidden="true"></div>
+    <p>© {{year}} · {{heroName}}</p>
+  </footer>
+
+</main>
+</body>
+</html>

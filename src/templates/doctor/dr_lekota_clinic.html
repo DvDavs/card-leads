@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{pageTitle}}</title>
+  <meta name="description" content="{{metaDescription}}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Paleta de MARCA del lead (colores medidos de la tarjeta + texto legible WCAG,
+       calculados en verify). Se consumen como CSS vars para tematizar toda la web
+       con CUALQUIER paleta, sin asumir colores concretos. Los grises (slate) son
+       neutros; el color de marca NUNCA se hardcodea, siempre pasa por estas vars. */
+    :root {
+      --brand-primary: {{colors.primary}};
+      --brand-primary-text: {{colorsText.primary}};
+      --brand-secondary: {{colors.secondary}};
+      --brand-secondary-text: {{colorsText.secondary}};
+      --brand-accent: {{colors.accent}};
+      --brand-accent-text: {{colorsText.accent}};
+    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    /* Menu movil por checkbox hack (sin JS). */
+    #mobile-menu-toggle:checked ~ #mobile-menu { display: block; }
+    /* Tintes suaves de marca (color-mix evita el problema del alpha sobre var()). */
+    .brand-soft { background: color-mix(in srgb, var(--brand-primary) 10%, white); color: var(--brand-primary); }
+    .brand-soft-accent { background: color-mix(in srgb, var(--brand-accent) 14%, white); color: var(--brand-primary); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-600 antialiased">
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+      <!-- Logo -->
+      <a href="#home" class="flex items-center gap-2 group min-w-0">
+        <div class="p-2 rounded-xl brand-soft shrink-0">
+          <iconify-icon icon="solar:health-linear" width="24" height="24"></iconify-icon>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-semibold text-slate-900 tracking-tight leading-none text-lg truncate">{{heroName}}</span>
+          {{#hasTagline}}<span class="text-xs text-slate-500 font-medium tracking-wide uppercase truncate">{{tagline}}</span>{{/hasTagline}}
+        </div>
+      </a>
+
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+        <a href="#home" class="hover:opacity-70 transition-opacity">Inicio</a>
+        {{#hasAbout}}<a href="#about" class="hover:opacity-70 transition-opacity">Nosotros</a>{{/hasAbout}}
+        {{#hasServices}}<a href="#services" class="hover:opacity-70 transition-opacity">Servicios</a>{{/hasServices}}
+        {{#hasTestimonials}}<a href="#reviews" class="hover:opacity-70 transition-opacity">Reseñas</a>{{/hasTestimonials}}
+        <a href="#contact" class="hover:opacity-70 transition-opacity">Contacto</a>
+      </div>
+
+      <!-- CTA & Mobile Toggle -->
+      <div class="flex items-center gap-4">
+        {{#hasWhatsapp}}
+        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-opacity hover:opacity-90 active:scale-95 shrink-0" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+          <iconify-icon icon="solar:chat-round-call-linear" width="18"></iconify-icon>
+          <span>Agendar por WhatsApp</span>
+        </a>
+        {{/hasWhatsapp}}
+        <label for="mobile-menu-toggle" class="md:hidden cursor-pointer p-2 text-slate-600">
+          <iconify-icon icon="solar:hamburger-menu-linear" width="24" height="24"></iconify-icon>
+        </label>
+      </div>
+    </div>
+
+    <!-- Mobile Menu (hidden by default, toggled via checkbox hack) -->
+    <input type="checkbox" id="mobile-menu-toggle" class="hidden">
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-100 absolute w-full left-0 top-full px-6 py-4 shadow-xl">
+      <div class="flex flex-col gap-4">
+        <a href="#home" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Inicio</a>
+        {{#hasAbout}}<a href="#about" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Nosotros</a>{{/hasAbout}}
+        {{#hasServices}}<a href="#services" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Servicios</a>{{/hasServices}}
+        {{#hasTestimonials}}<a href="#reviews" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Reseñas</a>{{/hasTestimonials}}
+        <a href="#contact" class="text-sm font-medium text-slate-900 py-2 border-b border-slate-50">Contacto</a>
+        {{#hasWhatsapp}}
+        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="text-center w-full py-3 rounded-lg font-medium text-sm mt-2" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+          Agendar por WhatsApp
+        </a>
+        {{/hasWhatsapp}}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section id="home" class="pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden" style="background-image: linear-gradient(to bottom, color-mix(in srgb, var(--brand-primary) 6%, white), white)">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div class="space-y-8 max-w-2xl">
+        {{#hasHeroBadge}}
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider brand-soft-accent">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style="background: var(--brand-accent)"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2" style="background: var(--brand-accent)"></span>
+          </span>
+          {{heroBadge}}
+        </div>
+        {{/hasHeroBadge}}
+        <h1 class="text-4xl md:text-6xl font-semibold text-slate-900 tracking-tight leading-[1.1]">{{heroHeadline}}</h1>
+        {{#hasHeroSubheadline}}
+        <p class="text-xl text-slate-500 font-medium leading-relaxed">{{heroSubheadline}}</p>
+        {{/hasHeroSubheadline}}
+        <div class="flex flex-col sm:flex-row gap-4 pt-4">
+          {{#hasWhatsapp}}
+          <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-medium transition-opacity hover:opacity-90 active:scale-95" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+            <iconify-icon icon="solar:chat-round-call-linear" width="20"></iconify-icon>
+            Agendar por WhatsApp
+          </a>
+          {{/hasWhatsapp}}
+          {{#hasServices}}
+          <a href="#services" class="flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-full text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95">
+            Ver servicios
+            <iconify-icon icon="solar:arrow-right-linear" width="20"></iconify-icon>
+          </a>
+          {{/hasServices}}
+        </div>
+      </div>
+
+      <!-- Imagen: foto/logo real, o placeholder de iniciales sobre gradiente de marca (NUNCA foto stock) -->
+      <div class="relative">
+        <div class="absolute -inset-4 rounded-full blur-3xl opacity-30" style="background: color-mix(in srgb, var(--brand-primary) 40%, white)"></div>
+        <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/10 bg-white aspect-[4/3] border border-slate-100">
+          {{#hasImage}}
+          <img src="{{imageSrc}}" alt="{{heroName}}" class="object-cover w-full h-full">
+          {{/hasImage}}
+          {{^hasImage}}
+          <div class="w-full h-full flex items-center justify-center" style="background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-accent))">
+            <span class="text-8xl font-semibold select-none" style="color: var(--brand-primary-text)">{{initial}}</span>
+          </div>
+          {{/hasImage}}
+
+          {{#hasTagline}}
+          <div class="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center brand-soft shrink-0">
+                <iconify-icon icon="solar:stethoscope-linear" width="24"></iconify-icon>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Especialidad</p>
+                <p class="text-base font-semibold text-slate-900 tracking-tight">{{tagline}}</p>
+              </div>
+            </div>
+          </div>
+          {{/hasTagline}}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {{#hasValueProps}}
+  <!-- Diferenciadores (tarjetas flotantes que solapan el hero) -->
+  <section class="relative z-10 px-6 -mt-16">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {{#valueProps}}
+        <div class="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center gap-3">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center brand-soft shrink-0">
+            <iconify-icon icon="solar:shield-check-linear" width="24"></iconify-icon>
+          </div>
+          <h3 class="text-base font-semibold text-slate-900">{{title}}</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">{{description}}</p>
+        </div>
+        {{/valueProps}}
+      </div>
+    </div>
+  </section>
+  {{/hasValueProps}}
+
+  {{#hasAbout}}
+  <!-- Sobre -->
+  <section id="about" class="bg-slate-50 py-24">
+    <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-5 gap-12 lg:gap-16 items-center">
+      {{#hasAttrs}}
+      <div class="lg:col-span-2 order-2 lg:order-1 relative">
+        <div class="absolute -top-4 -left-4 w-24 h-24 rounded-full blur-2xl" style="background: color-mix(in srgb, var(--brand-primary) 20%, white)"></div>
+        <div class="relative bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-6 flex items-center gap-2">
+            <iconify-icon icon="solar:medal-star-linear" width="18" style="color: var(--brand-primary)"></iconify-icon>
+            Formación y credenciales
+          </h3>
+          <dl class="space-y-5">
+            {{#attrs}}
+            <div>
+              <dt class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">{{key}}</dt>
+              <dd class="text-sm text-slate-700 leading-relaxed">{{value}}</dd>
+            </div>
+            {{/attrs}}
+          </dl>
+        </div>
+      </div>
+      {{/hasAttrs}}
+
+      <div class="lg:col-span-3 order-1 lg:order-2 space-y-6">
+        <div class="flex items-center gap-2">
+          <span class="h-px w-8" style="background: var(--brand-primary)"></span>
+          <span class="text-sm font-semibold uppercase tracking-wider" style="color: var(--brand-primary)">Sobre nosotros</span>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Sobre {{heroName}}</h2>
+        {{#hasBio}}
+        <p class="text-slate-600 text-lg leading-relaxed">{{bio}}</p>
+        {{/hasBio}}
+        <div class="pt-2">
+          <a href="#contact" class="font-semibold inline-flex items-center gap-2 transition-opacity hover:opacity-80" style="color: var(--brand-primary)">
+            Agendar una cita
+            <iconify-icon icon="solar:arrow-right-linear"></iconify-icon>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {{/hasAbout}}
+
+  {{#hasPullQuote}}
+  <!-- Misión (mapeada a pull_quote) -->
+  <section class="py-20 relative overflow-hidden" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+    <div class="max-w-4xl mx-auto px-6 text-center relative z-10 space-y-8">
+      <iconify-icon icon="solar:heart-angle-linear" class="text-5xl opacity-80"></iconify-icon>
+      <h2 class="text-3xl md:text-4xl font-semibold tracking-tight">Nuestra misión</h2>
+      <p class="text-xl md:text-2xl font-medium leading-relaxed opacity-90">“{{pullQuote}}”</p>
+      <div class="w-16 h-1 mx-auto rounded-full" style="background: rgba(255,255,255,0.3)"></div>
+    </div>
+  </section>
+  {{/hasPullQuote}}
+
+  {{#hasServices}}
+  <!-- Servicios -->
+  <section id="services" class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
+        <span class="text-sm font-semibold uppercase tracking-wider" style="color: var(--brand-primary)">Qué hacemos</span>
+        <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Servicios</h2>
+        <p class="text-slate-500">Atención profesional enfocada en tu bienestar.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        {{#services}}
+        <div class="group bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:border-slate-200 hover:shadow-xl hover:shadow-slate-900/5 transition-all duration-300">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6 brand-soft group-hover:scale-110 transition-transform">
+            <iconify-icon icon="solar:stethoscope-linear" width="24"></iconify-icon>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900 mb-4">{{name}}</h3>
+          {{#hasDescription}}<p class="text-sm text-slate-500 leading-relaxed">{{description}}</p>{{/hasDescription}}
+        </div>
+        {{/services}}
+      </div>
+    </div>
+  </section>
+  {{/hasServices}}
+
+  {{#hasTestimonials}}
+  <!-- Reseñas — aviso "de ejemplo" ligado a la seccion (no solo al pie) -->
+  <section id="reviews" class="py-24 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex flex-wrap items-center justify-center gap-3 mb-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Lo que dicen los pacientes</h2>
+        {{#testimonialsAreSample}}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold brand-soft-accent">
+          <iconify-icon icon="solar:info-circle-linear" width="14"></iconify-icon>
+          Testimonios de ejemplo
+        </span>
+        {{/testimonialsAreSample}}
+      </div>
+      {{#testimonialsAreSample}}
+      <p class="text-center text-sm text-slate-400 mb-12 max-w-2xl mx-auto">Reseñas ilustrativas para mostrar el diseño. Se reemplazan por testimonios reales del negocio antes de publicar.</p>
+      {{/testimonialsAreSample}}
+      {{^testimonialsAreSample}}<div class="mb-12"></div>{{/testimonialsAreSample}}
+      <div class="grid md:grid-cols-3 gap-6">
+        {{#testimonials}}
+        <figure class="relative p-8 bg-white border border-slate-100 rounded-2xl shadow-sm">
+          {{#testimonialsAreSample}}<span class="absolute top-4 right-4 text-[10px] uppercase tracking-wider font-semibold text-slate-300">Ejemplo</span>{{/testimonialsAreSample}}
+          <div class="mb-4" style="color: var(--brand-accent)">
+            <iconify-icon icon="solar:chat-square-like-linear" width="28"></iconify-icon>
+          </div>
+          <blockquote class="text-slate-600 text-sm leading-relaxed mb-6">“{{quote}}”</blockquote>
+          <figcaption class="text-sm font-semibold text-slate-900">
+            {{author}}{{#role}}<span class="block text-xs font-normal text-slate-400 mt-0.5">{{role}}</span>{{/role}}
+          </figcaption>
+        </figure>
+        {{/testimonials}}
+      </div>
+    </div>
+  </section>
+  {{/hasTestimonials}}
+
+  {{#hasFaqs}}
+  <!-- FAQs (banda oscura, dos columnas) -->
+  <section id="faq" class="py-24 bg-slate-900 text-slate-300">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 md:gap-16 items-start">
+      <div class="space-y-8">
+        <h2 class="text-3xl md:text-4xl font-semibold text-white tracking-tight">Preguntas frecuentes</h2>
+        <p class="text-lg leading-relaxed text-slate-400">Resolvemos las dudas más comunes. Si te queda alguna, escríbenos y con gusto te ayudamos.</p>
+        {{#hasWhatsapp}}
+        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-opacity hover:opacity-90" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+          <iconify-icon icon="solar:chat-round-call-linear" width="20"></iconify-icon>
+          Escribir por WhatsApp
+        </a>
+        {{/hasWhatsapp}}
+      </div>
+      <div class="relative">
+        <div class="absolute inset-0 blur-3xl rounded-full opacity-20" style="background: var(--brand-primary)"></div>
+        <div class="relative bg-slate-800 p-6 sm:p-8 rounded-3xl border border-slate-700 space-y-4">
+          {{#faqs}}
+          <details class="group bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50 open:bg-slate-700 transition-all">
+            <summary class="flex justify-between items-center gap-4 p-4 cursor-pointer list-none font-medium text-white">
+              {{question}}
+              <iconify-icon icon="solar:alt-arrow-down-linear" class="group-open:rotate-180 transition-transform shrink-0"></iconify-icon>
+            </summary>
+            <div class="p-4 pt-0 text-sm text-slate-400 leading-relaxed">{{answer}}</div>
+          </details>
+          {{/faqs}}
+        </div>
+      </div>
+    </div>
+  </section>
+  {{/hasFaqs}}
+
+  <!-- Contacto / CTA -->
+  <section id="contact" class="py-24" style="background: color-mix(in srgb, var(--brand-primary) 5%, white)">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <span class="text-sm font-semibold uppercase tracking-wider" style="color: var(--brand-primary)">Ponte en contacto</span>
+        <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mt-2">{{ctaHeadline}}</h2>
+        {{#hasCtaSubtext}}<p class="text-slate-500 mt-3 max-w-2xl mx-auto">{{ctaSubtext}}</p>{{/hasCtaSubtext}}
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Info -->
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-8 md:col-span-1">
+          {{#hasAddress}}
+          <div>
+            <div class="flex items-center gap-3 mb-2" style="color: var(--brand-primary)">
+              <iconify-icon icon="solar:map-point-linear" width="24"></iconify-icon>
+              <h3 class="font-semibold text-slate-900">Dirección</h3>
+            </div>
+            <address class="not-italic text-slate-600 text-sm leading-relaxed pl-9">{{addressText}}</address>
+            <a href="{{mapsUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-medium mt-2 ml-9 underline underline-offset-2 transition-opacity hover:opacity-80" style="color: var(--brand-primary)">
+              Cómo llegar
+              <iconify-icon icon="solar:arrow-right-up-linear" width="14"></iconify-icon>
+            </a>
+          </div>
+          {{/hasAddress}}
+
+          {{#hasPhone}}
+          <div>
+            <div class="flex items-center gap-3 mb-2" style="color: var(--brand-primary)">
+              <iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon>
+              <h3 class="font-semibold text-slate-900">Teléfono</h3>
+            </div>
+            <a href="{{phoneTelHref}}" class="block text-slate-600 text-sm pl-9 transition-opacity hover:opacity-80">{{phoneDisplay}}</a>
+          </div>
+          {{/hasPhone}}
+
+          {{#hasEmail}}
+          <div>
+            <div class="flex items-center gap-3 mb-2" style="color: var(--brand-primary)">
+              <iconify-icon icon="solar:letter-linear" width="24"></iconify-icon>
+              <h3 class="font-semibold text-slate-900">Correo</h3>
+            </div>
+            <a href="mailto:{{email}}" class="block text-slate-600 text-sm pl-9 break-all underline underline-offset-2 transition-opacity hover:opacity-80">{{email}}</a>
+          </div>
+          {{/hasEmail}}
+
+          {{#hasSocials}}
+          <div class="flex items-center gap-4 pl-9 pt-1" style="color: var(--brand-primary)">
+            {{#hasInstagram}}<a href="{{instagramUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="transition-opacity hover:opacity-70"><iconify-icon icon="brandico:instagram" width="20"></iconify-icon></a>{{/hasInstagram}}
+            {{#hasFacebook}}<a href="{{facebookUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="transition-opacity hover:opacity-70"><iconify-icon icon="brandico:facebook-rect" width="20"></iconify-icon></a>{{/hasFacebook}}
+            {{#hasTiktok}}<a href="{{tiktokUrl}}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="transition-opacity hover:opacity-70"><iconify-icon icon="ph:tiktok-logo" width="20"></iconify-icon></a>{{/hasTiktok}}
+          </div>
+          {{/hasSocials}}
+
+          <div class="pt-2 space-y-3">
+            {{#hasWhatsapp}}
+            <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-opacity hover:opacity-90" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+              <iconify-icon icon="solar:chat-round-call-linear" width="18"></iconify-icon>
+              WhatsApp
+            </a>
+            {{/hasWhatsapp}}
+            {{#hasPhone}}
+            <a href="{{phoneTelHref}}" class="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50">
+              <iconify-icon icon="solar:phone-calling-linear" width="18"></iconify-icon>
+              Llamar
+            </a>
+            {{/hasPhone}}
+          </div>
+        </div>
+
+        <!-- Horario -->
+        {{#hasHours}}
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 md:col-span-2">
+          <div class="flex items-center gap-3 mb-6">
+            <span style="color: var(--brand-primary)"><iconify-icon icon="solar:clock-circle-linear" width="24"></iconify-icon></span>
+            <h3 class="font-semibold text-slate-900">Horario de atención</h3>
+            {{#hoursReferential}}<span class="text-[10px] px-2 py-0.5 rounded-full font-medium brand-soft-accent">Referencial</span>{{/hoursReferential}}
+          </div>
+          <ul class="space-y-1">
+            {{#hoursLines}}<li class="flex items-center gap-3 text-sm text-slate-700 py-2 border-b border-slate-50">
+              <iconify-icon icon="solar:check-circle-linear" style="color: var(--brand-primary)"></iconify-icon>
+              {{.}}
+            </li>{{/hoursLines}}
+          </ul>
+          {{#hoursReferential}}<p class="text-xs text-slate-400 mt-4">Horario sugerido, sujeto a confirmación.</p>{{/hoursReferential}}
+        </div>
+        {{/hasHours}}
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-100 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div class="space-y-4">
+          <div class="flex items-center gap-2">
+            <span style="color: var(--brand-primary)"><iconify-icon icon="solar:health-linear" width="24"></iconify-icon></span>
+            <span class="font-semibold text-slate-900 tracking-tight">{{heroName}}</span>
+          </div>
+          {{#hasFooterTagline}}<p class="text-xs text-slate-500 leading-relaxed">{{footerTagline}}</p>{{/hasFooterTagline}}
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="font-semibold text-slate-900 text-sm">Navegación</h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li><a href="#home" class="transition-opacity hover:opacity-70">Inicio</a></li>
+            {{#hasAbout}}<li><a href="#about" class="transition-opacity hover:opacity-70">Nosotros</a></li>{{/hasAbout}}
+            {{#hasServices}}<li><a href="#services" class="transition-opacity hover:opacity-70">Servicios</a></li>{{/hasServices}}
+            <li><a href="#contact" class="transition-opacity hover:opacity-70">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="font-semibold text-slate-900 text-sm">Contacto</h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            {{#hasAddress}}<li>{{addressText}}</li>{{/hasAddress}}
+            {{#hasPhone}}<li><a href="{{phoneTelHref}}" class="transition-opacity hover:opacity-70">{{phoneDisplay}}</a></li>{{/hasPhone}}
+            {{#hasEmail}}<li><a href="mailto:{{email}}" class="break-all transition-opacity hover:opacity-70">{{email}}</a></li>{{/hasEmail}}
+          </ul>
+        </div>
+
+        {{#hasSocials}}
+        <div class="space-y-4">
+          <h4 class="font-semibold text-slate-900 text-sm">Redes sociales</h4>
+          <div class="flex gap-4 text-slate-400">
+            {{#hasInstagram}}<a href="{{instagramUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="transition-opacity hover:opacity-70"><iconify-icon icon="brandico:instagram" width="20"></iconify-icon></a>{{/hasInstagram}}
+            {{#hasFacebook}}<a href="{{facebookUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="transition-opacity hover:opacity-70"><iconify-icon icon="brandico:facebook-rect" width="20"></iconify-icon></a>{{/hasFacebook}}
+            {{#hasTiktok}}<a href="{{tiktokUrl}}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="transition-opacity hover:opacity-70"><iconify-icon icon="ph:tiktok-logo" width="20"></iconify-icon></a>{{/hasTiktok}}
+          </div>
+        </div>
+        {{/hasSocials}}
+      </div>
+
+      <div class="border-t border-slate-100 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-xs text-slate-400">© {{year}} {{heroName}}.</p>
+        <p class="text-xs text-slate-400">Sitio de demostración — contiene datos de ejemplo con fines ilustrativos.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{metaDescription}}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  /* Paleta de MARCA del lead (colores medidos de la tarjeta + texto legible WCAG,
+     calculados en verify). Se consumen como CSS vars para tematizar toda la web
+     con CUALQUIER paleta, sin asumir colores concretos. */
+  :root {
+    --brand-primary: {{colors.primary}};
+    --brand-primary-text: {{colorsText.primary}};
+    --brand-secondary: {{colors.secondary}};
+    --brand-secondary-text: {{colorsText.secondary}};
+    --brand-accent: {{colors.accent}};
+    --brand-accent-text: {{colorsText.accent}};
+  }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+  /* Tintes suaves de marca (color-mix evita el problema del alpha sobre var()). */
+  .brand-soft { background: color-mix(in srgb, var(--brand-primary) 10%, white); color: var(--brand-primary); }
+  .brand-soft-accent { background: color-mix(in srgb, var(--brand-accent) 14%, white); color: var(--brand-primary); }
+  /* Relleno de icono al hover del card, en marca (mockup original lo hacia con un verde fijo). */
+  .group:hover .brand-hover-fill { background: var(--brand-primary); color: var(--brand-primary-text); }
+</style>
+</head>
+<body class="antialiased bg-slate-50 text-slate-600">
+
+    <!-- Navigation -->
+    <header class="sticky top-0 z-50 w-full pt-3 pr-3 pb-3 pl-3 md:p-4">
+        <nav class="mx-auto max-w-6xl rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-xl shadow-lg shadow-slate-200/50 px-4 md:px-6 py-3 flex items-center justify-between gap-4">
+            <a href="#" class="flex items-center gap-2 group min-w-0">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center brand-soft shrink-0">
+                    <iconify-icon icon="solar:health-linear" width="20"></iconify-icon>
+                </div>
+                <span class="text-base font-semibold tracking-tight text-slate-900 truncate">{{heroName}}</span>
+            </a>
+
+            <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-500">
+                {{#hasAbout}}<a href="#about" class="hover:text-slate-900 transition-colors">Nosotros</a>{{/hasAbout}}
+                {{#hasServices}}<a href="#services" class="hover:text-slate-900 transition-colors">Servicios</a>{{/hasServices}}
+                {{#hasTestimonials}}<a href="#reviews" class="hover:text-slate-900 transition-colors">Reseñas</a>{{/hasTestimonials}}
+                <a href="#contact" class="hover:text-slate-900 transition-colors">Contacto</a>
+            </div>
+
+            {{#hasWhatsapp}}
+            <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="hidden lg:inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full shadow-lg transition-all hover:-translate-y-0.5 shrink-0" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                <iconify-icon icon="solar:chat-round-dots-linear" width="16"></iconify-icon>
+                Agendar por WhatsApp
+            </a>
+            {{/hasWhatsapp}}
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="relative pt-16 pb-20 lg:pt-20 lg:pb-28 overflow-hidden">
+        <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div class="max-w-2xl">
+                {{#hasHeroBadge}}
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6 brand-soft-accent">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style="background: var(--brand-accent)"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2" style="background: var(--brand-accent)"></span>
+                    </span>
+                    {{heroBadge}}
+                </div>
+                {{/hasHeroBadge}}
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold text-slate-900 tracking-tighter leading-[1.1] mb-6">
+                    {{heroHeadline}}
+                </h1>
+                {{#hasHeroSubheadline}}
+                <p class="text-lg text-slate-500 font-medium mb-8 leading-relaxed max-w-lg">{{heroSubheadline}}</p>
+                {{/hasHeroSubheadline}}
+                <div class="flex flex-col sm:flex-row gap-4">
+                    {{#hasWhatsapp}}
+                    <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full shadow-lg transition-all hover:-translate-y-0.5" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                        Agendar por WhatsApp
+                        <iconify-icon icon="solar:chat-round-dots-linear" width="16"></iconify-icon>
+                    </a>
+                    {{/hasWhatsapp}}
+                    {{#hasServices}}
+                    <a href="#services" class="inline-flex items-center justify-center px-7 py-3.5 text-sm font-semibold text-slate-700 transition-all bg-white border border-slate-200 rounded-full hover:bg-slate-50 hover:border-slate-300">
+                        Ver Servicios
+                    </a>
+                    {{/hasServices}}
+                </div>
+            </div>
+
+            <!-- Imagen: foto/logo real, o placeholder de iniciales sobre gradiente de marca (NUNCA foto stock) -->
+            <div class="relative lg:h-[520px] w-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl shadow-slate-300/40">
+                {{#hasImage}}
+                <img src="{{imageSrc}}" alt="{{heroName}}" class="object-cover w-full h-full">
+                {{/hasImage}}
+                {{^hasImage}}
+                <div class="w-full h-full min-h-[320px] flex items-center justify-center" style="background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-accent))">
+                    <span class="text-8xl font-semibold select-none" style="color: var(--brand-primary-text)">{{initial}}</span>
+                </div>
+                {{/hasImage}}
+
+                {{#hasTagline}}
+                <div class="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center brand-soft shrink-0">
+                            <iconify-icon icon="solar:health-linear" width="22"></iconify-icon>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Especialidad</p>
+                            <p class="text-base font-semibold text-slate-900 tracking-tight">{{tagline}}</p>
+                        </div>
+                    </div>
+                </div>
+                {{/hasTagline}}
+            </div>
+        </div>
+    </section>
+
+    {{#hasAbout}}
+    <!-- Sobre -->
+    <section id="about" class="py-24 bg-white border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-5 gap-12">
+            <div class="lg:col-span-3">
+                <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-6">Sobre {{heroName}}</h2>
+                {{#hasBio}}<p class="text-slate-500 text-lg font-medium leading-relaxed mb-8">{{bio}}</p>{{/hasBio}}
+                {{#hasPullQuote}}
+                <blockquote class="border-l-4 pl-6 py-1 text-xl font-medium text-slate-800 italic leading-relaxed" style="border-color: var(--brand-accent)">
+                    {{pullQuote}}
+                </blockquote>
+                {{/hasPullQuote}}
+            </div>
+
+            {{#hasAttrs}}
+            <div class="lg:col-span-2">
+                <div class="bg-slate-50 border border-slate-100 rounded-3xl p-8">
+                    <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-6 flex items-center gap-2">
+                        <iconify-icon icon="solar:diploma-linear" width="18" style="color: var(--brand-primary)"></iconify-icon>
+                        Formación y credenciales
+                    </h3>
+                    <dl class="space-y-5">
+                        {{#attrs}}
+                        <div>
+                            <dt class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">{{key}}</dt>
+                            <dd class="text-sm text-slate-700 leading-relaxed">{{value}}</dd>
+                        </div>
+                        {{/attrs}}
+                    </dl>
+                </div>
+            </div>
+            {{/hasAttrs}}
+        </div>
+    </section>
+    {{/hasAbout}}
+
+    {{#hasValueProps}}
+    <!-- Diferenciadores -->
+    <section class="py-24 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-2xl mb-16">
+                <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-4">Por qué elegirnos</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#valueProps}}
+                <div class="group p-8 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-900/5 transition-all">
+                    <div class="brand-hover-fill w-12 h-12 rounded-xl flex items-center justify-center mb-6 brand-soft transition-colors">
+                        <iconify-icon icon="solar:check-circle-linear" width="24"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-2">{{title}}</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed">{{description}}</p>
+                </div>
+                {{/valueProps}}
+            </div>
+        </div>
+    </section>
+    {{/hasValueProps}}
+
+    {{#hasServices}}
+    <!-- Servicios -->
+    <section id="services" class="py-24 bg-white border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-2xl mb-16">
+                <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-4">Servicios</h2>
+                <p class="text-slate-500 text-lg font-medium">Atención profesional enfocada en tu bienestar.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#services}}
+                <div class="group p-8 bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-900/5 transition-all duration-300">
+                    <div class="brand-hover-fill w-12 h-12 rounded-xl flex items-center justify-center mb-6 brand-soft group-hover:scale-110 transition-all">
+                        <iconify-icon icon="solar:add-circle-linear" width="24"></iconify-icon>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-2">{{name}}</h3>
+                    {{#hasDescription}}<p class="text-sm text-slate-500 leading-relaxed">{{description}}</p>{{/hasDescription}}
+                </div>
+                {{/services}}
+            </div>
+        </div>
+    </section>
+    {{/hasServices}}
+
+    {{#hasTestimonials}}
+    <!-- Reseñas — aviso "de ejemplo" ligado a la seccion (no solo al pie) -->
+    <section id="reviews" class="py-24 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Lo que dicen los pacientes</h2>
+                {{#testimonialsAreSample}}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold brand-soft-accent">
+                    <iconify-icon icon="solar:info-circle-linear" width="14"></iconify-icon>
+                    Testimonios de ejemplo
+                </span>
+                {{/testimonialsAreSample}}
+            </div>
+            {{#testimonialsAreSample}}
+            <p class="text-sm text-slate-400 mb-12 max-w-2xl">Reseñas ilustrativas para mostrar el diseño. Se reemplazan por testimonios reales del negocio antes de publicar.</p>
+            {{/testimonialsAreSample}}
+            {{^testimonialsAreSample}}<div class="mb-12"></div>{{/testimonialsAreSample}}
+            <div class="grid md:grid-cols-3 gap-6">
+                {{#testimonials}}
+                <figure class="relative p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
+                    {{#testimonialsAreSample}}<span class="absolute top-4 right-4 text-[10px] uppercase tracking-wider font-semibold text-slate-300">Ejemplo</span>{{/testimonialsAreSample}}
+                    <div class="mb-4" style="color: var(--brand-accent)">
+                        <iconify-icon icon="ri:double-quotes-l" width="26"></iconify-icon>
+                    </div>
+                    <blockquote class="text-slate-600 text-sm leading-relaxed mb-6">“{{quote}}”</blockquote>
+                    <figcaption class="text-sm font-semibold text-slate-900">
+                        {{author}}{{#role}}<span class="block text-xs font-normal text-slate-400 mt-0.5">{{role}}</span>{{/role}}
+                    </figcaption>
+                </figure>
+                {{/testimonials}}
+            </div>
+        </div>
+    </section>
+    {{/hasTestimonials}}
+
+    {{#hasFaqs}}
+    <!-- FAQs -->
+    <section id="faq" class="py-24 bg-white border-t border-slate-200">
+        <div class="max-w-3xl mx-auto px-6">
+            <h2 class="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-12">Preguntas frecuentes</h2>
+            <div class="space-y-4">
+                {{#faqs}}
+                <details class="group bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4">
+                    <summary class="flex items-center justify-between cursor-pointer list-none text-slate-900 font-medium">
+                        {{question}}
+                        <iconify-icon icon="solar:alt-arrow-down-linear" class="text-slate-400 transition-transform group-open:rotate-180 shrink-0 ml-4" width="20"></iconify-icon>
+                    </summary>
+                    <p class="text-sm text-slate-500 leading-relaxed mt-4">{{answer}}</p>
+                </details>
+                {{/faqs}}
+            </div>
+        </div>
+    </section>
+    {{/hasFaqs}}
+
+    <!-- Contacto / CTA — reemplaza el formulario del mockup: WhatsApp + telefono + direccion + horario + redes -->
+    <section id="contact" class="py-24 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid lg:grid-cols-5 gap-0 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-300/40" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                <div class="lg:col-span-3 p-10 lg:p-14 flex flex-col justify-center">
+                    <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3">{{ctaHeadline}}</h2>
+                    {{#hasCtaSubtext}}<p class="opacity-80 text-lg mb-8 max-w-md">{{ctaSubtext}}</p>{{/hasCtaSubtext}}
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        {{#hasWhatsapp}}
+                        <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full bg-white transition-transform hover:scale-[1.02]" style="color: var(--brand-primary)">
+                            <iconify-icon icon="solar:chat-round-dots-linear" width="18"></iconify-icon>
+                            WhatsApp
+                        </a>
+                        {{/hasWhatsapp}}
+                        {{#hasPhone}}
+                        <a href="{{phoneTelHref}}" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full border border-white/30 hover:bg-white/10 transition-colors">
+                            <iconify-icon icon="solar:phone-calling-linear" width="18"></iconify-icon>
+                            {{phoneDisplay}}
+                        </a>
+                        {{/hasPhone}}
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 p-10 lg:p-14 space-y-7" style="background: rgba(0,0,0,0.12)">
+                    {{#hasAddress}}
+                    <div class="flex gap-3">
+                        <iconify-icon icon="solar:map-point-linear" class="opacity-70 shrink-0 mt-0.5" width="18"></iconify-icon>
+                        <div>
+                            <p class="text-xs uppercase tracking-wider opacity-60 mb-1">Ubicación</p>
+                            <p class="text-sm leading-relaxed">{{addressText}}</p>
+                            <a href="{{mapsUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-medium mt-2 underline underline-offset-2 opacity-90 hover:opacity-100">
+                                Cómo llegar
+                                <iconify-icon icon="solar:arrow-right-up-linear" width="14"></iconify-icon>
+                            </a>
+                        </div>
+                    </div>
+                    {{/hasAddress}}
+
+                    {{#hasHours}}
+                    <div class="flex gap-3">
+                        <iconify-icon icon="solar:clock-circle-linear" class="opacity-70 shrink-0 mt-0.5" width="18"></iconify-icon>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-xs uppercase tracking-wider opacity-60">Horario</p>
+                                {{#hoursReferential}}<span class="text-[10px] px-2 py-0.5 rounded-full font-medium" style="background: rgba(255,255,255,0.18)">Referencial</span>{{/hoursReferential}}
+                            </div>
+                            <ul class="text-sm leading-relaxed space-y-0.5">
+                                {{#hoursLines}}<li>{{.}}</li>{{/hoursLines}}
+                            </ul>
+                            {{#hoursReferential}}<p class="text-[11px] opacity-60 mt-1.5">Horario sugerido, sujeto a confirmación.</p>{{/hoursReferential}}
+                        </div>
+                    </div>
+                    {{/hasHours}}
+
+                    {{#hasEmail}}
+                    <div class="flex gap-3">
+                        <iconify-icon icon="solar:letter-linear" class="opacity-70 shrink-0 mt-0.5" width="18"></iconify-icon>
+                        <div>
+                            <p class="text-xs uppercase tracking-wider opacity-60 mb-1">Correo</p>
+                            <a href="mailto:{{email}}" class="text-sm underline underline-offset-2 opacity-90 hover:opacity-100 break-all">{{email}}</a>
+                        </div>
+                    </div>
+                    {{/hasEmail}}
+
+                    {{#hasSocials}}
+                    <div class="flex items-center gap-4 pt-1">
+                        {{#hasInstagram}}<a href="{{instagramUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="opacity-70 hover:opacity-100 transition-opacity"><iconify-icon icon="ri:instagram-line" width="20"></iconify-icon></a>{{/hasInstagram}}
+                        {{#hasFacebook}}<a href="{{facebookUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="opacity-70 hover:opacity-100 transition-opacity"><iconify-icon icon="ri:facebook-fill" width="20"></iconify-icon></a>{{/hasFacebook}}
+                        {{#hasTiktok}}<a href="{{tiktokUrl}}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="opacity-70 hover:opacity-100 transition-opacity"><iconify-icon icon="ri:tiktok-fill" width="20"></iconify-icon></a>{{/hasTiktok}}
+                    </div>
+                    {{/hasSocials}}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 pt-16 pb-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-10 mb-12">
+                <div class="max-w-sm">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center brand-soft shrink-0">
+                            <iconify-icon icon="solar:health-linear" width="16"></iconify-icon>
+                        </div>
+                        <span class="text-sm font-semibold tracking-tight text-slate-900 truncate">{{heroName}}</span>
+                    </div>
+                    {{#hasFooterTagline}}<p class="text-slate-500 text-sm leading-relaxed mb-4">{{footerTagline}}</p>{{/hasFooterTagline}}
+                    {{#hasSocials}}
+                    <div class="flex items-center gap-3">
+                        {{#hasInstagram}}<a href="{{instagramUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors"><iconify-icon icon="ri:instagram-line" width="16"></iconify-icon></a>{{/hasInstagram}}
+                        {{#hasFacebook}}<a href="{{facebookUrl}}" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors"><iconify-icon icon="ri:facebook-fill" width="16"></iconify-icon></a>{{/hasFacebook}}
+                        {{#hasTiktok}}<a href="{{tiktokUrl}}" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors"><iconify-icon icon="ri:tiktok-fill" width="16"></iconify-icon></a>{{/hasTiktok}}
+                    </div>
+                    {{/hasSocials}}
+                </div>
+
+                <div class="flex items-start gap-16">
+                    <div class="hidden sm:block">
+                        <h4 class="text-sm font-semibold text-slate-900 mb-4">Enlaces rápidos</h4>
+                        <ul class="space-y-3 text-sm text-slate-500">
+                            {{#hasAbout}}<li><a href="#about" class="hover:text-slate-900">Nosotros</a></li>{{/hasAbout}}
+                            {{#hasServices}}<li><a href="#services" class="hover:text-slate-900">Servicios</a></li>{{/hasServices}}
+                            {{#hasTestimonials}}<li><a href="#reviews" class="hover:text-slate-900">Reseñas</a></li>{{/hasTestimonials}}
+                            <li><a href="#contact" class="hover:text-slate-900">Contacto</a></li>
+                        </ul>
+                    </div>
+                    {{#hasWhatsapp}}
+                    <a href="{{whatsappUrl}}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold rounded-full transition-opacity hover:opacity-90 self-start" style="background: var(--brand-primary); color: var(--brand-primary-text)">
+                        <iconify-icon icon="solar:chat-round-dots-linear" width="16"></iconify-icon>
+                        Contactar por WhatsApp
+                    </a>
+                    {{/hasWhatsapp}}
+                </div>
+            </div>
+
+            <div class="border-t border-slate-100 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p class="text-xs text-slate-400">© {{year}} {{heroName}}.</p>
+                <p class="text-xs text-slate-400">Sitio de demostración — contiene datos de ejemplo con fines ilustrativos.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

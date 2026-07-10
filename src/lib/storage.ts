@@ -66,15 +66,43 @@ export async function copyIntoLead(
   return destName; // ruta relativa que se guarda en source.card_front / card_back
 }
 
-/** Escribe un artefacto de texto (HTML, md) en la carpeta del lead. */
+/**
+ * Copia RECURSIVAMENTE un arbol de directorios (ej. los assets compartidos de
+ * los disenos guelaguetza) dentro de la carpeta del lead, en `destRelPath`
+ * (relativo a la carpeta del lead, puede traer subcarpetas). Idempotente:
+ * sobreescribe si ya existe. Si el origen no existe devuelve undefined sin
+ * tocar disco (un pool sin assets no rompe el build). Devuelve la ruta
+ * absoluta destino cuando copio algo.
+ */
+export async function copyTreeIntoLead(
+  slug: string,
+  sourceDir: string,
+  destRelPath: string,
+): Promise<string | undefined> {
+  try {
+    await fs.access(sourceDir);
+  } catch {
+    return undefined; // no hay assets que copiar
+  }
+  const dest = path.join(leadDir(slug), destRelPath);
+  await fs.mkdir(path.dirname(dest), { recursive: true });
+  await fs.cp(sourceDir, dest, { recursive: true });
+  return dest;
+}
+
+/**
+ * Escribe un artefacto de texto (HTML, md) en la carpeta del lead. `fileName`
+ * puede traer subcarpetas (ej. "dc/clinic.html", como hacen las digital
+ * cards): se crea todo el arbol de directorios necesario, no solo la raiz
+ * del lead.
+ */
 export async function writeArtifact(
   slug: string,
   fileName: string,
   content: string,
 ): Promise<string> {
-  const dir = leadDir(slug);
-  await fs.mkdir(dir, { recursive: true });
-  const full = path.join(dir, fileName);
+  const full = path.join(leadDir(slug), fileName);
+  await fs.mkdir(path.dirname(full), { recursive: true });
   await fs.writeFile(full, content, "utf8");
   return full;
 }

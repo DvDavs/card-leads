@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCorrection, finalizeVerified } from "../../src/stages/verify.js";
+import { applyCorrection, finalizeVerified, setAttr } from "../../src/stages/verify.js";
 import { parseLead, type Lead } from "../../src/lib/schema.js";
 
 /**
@@ -179,5 +179,41 @@ describe("finalizeVerified", () => {
     const named = applyCorrection(extractedLead(), "brand.colors.primary", "azul");
     const final = finalizeVerified(named);
     expect(final.brand.colorsText?.primary).toBeUndefined();
+  });
+});
+
+describe("setAttr (credenciales en business.attrs)", () => {
+  it("setea una credencial nueva (recortada)", () => {
+    const lead = setAttr(extractedLead(), "Cédula profesional", "  12007041  ");
+    expect(lead.business.attrs["Cédula profesional"]).toBe("12007041");
+  });
+
+  it("actualiza una credencial existente (cedula mal transcrita por el modelo)", () => {
+    const base = extractedLead({
+      business: { name: "X", attrs: { "Cédula profesional": "12007040" } },
+    });
+    const lead = setAttr(base, "Cédula profesional", "12007041");
+    expect(lead.business.attrs["Cédula profesional"]).toBe("12007041");
+  });
+
+  it("borra la credencial con null (queda fuera del mapa)", () => {
+    const base = extractedLead({
+      business: { name: "X", attrs: { "Cédula profesional": "12007041" } },
+    });
+    const lead = setAttr(base, "Cédula profesional", null);
+    expect(lead.business.attrs["Cédula profesional"]).toBeUndefined();
+    expect(Object.keys(lead.business.attrs)).toHaveLength(0);
+  });
+
+  it("NO muta el lead de entrada (inmutable)", () => {
+    const base = extractedLead({ business: { name: "X", attrs: { Universidad: "UNAM" } } });
+    const before = JSON.parse(JSON.stringify(base));
+    setAttr(base, "Universidad", "UABJO");
+    expect(base).toEqual(before);
+  });
+
+  it("el resultado sigue siendo un Lead valido contra el schema", () => {
+    const lead = setAttr(extractedLead(), "Certificación", "Consejo Mexicano de Medicina Interna");
+    expect(() => parseLead(lead)).not.toThrow();
   });
 });

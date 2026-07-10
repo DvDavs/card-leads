@@ -194,4 +194,159 @@ describe("applyExtraction", () => {
     expect(lead.brand.colors.primary).toBeUndefined();
     expect(lead.meta.needs.join(" | ")).toContain("revisar colores en verify");
   });
+
+  it("escribe los roles AMPLIADOS (background/text) y guarda la paleta medida", () => {
+    const brandColors = {
+      primary: { hex: "#24376d", textColor: "#ffffff" },
+      background: { hex: "#fcfbf9", textColor: "#000000" },
+      text: { hex: "#111111", textColor: "#ffffff" },
+    };
+    const palette = ["#24376d", "#fcfbf9", "#111111"];
+    const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE), brandColors, palette);
+    expect(lead.brand.colors.background).toBe("#fcfbf9");
+    expect(lead.brand.colors.text).toBe("#111111");
+    expect(lead.brand.colorsText?.background).toBe("#000000");
+    // 'text' es tinta (no superficie): el tipo de colorsText ni siquiera tiene la
+    // clave. El cast comprueba en runtime que no se colo por otra via.
+    expect((lead.brand.colorsText as Record<string, string | undefined>).text).toBeUndefined();
+    // la paleta cruda queda persistida para verify y re-corridas
+    expect(lead.brand.palette).toEqual(palette);
+    expect(() => parseLead(lead)).not.toThrow();
+  });
+
+  it("los colores salen del param brandColors, NO de ex.colors (se resuelven en extract)", () => {
+    // el LLM mando colors en la extraccion, pero applyExtraction no los lee:
+    // la asignacion ya viene resuelta/validada en brandColors (default {} aca).
+    const withColors = { ...SAMPLE, colors: { primary: "#123456" } };
+    const lead = applyExtraction(ingestedLead(), parseOk(withColors));
+    expect(lead.brand.colors.primary).toBeUndefined();
+  });
+
+  describe("servicios por defecto (rubroConfig), cuando la tarjeta no los lista", () => {
+    it("cae al default del rubro si el modelo no vio servicios", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario" }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.content.services).toEqual(["Consulta", "Vacunacion", "Urgencias"]);
+    });
+
+    it("usa el rubro ya corregido por el modelo (no el original) para elegir el default", () => {
+      // ingreso como "otro" pero el modelo detecta veterinario y no ve servicios:
+      // el default debe salir del rubro FINAL, no del que traia el lead.
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "otro" }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.rubro).toBe("veterinario");
+      expect(lead.content.services).toEqual(["Consulta", "Vacunacion", "Urgencias"]);
+    });
+
+    it("NO pisa servicios reales leidos de la tarjeta con el default", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario" }),
+        parseOk({ rubro: "veterinario", content: { services: ["Peluqueria canina"] } }),
+      );
+      expect(lead.content.services).toEqual(["Peluqueria canina"]);
+    });
+
+    it("NO pisa servicios ya cargados en el lead (de una corrida previa) con el default", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario", content: { services: ["Servicio ya cargado"] } }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.content.services).toEqual(["Servicio ya cargado"]);
+    });
+
+    it("rubro 'otro' no tiene default: queda vacio y se anota 'faltan servicios'", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "otro" }),
+        parseOk({ rubro: "otro", content: { services: [] } }),
+      );
+      expect(lead.content.services).toEqual([]);
+      expect(lead.meta.needs.join(" | ")).toContain("faltan servicios");
+    });
+
+    it("anota en meta.needs que los servicios son sugeridos por rubro (no de la tarjeta)", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "veterinario" }),
+        parseOk({ rubro: "veterinario", content: { services: [] } }),
+      );
+      expect(lead.meta.needs.join(" | ")).toContain("servicios sugeridos por rubro");
+    });
+
+    it("no anota el aviso de 'sugeridos' cuando los servicios SI vinieron de la tarjeta", () => {
+      const lead = applyExtraction(ingestedLead(), parseOk(SAMPLE));
+      expect(lead.meta.needs.join(" | ")).not.toContain("servicios sugeridos por rubro");
+    });
+  });
+
+  describe("credenciales medicas (business.attrs)", () => {
+    it("parseExtraction NO falla si una cedula viene como number (z.any, se coacciona luego)", () => {
+      // con z.string() por valor esto tiraria TODO el parse y se perderia la
+      // extraccion entera; el schema tolerante lo acepta y lo arregla al mapear.
+      const sample = {
+        ...SAMPLE,
+        business: { ...SAMPLE.business, attrs: { "Cédula profesional": 12007041 } },
+      };
+      expect(parseExtraction(JSON.stringify(sample)).ok).toBe(true);
+    });
+
+    it("mapea attrs: coacciona number a string, joinea listas y trimea", () => {
+      const ex = parseOk({
+        ...SAMPLE,
+        rubro: "doctor",
+        business: {
+          ...SAMPLE.business,
+          attrs: {
+            "Cédula profesional": 12007041,
+            "Cédula de especialidad": ["13937097", "14886103"],
+            "Universidad": "  UNAM  ",
+            vacio: "   ",
+          },
+        },
+      });
+      const lead = applyExtraction(ingestedLead({ rubro: "doctor" }), ex);
+      expect(lead.business.attrs["Cédula profesional"]).toBe("12007041");
+      expect(lead.business.attrs["Cédula de especialidad"]).toBe("13937097, 14886103");
+      expect(lead.business.attrs["Universidad"]).toBe("UNAM");
+      expect(lead.business.attrs.vacio).toBeUndefined(); // valor vacio se descarta
+      expect(() => parseLead(lead)).not.toThrow();
+    });
+
+    it("fusiona: conserva attrs previos y el modelo agrega/actualiza por clave", () => {
+      const base = ingestedLead({
+        rubro: "doctor",
+        business: { name: "", attrs: { Universidad: "UABJO" } },
+      });
+      const lead = applyExtraction(
+        base,
+        parseOk({ business: { attrs: { "Cédula profesional": "12007041" } } }),
+      );
+      expect(lead.business.attrs["Universidad"]).toBe("UABJO"); // conservado
+      expect(lead.business.attrs["Cédula profesional"]).toBe("12007041"); // agregado
+    });
+
+    it("con credenciales, anota en needs que hay que VERIFICARLAS contra la tarjeta", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "doctor" }),
+        parseOk({ rubro: "doctor", business: { attrs: { "Cédula profesional": "12007041" } } }),
+      );
+      expect(lead.meta.needs.join(" | ")).toContain("credenciales capturadas");
+    });
+
+    it("doctor SIN credenciales: avisa que no se detectaron (posible lectura fallida)", () => {
+      const lead = applyExtraction(
+        ingestedLead({ rubro: "doctor" }),
+        parseOk({ rubro: "doctor", business: { attrs: {} } }),
+      );
+      expect(lead.meta.needs.join(" | ")).toContain("sin credenciales detectadas");
+    });
+
+    it("rubro NO-doctor sin credenciales: attrs vacio y NINGUN aviso de credenciales", () => {
+      const lead = applyExtraction(ingestedLead({ rubro: "barberia" }), parseOk(SAMPLE));
+      expect(lead.business.attrs).toEqual({});
+      expect(lead.meta.needs.join(" | ")).not.toContain("credenciales");
+    });
+  });
 });

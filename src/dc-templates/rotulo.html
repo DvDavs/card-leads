@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{pageTitle}}</title>
+<meta name="description" content="{{metaDescription}}">
+<script type="application/ld+json">{{{jsonLd}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<!--
+  CAPA DE MOTIVOS · Buscar los marcadores "MOTIF:START" / "MOTIF:END" al inicio del <body>.
+  Para cambiar el rubro se reemplaza ese bloque COMPLETO por el bloque del rubro deseado
+  (viven en _motifs.html; mismo wrapper <div class="motif"> y sprites .m1 a .m5).
+  En este diseño .m1 actua como sello gigante de fondo y .m2-.m5 como fila divisoria;
+  las posiciones se definen en el CSS de ESTE archivo; el arte usa currentColor.
+-->
+<style>
+:root{
+  /* Paleta ORIGINAL del diseno (default; toggle "Ver con los colores de tu
+     marca" OFF en el visor). Diseno INVERTIDO: --primary ES el fondo de
+     pagina (ver `body{background:var(--primary)}` abajo). */
+  --primary:#16324f;
+  --secondary:#c0392b;
+  --accent:#d9b380;
+  --on-primary:#ffffff;
+  --ink:var(--on-primary);
+  --ink-soft:color-mix(in oklab,var(--on-primary) 55%,var(--primary));
+  --line:color-mix(in oklab,var(--on-primary) 22%,var(--primary));
+  --panel:color-mix(in oklab,var(--on-primary) 8%,var(--primary));
+}
+/* Paleta de MARCA (toggle ON, activado por el visor via postMessage; ver
+   _viewer.html). Todos los neutros referencian --primary/--on-primary y
+   recalculan solos. */
+:root[data-brand]{
+  --primary:{{{colors.primary}}};
+  --secondary:{{{colors.secondary}}};
+  --accent:{{{colors.accent}}};
+  --on-primary:{{{colorsText.primary}}};
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Archivo',sans-serif;background:var(--primary);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100dvh}
+a{color:var(--ink);text-decoration:none}
+a:hover{color:color-mix(in oklab,var(--on-primary) 80%,var(--primary))}
+
+/* ===== capa de motivos: sello gigante + fila ===== */
+.motif{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;color:var(--on-primary)}
+.m{position:absolute;display:block}
+.m1{width:min(520px,130vw);top:46%;left:50%;translate:-50% -40%;opacity:.06}
+.m2,.m3,.m4,.m5{width:54px;opacity:.14;bottom:18px}
+.m2{left:8%}.m3{left:32%;transform:rotate(-8deg)}.m4{right:32%;transform:rotate(6deg)}.m5{right:8%}
+@keyframes spin{to{rotate:360deg}}
+.m1{animation:spin 140s linear infinite}
+@media (prefers-reduced-motion:reduce){.m1{animation:none}}
+
+.wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;padding:clamp(30px,5.5vh,52px) 24px 92px;display:flex;flex-direction:column;gap:26px}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.rise{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+.d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}.d4{animation-delay:.32s}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+.serial{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:.34em;text-transform:uppercase;color:var(--ink-soft)}
+.avatar{width:54px;height:54px;border-radius:50%;object-fit:cover;background:var(--panel);border:2px solid var(--ink)}
+.avatar-ini{display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:24px;color:var(--ink)}
+.identity{display:flex;flex-direction:column;gap:8px}
+h1{margin:0;font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(40px,11vw,54px);line-height:.98;letter-spacing:.01em;text-transform:uppercase}
+.tag{margin:0;font-size:14.5px;font-weight:500;color:var(--ink-soft);max-width:36ch}
+.org{margin:0;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-soft)}
+
+.actions{display:flex;flex-direction:column}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 20px;margin-bottom:14px;background:var(--on-primary);color:var(--primary);font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;transition:transform .2s ease}
+.cta:hover{color:var(--primary);transform:translateY(-2px)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 2px;border-bottom:1px solid var(--line);font-size:14.5px;font-weight:500;transition:padding .2s ease}
+.row:hover{padding-left:8px}
+.row .k{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);flex:none;width:82px}
+.row .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .ar{flex:none;color:var(--ink-soft)}
+.vcard{align-self:flex-start;margin-top:14px;font-family:'Oswald',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid currentColor;padding-bottom:2px}
+
+.sect{display:flex;flex-direction:column;gap:12px}
+.sect h2{margin:0;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft)}
+.svcs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.svcs li{display:flex;align-items:baseline;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14.5px;font-weight:500;counter-increment:svc}
+.svcs li::before{content:counter(svc,decimal-leading-zero);font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;color:var(--ink-soft)}
+.svcs{counter-reset:svc}
+.svcs li:nth-child(n+7){display:none}
+.more-t:checked ~ .svcs li{display:flex}
+.more{align-self:flex-start;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid currentColor;padding-bottom:2px}
+.sect:not(:has(.svcs li:nth-child(7))) .more{display:none}
+.more .hide{display:none}
+.more-t:checked ~ .more .show{display:none}
+.more-t:checked ~ .more .hide{display:inline}
+
+.attrs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.attr{background:var(--primary);padding:14px 15px;display:flex;flex-direction:column;gap:4px}
+.attr b{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+.attr span{font-size:13.5px;font-weight:500}
+.about p{margin:0;font-size:14.5px;line-height:1.65;color:color-mix(in oklab,var(--ink) 85%,var(--ink-soft))}
+
+.socials{display:flex;gap:22px}
+.soc{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+.soc:hover{color:var(--ink)}
+footer{border-top:2px solid var(--ink);padding-top:14px;display:flex;justify-content:space-between;align-items:center}
+footer p{margin:0;font-size:11px;letter-spacing:.08em;color:var(--ink-soft)}
+footer i{width:26px;height:3px;background:var(--ink)}
+@media (min-width:720px){.wrap{max-width:500px}}
+</style>
+</head>
+<body>
+
+<!-- MOTIF:START (rubro=barberia) -->
+<div class="motif" aria-hidden="true">
+  <svg class="m m1" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="28" cy="30" r="10"/><circle cx="28" cy="70" r="10"/><path d="M36 64 82 22M36 36l46 42"/></svg>
+  <svg class="m m2" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="38" y="20" width="24" height="60" rx="12"/><path d="M38 36l24-8M38 50l24-8M38 64l24-8M34 20h32M34 80h32"/></svg>
+  <svg class="m m3" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="22" y="34" width="56" height="12" rx="4"/><path d="M30 46v16M40 46v20M50 46v16M60 46v20M70 46v16"/></svg>
+  <svg class="m m4" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-40 50 50)"><rect x="18" y="42" width="34" height="16" rx="5"/><path d="M52 42h26l6 8-6 8H52"/></g></svg>
+  <svg class="m m5" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 52c-8-12-22-12-30-2-4 5-10 6-14 2 6 14 24 16 34 6 4-4 6-4 10 0 10 10 28 8 34-6-4 4-10 3-14-2-8-10-22-10-30 2Z"/></svg>
+</div>
+<!-- MOTIF:END -->
+
+<main class="wrap">
+
+  <header class="identity rise">
+    <div class="top">
+      <span class="serial">Tarjeta digital</span>
+      <!-- FOTO CIRCULAR: photoPath es un CAMPO NUEVO propuesto (aun no existe en el view del pipeline).
+           Al agregarlo, esta imagen redonda toma prioridad; mientras tanto cae sola al logo o a la inicial. -->
+      {{#photoPath}}<img class="avatar" src="{{photoPath}}" alt="{{heroName}}">{{/photoPath}}
+      {{^photoPath}}
+        {{#logoPath}}<img class="avatar" src="{{logoPath}}" alt="{{heroName}}">{{/logoPath}}
+        {{^logoPath}}<div class="avatar avatar-ini">{{initial}}</div>{{/logoPath}}
+      {{/photoPath}}
+    </div>
+    <h1>{{heroName}}</h1>
+    {{#tagline}}<p class="tag">{{tagline}}</p>{{/tagline}}
+    {{#hasOrgLine}}<p class="org">{{orgName}}</p>{{/hasOrgLine}}
+  </header>
+
+  <section class="actions rise d1" aria-label="Contacto directo">
+    {{#hasPhone}}
+    <a class="cta" href="{{whatsappUrl}}" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.5.5c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.3 1.1 2.3 1.5 2.7 1.6.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.3.6.4 0 .2 0 .7-.2 1.2Z"/></svg>
+      Reservar por WhatsApp
+    </a>
+    <a class="row" href="{{phoneTelHref}}"><span class="k">Tel</span><span class="v">{{phoneDisplay}}</span><span class="ar">→</span></a>
+    {{/hasPhone}}
+    {{#hasEmail}}<a class="row" href="mailto:{{email}}"><span class="k">Correo</span><span class="v">{{email}}</span><span class="ar">→</span></a>{{/hasEmail}}
+    {{#hasAddressLine}}<a class="row" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="k">Local</span><span class="v">{{addressLine}}</span><span class="ar">→</span></a>{{/hasAddressLine}}
+    {{#hasWebsite}}<a class="row" href="{{website}}" target="_blank" rel="noopener"><span class="k">Web</span><span class="v">Visitar sitio</span><span class="ar">→</span></a>{{/hasWebsite}}
+    {{#vcard}}<a class="vcard" href="{{vcard}}" download>Guardar contacto</a>{{/vcard}}
+  </section>
+
+  {{#hasServices}}
+  <section class="sect rise d2" aria-label="Servicios">
+    <h2>Servicios</h2>
+    <input type="checkbox" id="more" class="more-t" hidden>
+    <ul class="svcs">
+      {{#services}}<li>{{.}}</li>{{/services}}
+    </ul>
+    <label class="more" for="more"><span class="show">Ver todos</span><span class="hide">Ver menos</span></label>
+  </section>
+  {{/hasServices}}
+
+  {{#about}}
+  <section class="sect about rise d2" aria-label="Acerca de">
+    <h2>Acerca de</h2>
+    <p>{{about}}</p>
+  </section>
+  {{/about}}
+
+  {{#hasAttrs}}
+  <section class="sect rise d3" aria-label="Información">
+    <h2>Información</h2>
+    <div class="attrs">
+      {{#attrs}}<div class="attr"><b>{{key}}</b><span>{{value}}</span></div>{{/attrs}}
+    </div>
+  </section>
+  {{/hasAttrs}}
+
+  {{#hasSocials}}
+  <nav class="socials rise d3" aria-label="Redes sociales">
+    {{#hasInstagram}}<a class="soc" href="{{instagramUrl}}" target="_blank" rel="noopener">Instagram</a>{{/hasInstagram}}
+    {{#hasFacebook}}<a class="soc" href="{{facebookUrl}}" target="_blank" rel="noopener">Facebook</a>{{/hasFacebook}}
+    {{#hasTiktok}}<a class="soc" href="{{tiktokUrl}}" target="_blank" rel="noopener">TikTok</a>{{/hasTiktok}}
+  </nav>
+  {{/hasSocials}}
+
+  <footer class="rise d4"><p>© {{year}} · {{heroName}}</p><i aria-hidden="true"></i></footer>
+
+</main>
+</body>
+</html>

@@ -24,6 +24,14 @@ export const ExtractionSchema = z.object({
       name: str,
       person_name: str,
       tagline: str,
+      // attrs: credenciales PROFESIONALES libres que la tarjeta muestre (cedula,
+      // universidad, certificacion). Valor `z.any()` A PROPOSITO: una cedula es un
+      // numero y el modelo puede mandarla como number o lista; con z.string() eso
+      // haria fallar TODO el parse y se perderia la extraccion entera (el peor
+      // caso para un campo de riesgo). Se coacciona a string en normalizeAttrs
+      // (stages/extract), que descarta lo no representable. Clave = etiqueta
+      // legible (se muestra tal cual en las cards).
+      attrs: z.record(z.any()).nullish(),
     })
     .nullish(),
   // el modelo puede sugerir/corregir el rubro que se puso al ingerir
@@ -44,12 +52,26 @@ export const ExtractionSchema = z.object({
       tiktok: str,
     })
     .nullish(),
-  // Los COLORES ya no los pide el modelo: se miden de los pixeles con colorthief
-  // (ver lib/colors). El LLM solo aporta has_logo y font_hint.
+  // Los hex se MIDEN de los pixeles con colorthief (ver lib/colors); el modelo NO
+  // los estima. Aca el LLM solo aporta has_logo y font_hint.
   brand: z
     .object({
       has_logo: z.boolean().nullish(),
       font_hint: str,
+    })
+    .nullish(),
+  // colors: ASIGNACION de roles. Al modelo se le pasa la paleta MEDIDA y elige,
+  // con vision, que hex de esa lista va en cada rol. No inventa hex: la baranda
+  // `resolveAssignedColors` descarta cualquier hex que no este en la paleta. Todo
+  // .nullish(): un rol sin buen candidato en la paleta queda null.
+  colors: z
+    .object({
+      primary: str,
+      secondary: str,
+      accent: str,
+      background: str,
+      surface: str,
+      text: str,
     })
     .nullish(),
   content: z
