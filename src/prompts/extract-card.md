@@ -16,7 +16,8 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
     "name": string | null,
     "person_name": string | null,
     "tagline": string | null,
-    "attrs": { [etiqueta: string]: string }
+    "attrs": { [etiqueta: string]: string },
+    "person_gender": "m" | "f" | null
   },
   "rubro": "doctor" | "barberia" | "estetica" | "veterinario" | "nutriologo" | "otro" | null,
   "contact": {
@@ -66,6 +67,11 @@ Forma exacta (usa null en todo lo que NO aparezca en la tarjeta):
   tinta del texto, etc.). Si un rol no tiene buen candidato en la lista, ponlo en
   `null`. PROHIBIDO devolver un hex que no este en la lista. Si NO se incluye
   ninguna paleta, devuelve todos los roles de `colors` en `null`.
+- `business.person_gender`: genero de LA PERSONA (no del negocio), para elegir
+  fotos de muestra en la web demo. Infierelo del nombre de pila, la foto o el
+  honorifico: "Dra." implica `"f"`; "Dr." solo es AMBIGUO (lo usan hombres y
+  mujeres), asi que decide por el nombre de pila o la foto. Si aun asi no queda
+  claro, devuelve `null`. No lo deduzcas de estereotipos del rubro.
 - `brand.has_logo`: `true` solo si hay un logo/isotipo real (no si es solo texto).
 - `content.services`: lista los servicios que la tarjeta enumere explicitamente.
   Si no enumera ninguno, devuelve `[]` (lista vacia). No inventes servicios.

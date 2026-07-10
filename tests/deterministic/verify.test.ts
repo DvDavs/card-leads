@@ -103,6 +103,29 @@ describe("applyCorrection", () => {
     expect(() => applyCorrection(extractedLead(), "rubro", "abogado")).toThrow();
   });
 
+  it("setea el genero de la persona con 'm' o 'f' (recortado)", () => {
+    const m = applyCorrection(extractedLead(), "business.person_gender", "m");
+    expect(m.business.person_gender).toBe("m");
+    const f = applyCorrection(extractedLead(), "business.person_gender", " f ");
+    expect(f.business.person_gender).toBe("f");
+  });
+
+  it("lanza si el genero esta fuera del enum (el caller re-pregunta)", () => {
+    expect(() => applyCorrection(extractedLead(), "business.person_gender", "hombre")).toThrow();
+    expect(() => applyCorrection(extractedLead(), "business.person_gender", "M")).toThrow();
+  });
+
+  it("vacia el genero con null (queda undefined, es opcional)", () => {
+    const withGender = applyCorrection(extractedLead(), "business.person_gender", "m");
+    const cleared = applyCorrection(withGender, "business.person_gender", null);
+    expect(cleared.business.person_gender).toBeUndefined();
+  });
+
+  it("el lead con genero corregido valida contra el schema", () => {
+    const lead = applyCorrection(extractedLead(), "business.person_gender", "f");
+    expect(() => parseLead(lead)).not.toThrow();
+  });
+
   it("reemplaza la lista de servicios entera (array)", () => {
     const lead = applyCorrection(extractedLead(), "content.services", ["Corte", "Barba"]);
     expect(lead.content.services).toEqual(["Corte", "Barba"]);
