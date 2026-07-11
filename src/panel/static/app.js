@@ -224,6 +224,18 @@ function renderAttrField(a) {
     </div>`;
 }
 
+// El <input type="color"> nativo exige un value ESTRICTO "#rrggbb" (6 digitos,
+// minusculas, sin alpha) o lo ignora en silencio. El hex que viene del server
+// (o el que el operador tipeo a mano en el campo de texto) puede no cumplir
+// eso (vacio, con mayusculas, sin "#", o directamente invalido: el server NO
+// valida formato, ver applyCorrection/normStr en stages/verify.ts). Por eso
+// toda lectura hacia el picker pasa por aca; si no matchea, cae a "#000000"
+// (el picker necesita SIEMPRE un value valido para poder abrirse).
+function normalizeColorInputHex(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex ?? "").trim());
+  return m ? `#${m[1].toLowerCase()}` : "#000000";
+}
+
 function renderColorField(c, palette) {
   const rgbText = c.rgb ? `rgb(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})` : "sin rgb";
   const chips = (palette || [])
@@ -235,6 +247,7 @@ function renderColorField(c, palette) {
       <div class="color-detail">${esc(c.hex ?? "(sin definir)")} · ${esc(rgbText)}</div>
     </div>
     <div class="color-edit">
+      <input type="color" class="color-native" data-color-for="${esc(c.path)}" value="${normalizeColorInputHex(c.hex)}" aria-label="Ajustar ${esc(c.label)} con selector visual" />
       <input type="text" data-field="${esc(c.path)}" data-kind="color" value="${esc(c.hex ?? "")}" placeholder="#rrggbb" />
       <div class="palette-chips">${chips}</div>
     </div>`;
@@ -298,8 +311,40 @@ async function saveField(field, value) {
 // listener por tipo de evento alcanza para todos.
 document.getElementById("screen-verify").addEventListener("change", (ev) => {
   const el = ev.target;
+  // El picker nativo no lleva data-field (no es un campo de texto libre): al
+  // confirmar un color (onchange = soltar el picker) guarda igual que el resto
+  // de los campos, mismo flujo de autosave + reload completo de la vista.
+  if (el.dataset && el.dataset.colorFor) {
+    saveField(el.dataset.colorFor, el.value);
+    return;
+  }
   if (!el.dataset || !el.dataset.field) return;
   saveField(el.dataset.field, readFieldValue(el));
+});
+
+// Sync en vivo entre el picker nativo y el campo de texto hex, SIN guardar
+// (el guardado real ocurre en "change", arriba). "input" dispara mientras el
+// operador arrastra el picker (desktop) o al instante al confirmar (mobile),
+// asi que ninguno de los dos campos "pelea" al otro: cada uno solo empuja su
+// valor normalizado hacia el otro, nunca dispara su propio autosave desde aca.
+document.getElementById("screen-verify").addEventListener("input", (ev) => {
+  const el = ev.target;
+  if (!el.dataset) return;
+  const container = el.closest(".color-edit");
+  if (!container) return;
+  if (el.dataset.colorFor) {
+    // picker -> texto: el valor nativo ya es "#rrggbb" estricto, se copia tal cual.
+    const hexInput = container.querySelector('input[data-kind="color"]');
+    if (hexInput) hexInput.value = el.value;
+    return;
+  }
+  if (el.dataset.kind === "color") {
+    // texto -> picker: solo si lo tipeado YA es un hex valido (el picker no
+    // acepta nada a medio escribir, ver normalizeColorInputHex).
+    if (!/^#?[0-9a-f]{6}$/i.test(el.value.trim())) return;
+    const nativeInput = container.querySelector('input[type="color"]');
+    if (nativeInput) nativeInput.value = normalizeColorInputHex(el.value);
+  }
 });
 
 document.getElementById("screen-verify").addEventListener("click", (ev) => {

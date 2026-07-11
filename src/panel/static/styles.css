@@ -174,8 +174,26 @@ textarea {
 }
 .color-role { font-weight: 700; font-size: 0.95rem; }
 .color-detail { font-size: 0.82rem; opacity: 0.9; margin-top: 0.15rem; }
-.color-edit { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.color-edit { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: stretch; }
 .color-edit input { flex: 1; min-width: 8rem; }
+/* Picker nativo: tamano fijo de tap-target (44px, minimo recomendado mobile),
+   NO el flex:1 del resto de los inputs de .color-edit -- es un swatch
+   cuadrado, no un campo de texto que deba estirarse. */
+.color-edit input[type="color"] {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-width: unset;
+  min-height: unset;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+.color-edit input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+.color-edit input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+.color-edit input[type="color"]::-moz-color-swatch { border: none; border-radius: 6px; }
 .palette-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
 .chip {
   width: 32px;
