@@ -13,6 +13,7 @@
     "extract": "tsx src/cli.ts extract",
     "enrich": "tsx src/cli.ts enrich",
     "build-cards": "tsx src/cli.ts build-cards",
+    "deploy": "tsx src/cli.ts deploy",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

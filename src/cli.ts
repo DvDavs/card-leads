@@ -56,7 +56,7 @@ Uso:
   cli verify <slug>           (checkpoint humano interactivo)
   cli enrich <slug>           (genera copy de marketing con IA)
   cli build-web <slug>        (stub)
-  cli deploy <slug>           (stub)
+  cli deploy <slug>
   cli proposal <slug>         (stub)
   cli package <slug>          (stub)
 
@@ -136,9 +136,13 @@ async function main(): Promise<void> {
       console.log(`web escrita: ${out}`);
       break;
     }
-    case "deploy":
-      await deploy(positionals[0]!);
+    case "deploy": {
+      const lead = await deploy(positionals[0]!);
+      console.log(`deployed: ${lead.slug} (status=${lead.status})`);
+      if (lead.generated.dc_url) console.log(`  dc:  ${lead.generated.dc_url}`);
+      if (lead.generated.web_url) console.log(`  web: ${lead.generated.web_url}`);
       break;
+    }
     case "proposal":
       await proposal(positionals[0]!);
       break;
