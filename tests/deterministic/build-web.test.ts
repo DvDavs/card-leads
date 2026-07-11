@@ -708,6 +708,17 @@ describe.each(POOL_FILES)("invariantes de %s (render final, fixture completo)", 
     expect(html).not.toContain("Dra. Ana Morales");
     expect(html).not.toContain("Cuidar la salud de cada familia");
   });
+
+  // Bug: el rubro "doctor" cubre CUALQUIER especialidad medica, no solo
+  // odontologia. Las plantillas NO deben hardcodear copy dental (texto
+  // estatico, iconos de diente, etc.) independientemente de la especialidad
+  // real del lead. El fixture `enrichedLead()` es un endocrinologo/internista
+  // ("MEDICINA INTERNA ● ENDOCRINOLOGIA"), asi que nada dental deberia
+  // aparecer en NINGUNA plantilla del pool.
+  it("no hardcodea copy dental cuando la especialidad real no es odontologia", async () => {
+    const html = await renderFinal(file);
+    expect(html).not.toMatch(/dental|odont|tooth/i);
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -728,6 +739,22 @@ describe("doc-clasico — stats flotantes + items de confianza", () => {
     const principal = resolvedImages(lead).slots.img_retrato_principal!;
     const html = await renderFinal("doc-clasico.html", lead);
     expect(html).toContain(`src="${principal}"`);
+  });
+
+  // Bug: la tarjeta de "Horario de Atencion" + "Reservar una Cita" usaba
+  // `grid lg:grid-cols-5 gap-12` (gap incondicional). En mobile el grid
+  // colapsa a una sola columna implicita, pero el gap-12 (48px) se aplica
+  // igual como row-gap: como el wrapper es bg-slate-900 y el panel de
+  // horario es bg-slate-800, ese hueco de 48px se ve como una banda oscura
+  // separando el panel de horario del formulario blanco, rompiendo la
+  // tarjeta continua en mobile. El fix: gap-0 por default, gap-12 solo desde
+  // lg: (el gutter entre columnas solo existe en el layout de 2 columnas).
+  it("el gap de la tarjeta de reserva es 0 por default y solo 48px (gap-12) desde lg: (bug: banda oscura mobile)", async () => {
+    const html = await renderFinal("doc-clasico.html");
+    expect(html).toContain("grid gap-0 lg:grid-cols-5 lg:gap-12 bg-slate-900");
+    // regresion: la version vieja aplicaba gap-12 SIN el prefijo lg: (row-gap
+    // incondicional -> banda oscura entre el panel de horario y el formulario)
+    expect(html).not.toContain("grid lg:grid-cols-5 gap-12 bg-slate-900");
   });
 });
 

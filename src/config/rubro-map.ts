@@ -123,7 +123,7 @@ export const WEB_LABELS: Record<string, { name: string; audience: string }> = {
   "doc-clasico": { name: "Clásico", audience: "Médicos y consultorios" },
   "doc-perfil": { name: "Perfil", audience: "Profesional individual · CV" },
   "doc-lujo": { name: "Lujo", audience: "Especialistas premium" },
-  "doc-moderno": { name: "Moderno", audience: "Clínicas dentales" },
+  "doc-moderno": { name: "Moderno", audience: "Consultorios médicos modernos" },
   "doc-limpio": { name: "Limpio", audience: "Clínicas con equipo" },
   "doc-familiar": { name: "Familiar", audience: "Medicina familiar" },
   "doc-urgencias": { name: "Urgencias 24h", audience: "Urgencias y disponibilidad" },

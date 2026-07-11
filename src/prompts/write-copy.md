@@ -74,6 +74,16 @@ Forma exacta:
 - Si en los datos del negocio viene "genero de la persona", usalo para la
   concordancia: "la doctora / la profesional" si es femenino, "el doctor / el
   profesional" si es masculino.
+- El rubro "doctor" cubre CUALQUIER especialidad medica (medicina general,
+  cardiologia, endocrinologia, pediatria, odontologia, etc.), NO solo
+  odontologia/dental. TODO el contenido -- copy Y el bloque `demo` (roles del
+  equipo, titulos/grados de `education`, contenido de `sedation`, etc.) debe
+  ser coherente con la ESPECIALIDAD REAL de ese negocio, que se infiere del
+  `tagline` y/o del nombre de los servicios reales que te dan. PROHIBIDO
+  asumir por default que un negocio del rubro "doctor" es un consultorio
+  dental: eso solo aplica si los datos reales del negocio lo indican. Si no
+  hay ninguna senal de la especialidad, quedate en terminos de medicina
+  general (nunca odontologia por default).
 
 ### Copy de marketing — campo por campo
 
@@ -134,12 +144,18 @@ Campo por campo del bloque `demo` (respeta las cantidades EXACTAS):
 - `stats`: EXACTAMENTE 4. Metricas de vitrina modestas. `value` corto ("1,200+",
   "12 anos", "4.9"); `label` breve ("pacientes atendidos", "anos de trayectoria",
   "calificacion promedio").
-- `team`: EXACTAMENTE 5 miembros. `name` nombre hispano generico; `role` el puesto
-  ("Odontologa general", "Recepcion", "Higienista"); `gender` "m"/"f", balanceado.
+- `team`: EXACTAMENTE 5 miembros. `name` nombre hispano generico; `role` el puesto,
+  ACORDE a la especialidad real del negocio (ej. medicina general/interna:
+  "Medico general", "Enfermeria", "Recepcion"; odontologia (solo si el negocio
+  ES dental): "Odontologa general", "Higienista"; pediatria: "Pediatra",
+  "Enfermeria pediatrica"). NUNCA uses roles de una especialidad distinta a la
+  real del negocio; `gender` "m"/"f", balanceado.
 - `experience`: EXACTAMENTE 3 entradas de trayectoria (timeline tipo CV). `role`,
   `place` (institucion generica), `period` ("2018 - Presente"), `description` 1
   frase. EXACTAMENTE una con `current: true` (la actual); el resto `false`.
-- `education`: 2-3 titulos. `degree` ("Cirujano Dentista"), `institution`
+- `education`: 2-3 titulos. `degree` ACORDE a la especialidad real (ej. "Medico
+  Cirujano" o "Especialidad en [especialidad real]" para medicina en general;
+  "Cirujano Dentista" SOLO si el negocio es odontologico), `institution`
   (generica), `period`, `details` array de 1-2 strings cortos.
 - `research`: EXACTAMENTE 2. `tag` categoria corta ("Prevencion"), `title`,
   `description` 1 frase. Areas de interes genericas, sin revistas ni DOIs reales.
@@ -148,8 +164,12 @@ Campo por campo del bloque `demo` (respeta las cantidades EXACTAS):
 - `mission`: 1-2 frases, declaracion de mision del negocio.
 - `patient_education`: EXACTAMENTE 3. `title` + `description` (1 frase). Consejos
   utiles y genericos al paciente/cliente.
-- `sedation`: OBJETO unico. `title`, `description` (1 frase), `points` array de
-  2-4 strings. (Aplica sobre todo a rubro dental; genera algo plausible y sobrio.)
+- `sedation`: OBJETO unico. Es un diferenciador de BIENESTAR/COMODIDAD durante
+  la atencion (manejo de ansiedad, tecnologia sin dolor, acompanamiento, etc.),
+  ACORDE a la especialidad real -- usa terminologia de sedacion dental SOLO si
+  el negocio es odontologico; para otras especialidades hablá de confort del
+  paciente en general. `title`, `description` (1 frase), `points` array de 2-4
+  strings.
 - `hygiene`: 3-4 items de protocolo de higiene/bioseguridad. `title` + `description`.
 - `urgency`: OBJETO unico. `headline` + `subtext`, banda de disponibilidad
   inmediata ("Atencion el mismo dia" / subtexto de 1 frase).
