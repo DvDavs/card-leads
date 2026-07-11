@@ -756,6 +756,18 @@ describe("doc-clasico — stats flotantes + items de confianza", () => {
     // incondicional -> banda oscura entre el panel de horario y el formulario)
     expect(html).not.toContain("grid lg:grid-cols-5 gap-12 bg-slate-900");
   });
+
+  // Bug: la fila de confianza_items ("Especialistas altamente calificados",
+  // "Equipo medico de vanguardia", "Trato humano y personalizado") usaba
+  // `flex items-center gap-6` sin flex-wrap ni flex-col. En mobile un flex
+  // row sin wrap no colapsa: los 3 items se ubican en una sola linea y el
+  // contenido se corta contra el borde derecho del viewport. El fix agrega
+  // flex-wrap para que los items bajen de linea en pantallas angostas.
+  it("la fila de confianza_items tiene flex-wrap (bug: se cortaba en mobile)", async () => {
+    const html = await renderFinal("doc-clasico.html");
+    expect(html).toContain("mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500");
+    expect(html).not.toContain("mt-10 flex items-center gap-6 text-sm text-slate-500");
+  });
 });
 
 describe("doc-perfil — CV: experiencia, educacion, idiomas, habilidades", () => {
