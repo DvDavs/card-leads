@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseJsonLoose } from "./json-repair.js";
 
 /**
  * enrichment.ts — el CONTRATO de la salida del modelo para la etapa `enrich`.
@@ -139,7 +140,7 @@ export function parseEnrichment(raw: string): EnrichmentResult {
 
   let json: unknown;
   try {
-    json = JSON.parse(cleaned);
+    json = parseJsonLoose(cleaned);
   } catch {
     return { ok: false, error: `la respuesta no es JSON valido: ${cleaned.slice(0, 200)}`, raw };
   }

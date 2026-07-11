@@ -290,6 +290,14 @@ function parseHex(hex: string): { r: number; g: number; b: number } | null {
 }
 
 /**
+ * hexToRgb — alias PUBLICO de parseHex. El panel mobile lo necesita para
+ * mostrar el color de marca en RGB (ademas del hex) junto al swatch, asi el
+ * operador puede verificarlo a ojo contra la tarjeta fisica. No se renombra
+ * parseHex para no tocar sus call sites internos.
+ */
+export const hexToRgb = parseHex;
+
+/**
  * textColorFor — dado un hex, devuelve el color de texto legible encima
  * ("#ffffff" o "#000000") usando el mismo calculo WCAG de colorthief. Se usa en
  * verify para RECALCULAR el textColor cuando el humano corrige un hex a mano, y

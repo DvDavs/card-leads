@@ -1,0 +1,16 @@
+[Unit]
+Description=card-leads internal panel (mobile pipeline UI)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/card-panel
+ExecStart=/opt/card-panel/node_modules/.bin/tsx src/panel/server.ts
+Restart=on-failure
+RestartSec=3
+# .env vive junto al codigo (chmod 600), incluye GEMINI_API_KEY + PANEL_* +
+# DEPLOY_* (loopback). loadEnv() lo lee al arrancar.
+EnvironmentFile=/opt/card-panel/.env
+
+[Install]
+WantedBy=multi-user.target

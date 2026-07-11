@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseJsonLoose } from "./json-repair.js";
 import { PersonGenderSchema, RubroSchema } from "../schema.js";
 
 /**
@@ -111,7 +112,7 @@ export function parseExtraction(raw: string): ExtractionResult {
 
   let json: unknown;
   try {
-    json = JSON.parse(cleaned);
+    json = parseJsonLoose(cleaned);
   } catch {
     return { ok: false, error: `la respuesta no es JSON valido: ${cleaned.slice(0, 200)}`, raw };
   }

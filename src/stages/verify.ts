@@ -261,8 +261,13 @@ export function finalizeVerified(lead: Lead): Lead {
 
 // ───────────────────────────── I/O interactivo (no testeado) ─────────────────────────────
 
-/** Descripcion de un campo para el recorrido interactivo. */
-interface FieldDef {
+/**
+ * Descripcion de un campo para el recorrido interactivo. Exportada junto con
+ * RISKY_FIELDS: el panel mobile la reusa como metadata de UI (que campos
+ * marcar como riesgo, en que orden, y cuales llevan swatch de color) en vez
+ * de duplicar esta lista.
+ */
+export interface FieldDef {
   path: LeadFieldPath;
   label: string;
   risky: boolean;
@@ -271,7 +276,7 @@ interface FieldDef {
 
 // Campos de riesgo que son un SOLO string. Los telefonos (lista) se recorren
 // aparte con promptListField, tambien marcados como riesgo.
-const RISKY_FIELDS: FieldDef[] = [
+export const RISKY_FIELDS: FieldDef[] = [
   { path: "contact.whatsapp", label: "WhatsApp", risky: true },
   { path: "socials.facebook", label: "Facebook", risky: true },
   { path: "socials.instagram", label: "Instagram", risky: true },

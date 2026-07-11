@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Panel interno — card-leads</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<main>
+
+  <!-- Screen: login -->
+  <section id="screen-login" class="screen">
+    <h1>Panel interno</h1>
+    <p class="sub">card-leads · herramienta interna, no publica</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="passphrase">Passphrase</label>
+        <input type="password" id="passphrase" name="passphrase" autocomplete="current-password" required />
+      </div>
+      <div class="error-msg" id="login-error"></div>
+      <button type="submit" class="primary" id="login-submit">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Screen: lista de leads -->
+  <section id="screen-list" class="screen">
+    <h1>Leads</h1>
+    <p class="sub" id="list-count">Cargando…</p>
+    <div id="leads-list"></div>
+    <button class="primary" id="new-lead-btn">+ Nuevo</button>
+    <button id="logout-btn">Salir</button>
+  </section>
+
+  <!-- Screen: captura de tarjeta -->
+  <section id="screen-capture" class="screen">
+    <h1>Nueva tarjeta</h1>
+    <p class="sub">Foto de frente (obligatoria) y reverso (opcional)</p>
+    <form id="capture-form">
+      <div class="field">
+        <label for="front-input">Frente *</label>
+        <input type="file" id="front-input" name="front" accept="image/*" capture="environment" required />
+      </div>
+      <div class="field">
+        <label for="back-input">Reverso (opcional)</label>
+        <input type="file" id="back-input" name="back" accept="image/*" capture="environment" />
+      </div>
+      <div class="field">
+        <label for="rubro-input">Rubro</label>
+        <select id="rubro-input" name="rubro">
+          <option value="">(sin definir, default "otro")</option>
+          <option value="doctor">Doctor</option>
+          <option value="barberia">Barberia</option>
+          <option value="estetica">Estetica</option>
+          <option value="veterinario">Veterinario</option>
+          <option value="nutriologo">Nutriologo</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="error-msg" id="capture-error"></div>
+      <button type="submit" class="primary" id="capture-submit">Subir y extraer</button>
+      <button type="button" id="capture-cancel">Cancelar</button>
+    </form>
+    <p class="hint" id="capture-progress" style="display:none;">Extrayendo… puede tardar hasta 30s.</p>
+  </section>
+
+  <!-- Screen: verificacion (checkpoint humano, reemplaza el readline del CLI) -->
+  <section id="screen-verify" class="screen">
+    <h1>Verificar</h1>
+    <p class="sub" id="verify-subtitle"></p>
+    <div class="banner-risk">⚠ Verificar estos datos contra la tarjeta fisica</div>
+
+    <div id="verify-phones"></div>
+    <div id="verify-risky"></div>
+    <div id="verify-colors"></div>
+    <div id="verify-attrs"></div>
+
+    <h1 style="font-size:1.05rem; margin-top:0.5rem;">Campos generales</h1>
+    <div id="verify-general"></div>
+    <div id="verify-services"></div>
+
+    <div class="error-msg" id="verify-error"></div>
+    <button class="primary" id="verify-finalize-btn">Confirmar y continuar</button>
+    <button id="verify-back-btn">Volver a la lista</button>
+  </section>
+
+  <!-- Screen: correr stages (build-cards -> enrich -> build-web -> deploy) -->
+  <section id="screen-run" class="screen">
+    <h1>Publicar</h1>
+    <p class="sub" id="run-subtitle"></p>
+    <div id="run-steps"></div>
+    <div class="error-msg" id="run-error"></div>
+    <button class="primary" id="run-publish-btn">Publicar</button>
+    <button id="run-links-btn">Ver links</button>
+    <button id="run-back-btn">Volver a la lista</button>
+  </section>
+
+  <!-- Screen: links publicos -->
+  <section id="screen-links" class="screen">
+    <h1>Listo</h1>
+    <p class="sub">Copia los links y mandaselos al negocio.</p>
+    <div id="links-list"></div>
+    <button id="links-back-btn">Volver a la lista</button>
+  </section>
+
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
