@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Panel — card-leads</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #0b0d10;
+    --surface: #14171c;
+    --border: #262b33;
+    --text: #e7e9ec;
+    --muted: #8a9099;
+    --accent: #5b8cff;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --border: #e2e5ea;
+      --text: #14171c;
+      --muted: #5b6470;
+      --accent: #3563e0;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  main { max-width: 880px; margin: 0 auto; }
+  header { margin-bottom: 2rem; }
+  h1 { font-size: 1.4rem; font-weight: 600; margin: 0 0 0.25rem; }
+  .sub { color: var(--muted); font-size: 0.9rem; }
+  .list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .card-info { min-width: 0; }
+  .card-name { font-weight: 600; font-size: 1.02rem; }
+  .card-meta { color: var(--muted); font-size: 0.82rem; margin-top: 0.15rem; }
+  .rubro-tag {
+    display: inline-block;
+    background: var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.72rem;
+    margin-right: 0.4rem;
+    text-transform: capitalize;
+  }
+  .links { display: flex; gap: 0.5rem; flex-shrink: 0; }
+  .btn {
+    display: inline-block;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    transition: border-color 0.15s ease;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .empty, .error {
+    color: var(--muted);
+    text-align: center;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+  }
+  .error { color: #e0685b; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Leads publicados</h1>
+    <div class="sub" id="count-sub">Cargando…</div>
+  </header>
+  <div class="list" id="list"></div>
+</main>
+<script>
+  function fmtDate(iso) {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" });
+    } catch {
+      return iso;
+    }
+  }
+
+  function render(entries) {
+    const list = document.getElementById("list");
+    const sub = document.getElementById("count-sub");
+    if (!Array.isArray(entries) || entries.length === 0) {
+      sub.textContent = "0 leads";
+      list.innerHTML = '<div class="empty">Todavia no hay leads publicados.</div>';
+      return;
+    }
+    sub.textContent = entries.length + (entries.length === 1 ? " lead" : " leads");
+    list.innerHTML = entries
+      .map((e) => {
+        const name = e.name || e.slug || "(sin nombre)";
+        const rubro = e.rubro ? '<span class="rubro-tag">' + e.rubro + "</span>" : "";
+        const date = fmtDate(e.deployed_at);
+        const dc = e.dc_url
+          ? '<a class="btn primary" href="' + e.dc_url + '" target="_blank" rel="noopener">Digital card</a>'
+          : "";
+        const web = e.web_url
+          ? '<a class="btn" href="' + e.web_url + '" target="_blank" rel="noopener">Web</a>'
+          : "";
+        return (
+          '<div class="card"><div class="card-info"><div class="card-name">' +
+          name +
+          '</div><div class="card-meta">' +
+          rubro +
+          date +
+          '</div></div><div class="links">' +
+          dc +
+          web +
+          "</div></div>"
+        );
+      })
+      .join("");
+  }
+
+  fetch("leads.json", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))))
+    .then(render)
+    .catch(() => {
+      document.getElementById("count-sub").textContent = "";
+      document.getElementById("list").innerHTML =
+        '<div class="error">No se pudo cargar leads.json.</div>';
+    });
+</script>
+</body>
+</html>
