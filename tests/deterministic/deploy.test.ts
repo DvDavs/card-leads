@@ -432,6 +432,23 @@ describe("deploy — flujo completo", () => {
     expect(runCommandMock).not.toHaveBeenCalled();
   });
 
+  // Bug: build-cards corre ANTES que build-web en el pipeline feliz, asi que
+  // dc/ quedaba escrito en disco con hasGeneratedWebsite=false para SIEMPRE
+  // (nada volvia a regenerarlo despues de que build-web corriera) y el link
+  // "Ver mi sitio" nunca aparecia en produccion. El fix: deploy regenera dc/
+  // (si ya existia) justo antes de subirlo, contra el status ACTUAL del lead.
+  it("regenera dc/ contra el status actual antes de subir: 'Ver mi sitio' aparece aunque dc/ se haya escrito ANTES de build-web", async () => {
+    const lead = deployableLead({ status: "web_built" });
+    await seedLead(lead, { dc: true, web: true }); // dc/index.html placeholder, como si build-cards hubiera corrido antes de web_built
+    mockSsh(undefined);
+
+    await deploy(lead.slug);
+
+    const credencialHtml = readFileSync(path.join(leadDir(lead.slug), "dc", "credencial.html"), "utf8");
+    expect(credencialHtml).toContain("Ver mi sitio");
+    expect(credencialHtml).toContain('href="../web/"');
+  });
+
   it("status anterior a linktree_built: rechazado antes de tocar red", async () => {
     const lead = deployableLead({ status: "verified" });
     await writeLead(lead);

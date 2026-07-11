@@ -7,6 +7,7 @@ import { StatusSchema, type Lead, type Status } from "../lib/schema.js";
 import { isValidSlug } from "../lib/slug.js";
 import { leadDir, readLead, writeLead } from "../lib/storage.js";
 import { runCommand } from "../lib/ssh.js";
+import { buildCards } from "./build-cards.js";
 
 /**
  * deploy — sube `leads/<slug>/dc/` y/o `leads/<slug>/web/` al droplet por
@@ -157,10 +158,27 @@ export async function deploy(slug: string): Promise<Lead> {
 
   loadEnv();
   const cfg = resolveDeployConfig();
-  const lead = await readLead(slug);
+  let lead = await readLead(slug);
   assertDeployableStatus(lead.status);
 
   const localDir = leadDir(slug);
+  const hadDc = await fileExists(path.join(localDir, "dc", "index.html"));
+
+  // Re-generar dc/ contra el status ACTUAL antes de subir, SOLO si ya existia:
+  // build-cards corre primero en el pipeline feliz (demo rapida antes de
+  // comprometerse a una web completa, ver [[digital-cards-architecture]]),
+  // asi que la primera vez que escribio dc/ el status todavia no llegaba a
+  // "web_built" y el link "Ver mi sitio" (hasGeneratedWebsite) quedaba
+  // permanentemente apagado en el HTML ya escrito en disco. Re-ejecutarlo aca
+  // no regresiona el status (buildCards nunca lo hace retroceder) y deja dc/
+  // consistente con el status final justo antes de publicarlo. Gateado por
+  // `hadDc` para no fabricar un dc/ que nunca se pidio (preserva el guard de
+  // "ni dc ni web construidos: deploy no hace ninguna llamada de red").
+  if (hadDc) {
+    await buildCards(slug);
+    lead = await readLead(slug);
+  }
+
   const hasDc = await fileExists(path.join(localDir, "dc", "index.html"));
   const hasWeb = await fileExists(path.join(localDir, "web", "index.html"));
   if (!hasDc && !hasWeb) {
