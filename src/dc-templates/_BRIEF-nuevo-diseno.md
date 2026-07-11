@@ -86,7 +86,8 @@ su `hasX`.
 | `phoneTelHref` | string | `tel:...` listo para el `href`. |
 | `whatsappUrl` | string | URL `wa.me` con mensaje precargado (o vacío). CTA que más convierte. Suele guardarse bajo `{{#hasPhone}}`. |
 | `hasEmail` | bool | / `email` (string). |
-| `hasWebsite` | bool | / `website` (string, URL). |
+| `hasWebsite` | bool | / `website` (string, URL). El sitio PROPIO del negocio (ya lo tenía antes de la tarjeta). |
+| `hasGeneratedWeb` | bool | / `generatedWebUrl` (string, ruta relativa). La mini-web que GENERAMOS (`build-web`), carpeta hermana `web/`. No confundir con `hasWebsite` — pueden aparecer los dos juntos. Gateado por status (`web_built` o posterior): mientras no exista no se muestra, para no linkear a un 404. |
 | `hasAddressLine` | bool | / `addressLine` (string, dirección en una línea) / `mapsUrl` (string, link a Google Maps). |
 | `hasSocials` | bool | Hay al menos una red. |
 | `hasInstagram` | bool | / `instagramUrl` (string). |
@@ -146,13 +147,12 @@ Reglas de color:
 | `metaDescription` | string | Para `<meta name="description">`. |
 | `jsonLd` | string (JSON) | Ficha schema.org. Inyectar **crudo**: `<script type="application/ld+json">{{{jsonLd}}}</script>`. |
 | `year` | number | Año actual (footer/copyright). |
-| `vcard` | string | data URI vCard (o vacío). Botón opcional "Guardar contacto": `{{#vcard}}<a href="{{vcard}}" download>...{{/vcard}}`. |
 | `about` | string | Texto libre "sobre el negocio" (puede ser vacío). |
 
 ### Solo para el diseño `credencial` (lista genérica de enlaces)
 Los diseños nuevos NO necesitan esto — usan los campos planos de arriba. Se
 documenta por completitud:
-- `hasLinks` / `links[]` con `{label, url, kind, icon (SVG crudo), primary?, external?, download?}`
+- `hasLinks` / `links[]` con `{label, url, kind, icon (SVG crudo), primary?, external?}`
 - `whatsapp` (`{url, icon}` | null), `address` (`{lines[], mapsUrl, mapsIcon}` | null)
 
 ## Estructura recomendada del `<head>`

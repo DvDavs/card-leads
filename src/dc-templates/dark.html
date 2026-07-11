@@ -125,6 +125,11 @@ h1{margin:0;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(44px,
       <small>Web</small><span>Visitar sitio</span>
     </a>
     {{/hasWebsite}}
+    {{#hasGeneratedWeb}}
+    <a class="act" href="{{generatedWebUrl}}" target="_blank" rel="noopener">
+      <small>Tu web</small><span>Ver mi sitio</span>
+    </a>
+    {{/hasGeneratedWeb}}
   </section>
 
   {{#hasServices}}

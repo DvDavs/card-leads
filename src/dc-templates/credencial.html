@@ -235,7 +235,7 @@
       <nav class="links" aria-label="Contacto y enlaces">
         {{#links}}{{#primary}}<a class="cta" href="{{url}}" data-kind="{{kind}}"{{#external}} target="_blank" rel="noopener noreferrer"{{/external}}>{{{icon}}}<span>{{label}}</span></a>{{/primary}}{{/links}}
         <div class="grid">
-          {{#links}}{{^primary}}<a class="g" href="{{url}}" data-kind="{{kind}}"{{#external}} target="_blank" rel="noopener noreferrer"{{/external}}{{#download}} download="{{download}}"{{/download}}>{{{icon}}}<span>{{label}}</span></a>{{/primary}}{{/links}}
+          {{#links}}{{^primary}}<a class="g" href="{{url}}" data-kind="{{kind}}"{{#external}} target="_blank" rel="noopener noreferrer"{{/external}}>{{{icon}}}<span>{{label}}</span></a>{{/primary}}{{/links}}
         </div>
         {{^hasLinks}}<p class="empty">Sin enlaces todavía.</p>{{/hasLinks}}
       </nav>

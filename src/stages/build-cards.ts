@@ -29,6 +29,16 @@ const VIEWER_FILE = "index.html";
  */
 const ASSETS_DIR = "assets";
 
+/**
+ * GENERATED_WEB_REL_URL — ruta RELATIVA de una digital card (`dc/<archivo>`)
+ * hacia la mini-web que le genera `build-web` (`web/index.html`), carpeta
+ * HERMANA dentro del mismo `leads/<slug>/`. Relativa (no absoluta) a proposito:
+ * funciona igual al previsualizar el HTML local (`leads/<slug>/dc/x.html`)
+ * y una vez publicado (`deploy` sube `dc/` y `web/` conservando la misma
+ * estructura de carpetas, ver `publicUrl` en `src/stages/deploy.ts`).
+ */
+const GENERATED_WEB_REL_URL = "../web/";
+
 /* ------------------------------------------------------------------ */
 /* Constantes tuneables (mismo criterio que los umbrales de colors.ts) */
 /* ------------------------------------------------------------------ */
@@ -109,7 +119,6 @@ export const LINK_ICONS: Record<string, string> = {
   facebook: `<svg ${ICON_ATTRS}><path fill="currentColor" stroke="none" d="M14.5 8.3h3.2V5h-3.2C12 5 10 7 10 9.5V12H7v3.4h3V21h3.4v-5.6h2.8l.6-3.4h-3.4V9.5c0-.7.5-1.2 1.1-1.2z"/></svg>`,
   tiktok: `<svg ${ICON_ATTRS}><path fill="currentColor" stroke="none" d="M16.6 3c.4 2.3 1.9 3.7 4.2 3.9V10c-1.6 0-3-.5-4.2-1.3v6.4a5.9 5.9 0 1 1-5.9-5.9c.3 0 .6 0 .9.1v3.2a2.8 2.8 0 1 0 1.9 2.6V3h3.1z"/></svg>`,
   maps: `<svg ${ICON_ATTRS}><path d="M20 10.5c0 5.7-8 11-8 11s-8-5.3-8-11a8 8 0 0 1 16 0z"/><circle cx="12" cy="10.5" r="3"/></svg>`,
-  vcard: `<svg ${ICON_ATTRS}><circle cx="9" cy="8" r="3.5"/><path d="M3.5 20c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/><path d="M18 8v6M15 11h6"/></svg>`,
 };
 
 /* ------------------------------------------------------------------ */
@@ -125,8 +134,6 @@ export interface CardLink {
   primary?: boolean;
   /** true => target="_blank" + rel (solo enlaces que salen de la pagina). */
   external?: boolean;
-  /** nombre de archivo para atributo download (solo vCard). */
-  download?: string;
 }
 
 /** Solo digitos: WhatsApp necesita el numero pelado para wa.me. */
@@ -182,48 +189,6 @@ export function socialUrl(kind: "instagram" | "facebook" | "tiktok", value: stri
     case "tiktok":
       return `https://www.tiktok.com/@${handle}`;
   }
-}
-
-/** Escapado de texto segun RFC 6350 (vCard): \ ; , y saltos de linea. */
-function vcardEscape(s: string): string {
-  return s
-    .replace(/\\/g, "\\\\")
-    .replace(/;/g, "\\;")
-    .replace(/,/g, "\\,")
-    .replace(/\r?\n/g, "\\n");
-}
-
-/**
- * buildVcard — vCard 3.0 embebida como data URI. Diferenciador clave: el
- * boton "Guardar contacto" mete al negocio en la agenda del cliente con un
- * toque, cerrando el ciclo tarjeta fisica -> contacto digital. Sin JS.
- */
-export function buildVcard(lead: Lead): string | undefined {
-  const { business, contact } = lead;
-  const fullName = business.person_name || business.name;
-  if (!fullName) return undefined;
-
-  const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
-  lines.push(`N:${vcardEscape(fullName)};;;;`);
-  lines.push(`FN:${vcardEscape(fullName)}`);
-  if (business.name && business.name !== fullName) lines.push(`ORG:${vcardEscape(business.name)}`);
-  if (business.tagline) lines.push(`TITLE:${vcardEscape(business.tagline)}`);
-  for (const p of contact.phones ?? []) {
-    const tel = p.replace(/[^\d+]/g, "");
-    if (tel) lines.push(`TEL;TYPE=WORK,VOICE:${tel}`);
-  }
-  const wa = deriveWhatsappNumber(contact);
-  if (wa && contact.whatsapp) lines.push(`TEL;TYPE=CELL:+${wa}`);
-  if (contact.email) lines.push(`EMAIL;TYPE=WORK:${vcardEscape(contact.email)}`);
-  if (contact.address) {
-    const street = contact.address.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).join(", ");
-    lines.push(`ADR;TYPE=WORK:;;${vcardEscape(street)};;;;`);
-  }
-  if (contact.website) lines.push(`URL:${vcardEscape(contact.website)}`);
-  lines.push("END:VCARD");
-
-  // CRLF por spec; encodeURIComponent deja el data URI seguro dentro de href.
-  return `data:text/vcard;charset=utf-8,${encodeURIComponent(lines.join("\r\n"))}`;
 }
 
 /**
@@ -364,6 +329,26 @@ export function assertBuildableStatus(status: Status): void {
   );
 }
 
+/**
+ * hasGeneratedWebsite — true si el lead YA tiene su mini-web propia generada
+ * por la etapa `build-web` (status "web_built" o posterior, "error" excluido).
+ *
+ * DECISION: `build-cards` corre ANTES que `build-web` en el pipeline feliz
+ * (ver `src/cli.ts`), asi que no se puede chequear en disco si `web/` existe
+ * al momento de armar la digital card. La URL hacia `web/` es deterministica
+ * (carpeta hermana de `dc/`, ver `generatedWebUrl` en `buildCardView`), pero
+ * mostrar el link SIEMPRE llevaria a un 404 si el cliente lo toca antes de
+ * que `build-web` corra. Por eso se gatea con el status real del lead (mismo
+ * criterio de `assertBuildableStatus`/`assertDeployableStatus`): `build-cards`
+ * puede volver a correrse mas adelante para regenerar las cards de un lead
+ * que YA paso por `build-web` (status "web_built" o posterior) — en ese caso
+ * si corresponde mostrar el link.
+ */
+export function hasGeneratedWebsite(status: Status): boolean {
+  const order = StatusSchema.options;
+  return status !== "error" && order.indexOf(status) >= order.indexOf("web_built");
+}
+
 /* ------------------------------------------------------------------ */
 /* Vista pura + render                                                 */
 /* ------------------------------------------------------------------ */
@@ -430,19 +415,25 @@ export function buildCardView(
     });
   });
 
-  const vcard = buildVcard(lead);
-  if (vcard) {
+  if (c.email) links.push({ label: "Email", url: `mailto:${c.email}`, kind: "email", icon: LINK_ICONS.email! });
+  if (c.website) links.push({ label: "Sitio web", url: c.website, kind: "website", icon: LINK_ICONS.website!, external: true });
+
+  // "Ver mi sitio": la mini-web que GENERAMOS para el lead (build-web), NO
+  // confundir con "Sitio web" arriba (el sitio PROPIO que el negocio ya tenia
+  // antes de que lo carguemos, dato de contact.website). Gateado por status:
+  // ver hasGeneratedWebsite.
+  const hasGeneratedWeb = hasGeneratedWebsite(lead.status);
+  const generatedWebUrl = hasGeneratedWeb ? GENERATED_WEB_REL_URL : "";
+  if (hasGeneratedWeb) {
     links.push({
-      label: "Guardar contacto",
-      url: vcard,
-      kind: "vcard",
-      icon: LINK_ICONS.vcard!,
-      download: `${lead.slug}.vcf`,
+      label: "Ver mi sitio",
+      url: generatedWebUrl,
+      kind: "generated-web",
+      icon: LINK_ICONS.website!,
+      external: true,
     });
   }
 
-  if (c.email) links.push({ label: "Email", url: `mailto:${c.email}`, kind: "email", icon: LINK_ICONS.email! });
-  if (c.website) links.push({ label: "Sitio web", url: c.website, kind: "website", icon: LINK_ICONS.website!, external: true });
   if (s.instagram) links.push({ label: "Instagram", url: socialUrl("instagram", s.instagram), kind: "instagram", icon: LINK_ICONS.instagram!, external: true });
   if (s.facebook) links.push({ label: "Facebook", url: socialUrl("facebook", s.facebook), kind: "facebook", icon: LINK_ICONS.facebook!, external: true });
   if (s.tiktok) links.push({ label: "TikTok", url: socialUrl("tiktok", s.tiktok), kind: "tiktok", icon: LINK_ICONS.tiktok!, external: true });
@@ -553,6 +544,8 @@ export function buildCardView(
     email: c.email ?? "",
     hasWebsite,
     website: c.website ?? "",
+    hasGeneratedWeb,
+    generatedWebUrl,
     hasAddressLine,
     addressLine,
     mapsUrl,
@@ -579,7 +572,6 @@ export function buildCardView(
 
 
     // --- meta / extras ---
-    vcard: vcard ?? "",
     jsonLd: buildJsonLd(lead),
     year,
     pageTitle: tagline ? `${name} — ${tagline}` : name,

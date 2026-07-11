@@ -78,7 +78,6 @@ h1{margin:0;font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(29p
 .pill{background:var(--card);border:2px solid color-mix(in oklab,var(--primary) 16%,var(--line));box-shadow:0 4px 0 color-mix(in oklab,var(--primary) 14%,var(--line))}
 .pill:hover{box-shadow:0 6px 0 color-mix(in oklab,var(--primary) 20%,var(--line))}
 .pill .v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vcard{align-self:center;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);border-bottom:2px solid var(--line);padding:3px 2px}
 
 .sect{display:flex;flex-direction:column;gap:12px}
 .sect h2{margin:0;text-align:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px}
@@ -144,7 +143,7 @@ footer p{margin:0;font-size:11px;font-weight:700;color:var(--ink-soft)}
     {{#hasEmail}}<a class="btn pill" href="mailto:{{email}}"><span class="v">{{email}}</span></a>{{/hasEmail}}
     {{#hasAddressLine}}<a class="btn pill" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="v">Cómo llegar</span></a>{{/hasAddressLine}}
     {{#hasWebsite}}<a class="btn pill" href="{{website}}" target="_blank" rel="noopener"><span class="v">Sitio web</span></a>{{/hasWebsite}}
-    {{#vcard}}<a class="vcard" href="{{vcard}}" download>Guardar contacto</a>{{/vcard}}
+    {{#hasGeneratedWeb}}<a class="btn pill" href="{{generatedWebUrl}}" target="_blank" rel="noopener"><span class="v">Ver mi sitio</span></a>{{/hasGeneratedWeb}}
   </section>
 
   {{#hasAddressLine}}

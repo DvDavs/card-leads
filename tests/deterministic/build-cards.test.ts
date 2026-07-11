@@ -5,6 +5,7 @@ import {
   assertBuildableStatus,
   buildCardView,
   buildMapsUrl,
+  hasGeneratedWebsite,
   injectBrandToggle,
   parseMotifs,
   socialUrl,
@@ -361,19 +362,6 @@ describe("buildCardView — identidad y extras", () => {
     expect(buildCardView(lead).initial).toBe("D");
   });
 
-  it("vCard: data URI con FN, TEL y direccion escapada (RFC 6350)", () => {
-    const view = buildCardView(verifiedLead());
-    const vcardLink = linkOfKind(view, "vcard");
-    expect(vcardLink!.download).toBe("prueba-karey.vcf");
-    expect(vcardLink!.url.startsWith("data:text/vcard;charset=utf-8,")).toBe(true);
-    const decoded = decodeURIComponent(vcardLink!.url.split(",")[1]!);
-    expect(decoded).toContain("FN:Dr. Guillermo Karey Pérez Cortés");
-    expect(decoded).toContain("ORG:Torre Médica Universidad");
-    expect(decoded).toContain("TEL;TYPE=WORK,VOICE:9515442192");
-    expect(decoded).toContain("Piso 8\\, Consultorio 808"); // coma escapada
-    expect(decoded).toContain("END:VCARD");
-  });
-
   it("JSON-LD: tipo por rubro, parseable, con telefono y direccion", () => {
     const view = buildCardView(verifiedLead());
     const data = JSON.parse(view.jsonLd as string);
@@ -509,6 +497,55 @@ describe("assertBuildableStatus — guard", () => {
   });
 });
 
+describe("hasGeneratedWebsite — gate del link \"Ver mi sitio\" (build-cards corre ANTES que build-web)", () => {
+  it("false antes de que build-web corra (verified/linktree_built/enriched)", () => {
+    expect(hasGeneratedWebsite("verified")).toBe(false);
+    expect(hasGeneratedWebsite("linktree_built")).toBe(false);
+    expect(hasGeneratedWebsite("enriched")).toBe(false);
+  });
+
+  it("true desde web_built en adelante (build-web ya corrio)", () => {
+    expect(hasGeneratedWebsite("web_built")).toBe(true);
+    expect(hasGeneratedWebsite("deployed")).toBe(true);
+    expect(hasGeneratedWebsite("proposal_ready")).toBe(true);
+    expect(hasGeneratedWebsite("packaged")).toBe(true);
+  });
+
+  it("false en ingested/extracted; excluye error aunque quede despues en el enum", () => {
+    expect(hasGeneratedWebsite("ingested")).toBe(false);
+    expect(hasGeneratedWebsite("extracted")).toBe(false);
+    expect(hasGeneratedWebsite("error")).toBe(false);
+  });
+});
+
+describe("buildCardView — \"Ver mi sitio\" (mini-web generada por build-web, distinta de contact.website)", () => {
+  it("sin web generada todavia (status verified): hasGeneratedWeb false, generatedWebUrl vacio, sin link en el pool generico", () => {
+    const view = buildCardView(verifiedLead());
+    expect(view.hasGeneratedWeb).toBe(false);
+    expect(view.generatedWebUrl).toBe("");
+    expect(linkOfKind(view, "generated-web")).toBeUndefined();
+  });
+
+  it("con web generada (status web_built o posterior): hasGeneratedWeb true, URL relativa a la carpeta hermana web/", () => {
+    const view = buildCardView(verifiedLead({ status: "web_built" }));
+    expect(view.hasGeneratedWeb).toBe(true);
+    expect(view.generatedWebUrl).toBe("../web/");
+    const link = linkOfKind(view, "generated-web");
+    expect(link).toBeDefined();
+    expect(link!.label).toBe("Ver mi sitio");
+    expect(link!.url).toBe("../web/");
+    expect(link!.external).toBe(true);
+  });
+
+  it("coexiste con el sitio PROPIO del negocio (contact.website): son dos links distintos", () => {
+    const lead = verifiedLead({ status: "deployed" });
+    lead.contact.website = "https://elnegocio-ya-tenia.mx";
+    const view = buildCardView(lead);
+    expect(linkOfKind(view, "website")!.url).toBe("https://elnegocio-ya-tenia.mx");
+    expect(linkOfKind(view, "generated-web")!.url).toBe("../web/");
+  });
+});
+
 describe("render del diseno credencial (contrato vista <-> HTML, self-contained)", () => {
   async function renderKarey(): Promise<string> {
     const url = new URL("../../src/dc-templates/credencial.html", import.meta.url);
@@ -524,11 +561,10 @@ describe("render del diseno credencial (contrato vista <-> HTML, self-contained)
     expect(html).toContain("Georgia");
   });
 
-  it("renderiza CTA de WhatsApp derivado, vCard descargable y los 12 servicios", async () => {
+  it("renderiza CTA de WhatsApp derivado y los 12 servicios", async () => {
     const html = await renderKarey();
     expect(html).toContain("wa.me/529515442192");
     expect(html).toContain('class="cta"');
-    expect(html).toContain('download="prueba-karey.vcf"');
     expect(html).toContain("Cateterismo cardíaco");
     expect(html).toContain("MAPA");
   });
@@ -711,6 +747,51 @@ describe("render de los disenos Guelaguetza (paleta fija + assets propios)", () 
     lead.brand.photo_path = "foto-karey.jpg";
     const conFoto = await renderGuela(key, lead);
     expect(conFoto).toContain('src="foto-karey.jpg"');
+  });
+});
+
+describe("\"Ver mi sitio\" en TODO el pool (14 disenos): gateado por status, URL relativa a web/", () => {
+  const ALL_TEMPLATES = [
+    "credencial",
+    "clinic",
+    "dark",
+    "executive",
+    "luxury",
+    "celeste",
+    "vitrina",
+    "rotulo",
+    "seda",
+    "redondo",
+    "lienzo",
+    "guelaguetza-calenda",
+    "guelaguetza-pina",
+    "guelaguetza-tehuana",
+  ];
+
+  async function renderTemplateFor(key: string, lead: Lead): Promise<string> {
+    const url = new URL(`../../src/dc-templates/${key}.html`, import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    return renderTemplate(template, buildCardView(lead, 2026));
+  }
+
+  it.each(ALL_TEMPLATES)("%s: NO muestra 'Ver mi sitio' antes de build-web (status verified)", async (key) => {
+    const html = await renderTemplateFor(key, verifiedLead());
+    expect(html).not.toContain("Ver mi sitio");
+  });
+
+  it.each(ALL_TEMPLATES)(
+    "%s: SI muestra 'Ver mi sitio' con href relativo '../web/' una vez que build-web corrio (status web_built)",
+    async (key) => {
+      const html = await renderTemplateFor(key, verifiedLead({ status: "web_built" }));
+      expect(html).toContain("Ver mi sitio");
+      expect(html).toContain('href="../web/"');
+    },
+  );
+
+  it.each(ALL_TEMPLATES)("%s: sin rastro de 'Guardar contacto' / vCard (funcionalidad removida)", async (key) => {
+    const html = await renderTemplateFor(key, verifiedLead());
+    expect(html.toLowerCase()).not.toContain("vcard");
+    expect(html).not.toContain("Guardar contacto");
   });
 });
 

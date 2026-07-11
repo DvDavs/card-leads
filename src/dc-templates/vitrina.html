@@ -78,7 +78,6 @@ h1{margin:0;font-weight:800;font-size:clamp(30px,8.2vw,38px);letter-spacing:-.02
 .row:hover{border-color:color-mix(in oklab,var(--primary) 40%,var(--line));transform:translateY(-1px)}
 .row .ic{flex:none;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:color-mix(in oklab,var(--primary) 10%,#fff);color:color-mix(in oklab,var(--primary) 80%,#000)}
 .row .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vcard{align-self:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1.5px solid var(--line);padding:4px 2px}
 
 .sect{display:flex;flex-direction:column;gap:12px}
 .sect h2{margin:0;font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft)}
@@ -144,7 +143,7 @@ footer p{margin:0;font-size:11px;color:var(--ink-soft)}
     {{#hasEmail}}<a class="row" href="mailto:{{email}}"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m3 6 9 7 9-7"/></svg></span><span class="v">{{email}}</span></a>{{/hasEmail}}
     {{#hasAddressLine}}<a class="row" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="v">{{addressLine}}</span></a>{{/hasAddressLine}}
     {{#hasWebsite}}<a class="row" href="{{website}}" target="_blank" rel="noopener"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3 4 6.5 4 10s-1 7-4 10c-3-3-4-6.5-4-10s1-7 4-10Z"/></svg></span><span class="v">Visitar sitio web</span></a>{{/hasWebsite}}
-    {{#vcard}}<a class="vcard" href="{{vcard}}" download>Guardar contacto</a>{{/vcard}}
+    {{#hasGeneratedWeb}}<a class="row" href="{{generatedWebUrl}}" target="_blank" rel="noopener"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3 4 6.5 4 10s-1 7-4 10c-3-3-4-6.5-4-10s1-7 4-10Z"/></svg></span><span class="v">Ver mi sitio</span></a>{{/hasGeneratedWeb}}
   </section>
 
   {{#hasServices}}

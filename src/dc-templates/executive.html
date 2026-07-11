@@ -112,6 +112,9 @@ h1{margin:0;font-size:clamp(32px,8.5vw,40px);font-weight:700;letter-spacing:-.03
     {{#hasWebsite}}
     <a class="row" href="{{website}}" target="_blank" rel="noopener"><span class="k">Web</span><span class="v">Visitar sitio</span><span class="ar">→</span></a>
     {{/hasWebsite}}
+    {{#hasGeneratedWeb}}
+    <a class="row" href="{{generatedWebUrl}}" target="_blank" rel="noopener"><span class="k">Tu web</span><span class="v">Ver mi sitio</span><span class="ar">→</span></a>
+    {{/hasGeneratedWeb}}
   </section>
 
   {{#hasServices}}

@@ -102,6 +102,9 @@ h1 em{font-style:italic}
     {{#hasWebsite}}
     <a class="row" href="{{website}}" target="_blank" rel="noopener"><small>Sitio</small><span>Visitar web</span></a>
     {{/hasWebsite}}
+    {{#hasGeneratedWeb}}
+    <a class="row" href="{{generatedWebUrl}}" target="_blank" rel="noopener"><small>Tu web</small><span>Ver mi sitio</span></a>
+    {{/hasGeneratedWeb}}
   </section>
 
   {{#hasServices}}

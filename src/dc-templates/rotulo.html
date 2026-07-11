@@ -77,7 +77,6 @@ h1{margin:0;font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(40px
 .row .k{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);flex:none;width:82px}
 .row .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .ar{flex:none;color:var(--ink-soft)}
-.vcard{align-self:flex-start;margin-top:14px;font-family:'Oswald',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid currentColor;padding-bottom:2px}
 
 .sect{display:flex;flex-direction:column;gap:12px}
 .sect h2{margin:0;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft)}
@@ -149,7 +148,7 @@ footer i{width:26px;height:3px;background:var(--ink)}
     {{#hasEmail}}<a class="row" href="mailto:{{email}}"><span class="k">Correo</span><span class="v">{{email}}</span><span class="ar">→</span></a>{{/hasEmail}}
     {{#hasAddressLine}}<a class="row" href="{{mapsUrl}}" target="_blank" rel="noopener"><span class="k">Local</span><span class="v">{{addressLine}}</span><span class="ar">→</span></a>{{/hasAddressLine}}
     {{#hasWebsite}}<a class="row" href="{{website}}" target="_blank" rel="noopener"><span class="k">Web</span><span class="v">Visitar sitio</span><span class="ar">→</span></a>{{/hasWebsite}}
-    {{#vcard}}<a class="vcard" href="{{vcard}}" download>Guardar contacto</a>{{/vcard}}
+    {{#hasGeneratedWeb}}<a class="row" href="{{generatedWebUrl}}" target="_blank" rel="noopener"><span class="k">Tu web</span><span class="v">Ver mi sitio</span><span class="ar">→</span></a>{{/hasGeneratedWeb}}
   </section>
 
   {{#hasServices}}
