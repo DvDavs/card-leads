@@ -118,14 +118,19 @@
 
   /* ---------- toggle "Ver con los colores de tu marca" (portado del visor
      de digital cards: icono compacto, el aviso aparece como toast y se apaga
-     solo — no tapa el header de la web) ---------- */
+     solo — no tapa el header de la web). Arranca MAS ABAJO del borde superior
+     (para no tapar el boton de menu "sandwich" que traen las webs arriba a la
+     derecha) y es una BURBUJA ARRASTRABLE (ver drag JS). ---------- */
   .brand-toggle{
     position:absolute;
-    top:max(10px,env(safe-area-inset-top));
+    top:calc(max(10px,env(safe-area-inset-top)) + 68px);
     right:max(10px,env(safe-area-inset-right));
     pointer-events:auto;
     display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+    touch-action:none;
   }
+  .brand-toggle.dragging{transition:none}
+  .brand-toggle.dragging .brand-btn{cursor:grabbing;transform:scale(1.06)}
   .brand-btn{
     width:38px;height:38px;flex:none;
     border-radius:50%;
@@ -135,7 +140,8 @@
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
     color:#f2f1ee;
-    cursor:pointer;
+    cursor:grab;
+    touch-action:none;
     transition:background .2s ease,transform .2s ease;
   }
   .brand-btn:hover{background:rgb(15 15 18 / 0.65)}
@@ -163,9 +169,98 @@
   .brand-toast.show{opacity:1;transform:translateY(0)}
   .brand-toast.warn{border-color:rgb(255 200 120 / 0.32);background:rgb(140 60 10 / 0.75);color:#fff3e0}
 
+  /* ---------- barra inferior izquierda: "volver a la tarjeta" + "?" (zona
+     libre; el resto del HUD esta a la derecha/centro) ---------- */
+  .corner{
+    position:absolute;
+    bottom:max(16px,env(safe-area-inset-bottom));
+    left:max(10px,env(safe-area-inset-left));
+    pointer-events:auto;
+    display:flex;align-items:center;gap:8px;
+  }
+  .back-dc{
+    display:inline-flex;align-items:center;gap:7px;
+    height:34px;padding:0 14px 0 11px;
+    border-radius:999px;
+    border:1px solid rgb(255 255 255 / 0.22);
+    background:rgb(15 15 18 / 0.5);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:#f2f1ee;text-decoration:none;
+    font-size:12.5px;font-weight:600;line-height:1;white-space:nowrap;
+    transition:background .2s ease,transform .2s ease;
+  }
+  .back-dc:hover{background:rgb(15 15 18 / 0.7)}
+  .back-dc:active{transform:scale(.96)}
+  .back-dc svg{width:16px;height:16px}
+  .help-btn{
+    width:34px;height:34px;flex:none;
+    border-radius:50%;
+    display:grid;place-items:center;
+    border:1px solid rgb(255 255 255 / 0.22);
+    background:rgb(15 15 18 / 0.5);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:#f2f1ee;
+    font:600 16px/1 system-ui,sans-serif;
+    cursor:pointer;
+    transition:background .2s ease,transform .2s ease;
+  }
+  .help-btn:hover{background:rgb(15 15 18 / 0.7)}
+  .help-btn:active{transform:scale(.92)}
+
+  /* ---------- vista guiada (coach-marks): mismo patron que el visor de
+     digital cards. Overlay oscuro con un reflector sobre el elemento del paso
+     + globo con el texto; posicion por getBoundingClientRect (sigue a la
+     burbuja de marca aunque se arrastre). ---------- */
+  .tour{position:fixed;inset:0;z-index:50;pointer-events:auto;display:none}
+  .tour.open{display:block}
+  .tour.no-spot{background:rgb(6 6 10 / 0.72)}
+  .tour-spot{
+    position:absolute;left:0;top:0;width:0;height:0;
+    border-radius:16px;
+    box-shadow:0 0 0 9999px rgb(6 6 10 / 0.72);
+    transition:all .32s cubic-bezier(.22,.75,.3,1);
+    pointer-events:none;
+  }
+  .tour.no-spot .tour-spot{display:none}
+  .tour-pop{
+    position:absolute;
+    width:min(300px,84vw);
+    padding:16px 16px 12px;
+    border-radius:16px;
+    border:1px solid rgb(255 255 255 / 0.14);
+    background:rgb(20 20 24 / 0.94);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    color:#f2f1ee;
+    box-shadow:0 12px 40px rgb(0 0 0 / 0.5);
+    transition:top .3s ease,left .3s ease;
+  }
+  .tour-title{margin:0 0 5px;font-size:15px;font-weight:700;letter-spacing:.01em}
+  .tour-text{margin:0;font-size:13px;line-height:1.45;color:rgb(242 241 238 / 0.82)}
+  .tour-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+  .tour-dots{display:flex;gap:6px;align-items:center}
+  .tour-dots i{width:6px;height:6px;border-radius:50%;background:rgb(255 255 255 / 0.28);transition:background .2s,transform .2s}
+  .tour-dots i.on{background:#f2f1ee;transform:scale(1.3)}
+  .tour-skip{
+    border:none;background:transparent;padding:6px 2px;
+    color:rgb(242 241 238 / 0.55);font-size:12px;cursor:pointer;
+  }
+  .tour-skip:hover{color:rgb(242 241 238 / 0.85)}
+  .tour-next{
+    border:none;border-radius:999px;
+    padding:8px 16px;
+    background:#3d6fd6;color:#fff;
+    font-size:13px;font-weight:600;cursor:pointer;
+    transition:background .2s,transform .2s;
+  }
+  .tour-next:hover{background:#2f5ec0}
+  .tour-next:active{transform:scale(.95)}
+
   @media (prefers-reduced-motion: reduce){
     .track{transition:none}
-    .dot,.nav,.brand-btn{transition:none}
+    .dot,.nav,.brand-btn,.tour-spot,.tour-pop{transition:none}
     .chip{view-transition-name:none}
   }
 </style>
@@ -196,11 +291,36 @@
 
     <div class="dots" role="tablist" aria-label="Diseños disponibles"></div>
 
-    <div class="brand-toggle">
+    <div class="brand-toggle" id="brandToggle">
       <button type="button" class="brand-btn" id="brandBtn" aria-pressed="false" aria-label="Ver con los colores de tu marca">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.9 0-.5-.2-.9-.6-1.3-.4-.4-.5-.9-.2-1.4.3-.5.9-.6 1.5-.6H16a4 4 0 0 0 4-4c0-5-3.6-8.8-8-8.8Z"/><circle cx="7.5" cy="10.5" r="1.15" fill="currentColor" stroke="none"/><circle cx="10.3" cy="7" r="1.15" fill="currentColor" stroke="none"/><circle cx="14.3" cy="7.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="16.8" cy="10.8" r="1.15" fill="currentColor" stroke="none"/></svg>
       </button>
       <p class="brand-toast" id="brandToast" role="status"></p>
+    </div>
+
+    <div class="corner">
+      <!-- Volver al visor de la tarjeta digital (carpeta hermana dc/). El
+           enlace es relativo: funciona igual en la previsualizacion local y
+           publicado (deploy sube dc/ y web/ con la misma estructura). -->
+      <a class="back-dc" id="backDc" href="../dc/index.html" aria-label="Volver a la tarjeta digital">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Tarjeta digital</span>
+      </a>
+      <button type="button" class="help-btn" id="helpBtn" aria-label="Ver la guía de nuevo">?</button>
+    </div>
+  </div>
+
+  <!-- Vista guiada (coach-marks). Mismo patron que el visor de digital cards. -->
+  <div class="tour" id="tour" role="dialog" aria-modal="true" aria-label="Guía rápida">
+    <div class="tour-spot" id="tourSpot"></div>
+    <div class="tour-pop" id="tourPop">
+      <p class="tour-title" id="tourTitle"></p>
+      <p class="tour-text" id="tourText"></p>
+      <div class="tour-actions">
+        <button type="button" class="tour-skip" id="tourSkip">Saltar</button>
+        <div class="tour-dots" id="tourDots" aria-hidden="true"></div>
+        <button type="button" class="tour-next" id="tourNext">Siguiente</button>
+      </div>
     </div>
   </div>
 
@@ -416,6 +536,144 @@
         }
       }
     });
+
+    /* ---------- burbuja de marca ARRASTRABLE (igual que el visor de digital
+     * cards): arranca abajo del borde superior para no tapar el menu de la web,
+     * y se puede reubicar. Si el gesto se mueve mas de DRAG_THRESHOLD es un DRAG
+     * (mover) y se cancela el click (toggle). */
+    var brandToggle = document.getElementById("brandToggle");
+    var DRAG_THRESHOLD = 6;
+    var bDown = false, bMoved = false, bPointer = null;
+    var bStartX = 0, bStartY = 0, bOrigL = 0, bOrigT = 0;
+
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+    // El seguimiento se hace en `window` (no en el boton chico): un arrastre
+    // rapido abandona el boton antes de superar el umbral; en window se sigue
+    // igual aunque el puntero salga del boton.
+    function onBrandMove(e) {
+      if (!bDown || e.pointerId !== bPointer) return;
+      var dxp = e.clientX - bStartX;
+      var dyp = e.clientY - bStartY;
+      if (!bMoved) {
+        if (Math.abs(dxp) < DRAG_THRESHOLD && Math.abs(dyp) < DRAG_THRESHOLD) return;
+        bMoved = true;
+        brandToggle.classList.add("dragging");
+      }
+      var w = brandToggle.offsetWidth, h = brandToggle.offsetHeight;
+      brandToggle.style.left = clamp(bOrigL + dxp, 6, innerWidth - w - 6) + "px";
+      brandToggle.style.top = clamp(bOrigT + dyp, 6, innerHeight - h - 6) + "px";
+      brandToggle.style.right = "auto";
+      e.preventDefault();
+    }
+    function onBrandUp() {
+      if (!bDown) return;
+      bDown = false;
+      brandToggle.classList.remove("dragging");
+      removeEventListener("pointermove", onBrandMove);
+      removeEventListener("pointerup", onBrandUp);
+      removeEventListener("pointercancel", onBrandUp);
+    }
+    brandBtn.addEventListener("pointerdown", function (e) {
+      bDown = true;
+      bMoved = false;
+      bPointer = e.pointerId;
+      bStartX = e.clientX;
+      bStartY = e.clientY;
+      var r = brandToggle.getBoundingClientRect();
+      bOrigL = r.left;
+      bOrigT = r.top;
+      addEventListener("pointermove", onBrandMove);
+      addEventListener("pointerup", onBrandUp);
+      addEventListener("pointercancel", onBrandUp);
+    });
+    brandBtn.addEventListener("click", function (e) {
+      if (bMoved) {
+        bMoved = false;
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    }, true);
+
+    /* ---------- vista guiada (coach-marks): mismo patron que el visor de
+     * digital cards. Senala las zonas clave y ofrece volver a la tarjeta. */
+    var TOUR_KEY = "web-tour-seen-v1";
+    var steps = [
+      { sel: null, title: "Tu página web", text: "Este es un ejemplo de cómo se vería tu propia página web, hecha a partir de tu tarjeta." },
+      { sel: "#brandBtn", title: "Los colores de tu marca", text: "Con este botón puedes ver la web con los colores de tu marca. Puedes arrastrarlo si te estorba." },
+      { sel: ".dots", title: "Otros diseños", text: "Aquí puedes ver otros diseños de página: desliza a los lados o usa las flechas." },
+      { sel: "#backDc", title: "Volver a tu tarjeta", text: "Cuando quieras, regresa a tu tarjeta digital desde este botón." }
+    ];
+
+    var tour = document.getElementById("tour");
+    var tourSpot = document.getElementById("tourSpot");
+    var tourPop = document.getElementById("tourPop");
+    var tourTitle = document.getElementById("tourTitle");
+    var tourText = document.getElementById("tourText");
+    var tourDots = document.getElementById("tourDots");
+    var tourNext = document.getElementById("tourNext");
+    var tourSkip = document.getElementById("tourSkip");
+    var helpBtn = document.getElementById("helpBtn");
+    var tourStep = 0;
+
+    steps.forEach(function () {
+      var i = document.createElement("i");
+      tourDots.appendChild(i);
+    });
+    var tourDotEls = Array.prototype.slice.call(tourDots.children);
+
+    function placeTour() {
+      var step = steps[tourStep];
+      var target = step.sel ? document.querySelector(step.sel) : null;
+      var rect = target && target.getBoundingClientRect();
+      if (rect && rect.width) {
+        tour.classList.remove("no-spot");
+        var pad = 8;
+        tourSpot.style.left = (rect.left - pad) + "px";
+        tourSpot.style.top = (rect.top - pad) + "px";
+        tourSpot.style.width = (rect.width + pad * 2) + "px";
+        tourSpot.style.height = (rect.height + pad * 2) + "px";
+        var popW = tourPop.offsetWidth, popH = tourPop.offsetHeight;
+        var below = rect.bottom + pad + 12;
+        var top = below + popH < innerHeight ? below : (rect.top - pad - 12 - popH);
+        top = clamp(top, 10, innerHeight - popH - 10);
+        var left = clamp(rect.left + rect.width / 2 - popW / 2, 10, innerWidth - popW - 10);
+        tourPop.style.left = left + "px";
+        tourPop.style.top = top + "px";
+      } else {
+        tour.classList.add("no-spot");
+        var pw = tourPop.offsetWidth, ph = tourPop.offsetHeight;
+        tourPop.style.left = clamp(innerWidth / 2 - pw / 2, 10, innerWidth - pw - 10) + "px";
+        tourPop.style.top = clamp(innerHeight / 2 - ph / 2, 10, innerHeight - ph - 10) + "px";
+      }
+      tourTitle.textContent = step.title;
+      tourText.textContent = step.text;
+      tourNext.textContent = tourStep === steps.length - 1 ? "Entendido" : "Siguiente";
+      tourDotEls.forEach(function (d, i) { d.classList.toggle("on", i === tourStep); });
+    }
+
+    function openTour() {
+      tourStep = 0;
+      tour.classList.add("open");
+      placeTour();
+    }
+    function closeTour() {
+      tour.classList.remove("open");
+      try { localStorage.setItem(TOUR_KEY, "1"); } catch (_) {}
+    }
+
+    tourNext.addEventListener("click", function () {
+      if (tourStep >= steps.length - 1) { closeTour(); return; }
+      tourStep++;
+      placeTour();
+    });
+    tourSkip.addEventListener("click", closeTour);
+    helpBtn.addEventListener("click", openTour);
+    addEventListener("resize", function () { if (tour.classList.contains("open")) placeTour(); });
+
+    var tourSeen = false;
+    try { tourSeen = localStorage.getItem(TOUR_KEY) === "1"; } catch (_) {}
+    if (!tourSeen) setTimeout(openTour, 550);
 
     paint(false);
     ensureLoaded(index); // primera carga: la visible + su adyacente

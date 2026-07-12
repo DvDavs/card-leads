@@ -698,6 +698,10 @@ export async function buildCards(slug: string): Promise<string[]> {
       const label = labelFor(entry.key);
       return { file: entry.file, name: label.name, audience: label.audience };
     }),
+    // Gatea el paso "Tu propia página web" de la vista guiada: solo se muestra
+    // si el lead ya paso por build-web (mismo criterio que el link "Ver mi
+    // sitio" de cada card). Antes de eso, prometer una web daria un 404.
+    hasGeneratedWeb: hasGeneratedWebsite(lead.status),
   };
   const viewerHtml = renderTemplate(viewerTemplate, viewerView);
   const viewerRelPath = path.posix.join(DC_DIR, VIEWER_FILE);

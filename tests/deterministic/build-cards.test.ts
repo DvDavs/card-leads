@@ -890,6 +890,51 @@ describe("render del visor (_viewer.html)", () => {
     expect(html).toContain("DOT_WINDOW_RADIUS = 1");
     expect(html).toContain("classList.toggle(\"edge\"");
   });
+
+  it("la burbuja de marca es arrastrable (drag distingue de click) y arranca abajo del borde", async () => {
+    const url = new URL("../../src/dc-templates/_viewer.html", import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    const html = renderTemplate(template, {
+      cards: [{ file: "clinic.html", name: "Clinic", audience: "" }],
+    });
+    expect(html).toContain('id="brandToggle"');
+    // arranca corrida hacia abajo para no tapar el menu "sandwich" del diseno
+    expect(html).toContain("+ 68px)");
+    // drag: supera un umbral, marca "dragging" y cancela el click si hubo drag
+    expect(html).toContain("DRAG_THRESHOLD");
+    expect(html).toContain('classList.add("dragging")');
+    expect(html).toContain("stopImmediatePropagation");
+  });
+
+  it("trae la vista guiada (coach-marks) con los pasos base y el boton de reabrir", async () => {
+    const url = new URL("../../src/dc-templates/_viewer.html", import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    const html = renderTemplate(template, {
+      cards: [{ file: "clinic.html", name: "Clinic", audience: "" }],
+    });
+    expect(html).toContain('id="tour"');
+    expect(html).toContain('id="helpBtn"');
+    expect(html).toContain("cómo se vería tu tarjeta digital");
+    expect(html).toContain("los colores de tu marca");
+    expect(html).toContain("Otros diseños");
+  });
+
+  it("el paso 'tu propia página web' de la guia se muestra SOLO con hasGeneratedWeb", async () => {
+    const url = new URL("../../src/dc-templates/_viewer.html", import.meta.url);
+    const template = await fs.readFile(fileURLToPath(url), "utf8");
+    const withWeb = renderTemplate(template, {
+      cards: [{ file: "clinic.html", name: "Clinic", audience: "" }],
+      hasGeneratedWeb: true,
+    });
+    const withoutWeb = renderTemplate(template, {
+      cards: [{ file: "clinic.html", name: "Clinic", audience: "" }],
+    });
+    expect(withWeb).toContain("Tu propia página web");
+    expect(withoutWeb).not.toContain("Tu propia página web");
+    // ni con ni sin el paso quedan marcadores sin resolver
+    expect(withWeb).not.toMatch(/\{\{/);
+    expect(withoutWeb).not.toMatch(/\{\{/);
+  });
 });
 
 /**

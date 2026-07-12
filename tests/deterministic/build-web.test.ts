@@ -912,4 +912,29 @@ describe("visor web doctor/_viewer.html (swipeable, lazy-load + toggle de marca)
     // el handshake responde SOLO al iframe que avisa (clave con lazy-load)
     expect(html).toContain("ensureLoaded");
   });
+
+  it("la burbuja de marca es arrastrable y arranca abajo del borde (no tapa el menu de la web)", async () => {
+    const html = await renderViewer();
+    expect(html).toContain('id="brandToggle"');
+    expect(html).toContain("+ 68px)");
+    expect(html).toContain("DRAG_THRESHOLD");
+    expect(html).toContain('classList.add("dragging")');
+    expect(html).toContain("stopImmediatePropagation");
+  });
+
+  it("trae el boton 'Tarjeta digital' que vuelve al visor de la card (carpeta hermana ../dc/)", async () => {
+    const html = await renderViewer();
+    expect(html).toContain('id="backDc"');
+    expect(html).toContain('href="../dc/index.html"');
+    expect(html).toContain("Tarjeta digital");
+  });
+
+  it("trae la vista guiada (coach-marks) con los pasos base y el boton de reabrir", async () => {
+    const html = await renderViewer();
+    expect(html).toContain('id="tour"');
+    expect(html).toContain('id="helpBtn"');
+    expect(html).toContain("cómo se vería tu propia página web");
+    expect(html).toContain("los colores de tu marca");
+    expect(html).toContain("Volver a tu tarjeta");
+  });
 });
