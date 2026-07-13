@@ -224,13 +224,12 @@ function renderAttrField(a) {
     </div>`;
 }
 
-// El <input type="color"> nativo exige un value ESTRICTO "#rrggbb" (6 digitos,
-// minusculas, sin alpha) o lo ignora en silencio. El hex que viene del server
-// (o el que el operador tipeo a mano en el campo de texto) puede no cumplir
-// eso (vacio, con mayusculas, sin "#", o directamente invalido: el server NO
-// valida formato, ver applyCorrection/normStr en stages/verify.ts). Por eso
-// toda lectura hacia el picker pasa por aca; si no matchea, cae a "#000000"
-// (el picker necesita SIEMPRE un value valido para poder abrirse).
+// Normaliza un hex a "#rrggbb" estricto (6 digitos, minusculas, con "#"). El
+// hex que viene del server (o el que el operador tipeo a mano en el campo de
+// texto) puede no cumplir eso (vacio, con mayusculas, sin "#", o invalido: el
+// server NO valida formato, ver applyCorrection/normStr en stages/verify.ts).
+// Se usa para pintar el swatch disparador de la flor; si no matchea, cae a
+// "#000000".
 function normalizeColorInputHex(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex ?? "").trim());
   return m ? `#${m[1].toLowerCase()}` : "#000000";
@@ -247,7 +246,7 @@ function renderColorField(c, palette) {
       <div class="color-detail">${esc(c.hex ?? "(sin definir)")} · ${esc(rgbText)}</div>
     </div>
     <div class="color-edit">
-      <input type="color" class="color-native" data-color-for="${esc(c.path)}" value="${normalizeColorInputHex(c.hex)}" aria-label="Ajustar ${esc(c.label)} con selector visual" />
+      <button type="button" class="blossom-trigger" data-blossom-for="${esc(c.path)}" data-label="${esc(c.label)}" style="background-color:${esc(c.hex ?? "transparent")}" aria-label="Elegir ${esc(c.label)} con selector visual"></button>
       <input type="text" data-field="${esc(c.path)}" data-kind="color" value="${esc(c.hex ?? "")}" placeholder="#rrggbb" />
       <div class="palette-chips">${chips}</div>
     </div>`;
@@ -311,39 +310,22 @@ async function saveField(field, value) {
 // listener por tipo de evento alcanza para todos.
 document.getElementById("screen-verify").addEventListener("change", (ev) => {
   const el = ev.target;
-  // El picker nativo no lleva data-field (no es un campo de texto libre): al
-  // confirmar un color (onchange = soltar el picker) guarda igual que el resto
-  // de los campos, mismo flujo de autosave + reload completo de la vista.
-  if (el.dataset && el.dataset.colorFor) {
-    saveField(el.dataset.colorFor, el.value);
-    return;
-  }
   if (!el.dataset || !el.dataset.field) return;
   saveField(el.dataset.field, readFieldValue(el));
 });
 
-// Sync en vivo entre el picker nativo y el campo de texto hex, SIN guardar
-// (el guardado real ocurre en "change", arriba). "input" dispara mientras el
-// operador arrastra el picker (desktop) o al instante al confirmar (mobile),
-// asi que ninguno de los dos campos "pelea" al otro: cada uno solo empuja su
-// valor normalizado hacia el otro, nunca dispara su propio autosave desde aca.
+// Sync en vivo del swatch disparador de la flor mientras el operador tipea un
+// hex a mano, SIN guardar (el guardado real ocurre en "change", arriba): en
+// cuanto lo tipeado ES un hex valido, el swatch adopta ese color, asi el
+// disparador siempre refleja el campo de texto sin disparar su propio autosave.
 document.getElementById("screen-verify").addEventListener("input", (ev) => {
   const el = ev.target;
-  if (!el.dataset) return;
+  if (!el.dataset || el.dataset.kind !== "color") return;
   const container = el.closest(".color-edit");
   if (!container) return;
-  if (el.dataset.colorFor) {
-    // picker -> texto: el valor nativo ya es "#rrggbb" estricto, se copia tal cual.
-    const hexInput = container.querySelector('input[data-kind="color"]');
-    if (hexInput) hexInput.value = el.value;
-    return;
-  }
-  if (el.dataset.kind === "color") {
-    // texto -> picker: solo si lo tipeado YA es un hex valido (el picker no
-    // acepta nada a medio escribir, ver normalizeColorInputHex).
-    if (!/^#?[0-9a-f]{6}$/i.test(el.value.trim())) return;
-    const nativeInput = container.querySelector('input[type="color"]');
-    if (nativeInput) nativeInput.value = normalizeColorInputHex(el.value);
+  const trigger = container.querySelector(".blossom-trigger");
+  if (trigger && /^#?[0-9a-f]{6}$/i.test(el.value.trim())) {
+    trigger.style.backgroundColor = normalizeColorInputHex(el.value);
   }
 });
 
@@ -356,6 +338,20 @@ document.getElementById("screen-verify").addEventListener("click", (ev) => {
   const setColorField = ev.target.dataset && ev.target.dataset.setColor;
   if (setColorField) {
     saveField(setColorField, ev.target.dataset.hex);
+    return;
+  }
+  // Disparador de la flor: abre el selector visual centrado en el color actual
+  // del campo; al confirmar guarda por el mismo camino que el resto (saveField).
+  const trigger = ev.target.closest && ev.target.closest(".blossom-trigger");
+  if (trigger && window.Blossom) {
+    const path = trigger.dataset.blossomFor;
+    const container = trigger.closest(".color-edit");
+    const hexInput = container && container.querySelector('input[data-kind="color"]');
+    window.Blossom.open({
+      hex: hexInput ? hexInput.value : "",
+      label: trigger.dataset.label,
+      onConfirm: (hex) => saveField(path, hex),
+    });
   }
 });
 
