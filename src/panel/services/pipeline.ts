@@ -4,6 +4,7 @@ import { deploy } from "../../stages/deploy.js";
 import { enrich } from "../../stages/enrich.js";
 import { extract } from "../../stages/extract.js";
 import { ingest, type IngestOptions } from "../../stages/ingest.js";
+import { pkg } from "../../stages/package.js";
 import { readLead } from "../../lib/storage.js";
 import type { Lead } from "../../lib/schema.js";
 
@@ -35,7 +36,7 @@ export async function runIngestAndExtract(opts: IngestOptions): Promise<Lead> {
   return withSlugLock(ingested.slug, () => extract(ingested.slug));
 }
 
-export type RunnableStage = "build-cards" | "enrich" | "build-web" | "deploy";
+export type RunnableStage = "build-cards" | "enrich" | "build-web" | "deploy" | "package";
 
 /** Corre una stage por nombre, bajo lock del slug. Usado por el endpoint SSE (batch 4). */
 export async function runStage(slug: string, stage: RunnableStage): Promise<Lead> {
@@ -52,6 +53,9 @@ export async function runStage(slug: string, stage: RunnableStage): Promise<Lead
         break;
       case "deploy":
         await deploy(slug);
+        break;
+      case "package":
+        await pkg(slug);
         break;
     }
     // las stages devuelven distintas cosas (Lead, string[], string); releemos

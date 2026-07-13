@@ -215,3 +215,14 @@ textarea {
 .link-row label { margin-bottom: 0.5rem; }
 .link-row .field-row-inputs a.btn { flex: 1; text-align: center; }
 .link-url { word-break: break-all; font-size: 0.8rem; color: var(--muted); margin: 0.3rem 0 0.6rem; }
+/* Mensaje de outreach: preserva saltos de linea, scroll si es largo. */
+.msg-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text, var(--muted));
+  margin: 0.3rem 0 0.6rem;
+  max-height: 11rem;
+  overflow-y: auto;
+}

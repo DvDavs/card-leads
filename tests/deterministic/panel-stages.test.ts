@@ -135,12 +135,41 @@ describe("stages route (SSE) — con ssh mockeado", () => {
     expect(donePayload.links.web_url).toBe("https://cards.kronet.app/carlos-doc/web/");
   });
 
-  it("GET /links devuelve null si el lead nunca se deployo", async () => {
+  it("GET /links devuelve null si el lead nunca se deployo ni empaqueto", async () => {
     const app = createApp();
     await writeLead(deployableLead({ status: "verified", generated: {} }));
     const cookie = await loginCookie(app);
     const res = await app.request("/api/leads/carlos-doc/links", { headers: { cookie } });
-    expect(await res.json()).toEqual({ dc_url: null, web_url: null });
+    expect(await res.json()).toEqual({
+      dc_url: null,
+      web_url: null,
+      outreach_front: null,
+      outreach_back: null,
+    });
+  });
+
+  it("POST /stages/package arma el mensaje y GET /links devuelve front/back", async () => {
+    const app = createApp();
+    await writeLead(deployableLead()); // status "linktree_built" -> packageable
+    const cookie = await loginCookie(app);
+
+    const res = await app.request("/api/leads/carlos-doc/stages/package", {
+      method: "POST",
+      headers: { cookie },
+    });
+    expect(res.status).toBe(200);
+
+    const events = parseSSE(await res.text());
+    expect(events.map((e) => e.event)).toEqual(expect.arrayContaining(["started", "done"]));
+    expect(events.some((e) => e.event === "error")).toBe(false);
+    const donePayload = events.find((e) => e.event === "done")!.data as { status: string };
+    expect(donePayload.status).toBe("packaged");
+
+    const links = await app.request("/api/leads/carlos-doc/links", { headers: { cookie } });
+    const data = (await links.json()) as { outreach_front: string | null; outreach_back: string | null };
+    expect(data.outreach_front).toContain("Hola, buen día");
+    expect(data.outreach_front).toContain("https://cards.kronet.app/carlos-doc");
+    expect(data.outreach_back).toContain("de forma automática");
   });
 
   it("una stage desconocida da 400", async () => {

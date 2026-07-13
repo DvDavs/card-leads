@@ -378,21 +378,23 @@ $("verify-back-btn").addEventListener("click", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/* Run / progreso (build-cards -> enrich -> build-web -> deploy, via SSE) */
+/* Run / progreso (build-cards -> enrich -> build-web -> deploy -> package, via SSE) */
 /* ------------------------------------------------------------------ */
 
-const STAGE_ORDER = ["build-cards", "enrich", "build-web", "deploy"];
+const STAGE_ORDER = ["build-cards", "enrich", "build-web", "deploy", "package"];
 const STAGE_LABELS = {
   "build-cards": "Digital cards",
   enrich: "Copy de marketing",
   "build-web": "Sitio web",
   deploy: "Publicar (deploy)",
+  package: "Mensaje de contacto",
 };
 const STAGE_PRODUCES = {
   "build-cards": "linktree_built",
   enrich: "enriched",
   "build-web": "web_built",
   deploy: "deployed",
+  package: "packaged",
 };
 const STATUS_ORDER = [
   "ingested", "extracted", "verified", "linktree_built", "enriched",
@@ -518,12 +520,28 @@ function linkRow(label, url) {
     </div>`;
 }
 
+// Igual que linkRow pero para el mensaje de outreach: texto multilinea (sin
+// "Abrir", no es una URL) + boton Copiar. El data-copy conserva los \n del
+// mensaje; esc() solo escapa &<>"' y deja los saltos de linea intactos.
+function messageRow(label, text) {
+  return `
+    <div class="link-row">
+      <label>${esc(label)}</label>
+      <div class="msg-text">${esc(text)}</div>
+      <div class="field-row-inputs">
+        <button type="button" data-copy="${esc(text)}">Copiar</button>
+      </div>
+    </div>`;
+}
+
 async function loadLinksScreen(slug) {
   const res = await fetch(`/api/leads/${encodeURIComponent(slug)}/links`, { credentials: "same-origin" });
   const data = await res.json().catch(() => ({}));
   const rows = [];
   if (data.dc_url) rows.push(linkRow("Digital card", data.dc_url));
   if (data.web_url) rows.push(linkRow("Sitio web", data.web_url));
+  if (data.outreach_front) rows.push(messageRow("Mensaje — apertura", data.outreach_front));
+  if (data.outreach_back) rows.push(messageRow("Mensaje — seguimiento", data.outreach_back));
   $("links-list").innerHTML = rows.join("") || '<p class="empty-hint">Todavia no hay links. Corre "Publicar" primero.</p>';
   $("links-list").querySelectorAll("[data-copy]").forEach((btn) => {
     btn.addEventListener("click", () => {
