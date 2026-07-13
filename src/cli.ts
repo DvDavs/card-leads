@@ -58,7 +58,7 @@ Uso:
   cli build-web <slug>        (stub)
   cli deploy <slug>
   cli proposal <slug>         (stub)
-  cli package <slug>          (stub)
+  cli package <slug>          (mensaje de contacto para WhatsApp)
 
 Rubros: doctor, barberia, estetica, veterinario, nutriologo, otro
 `;
@@ -146,9 +146,18 @@ async function main(): Promise<void> {
     case "proposal":
       await proposal(positionals[0]!);
       break;
-    case "package":
-      await pkg(positionals[0]!);
+    case "package": {
+      const { lead, message } = await pkg(positionals[0]!);
+      console.log(`mensaje de contacto listo: ${lead.slug} (status=${lead.status})`);
+      console.log("\n── Mensaje de apertura (front) ──\n");
+      console.log(message.front);
+      console.log("\n── Mensaje de seguimiento (back) ──\n");
+      console.log(message.back);
+      console.log(
+        "\n(Guardado en generated.outreach_message. Envíalo junto con una captura de la tarjeta digital.)",
+      );
       break;
+    }
 
     case undefined:
     case "help":
