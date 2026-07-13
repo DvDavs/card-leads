@@ -89,7 +89,7 @@
     top:calc(max(10px,env(safe-area-inset-top)) + 68px);
     right:max(10px,env(safe-area-inset-right));
     pointer-events:auto;
-    display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+    display:flex;flex-direction:column;gap:8px;
     touch-action:none; /* el drag maneja el gesto; no scroll/zoom nativo */
   }
   .brand-toggle.dragging{transition:none}
@@ -112,7 +112,11 @@
   .brand-btn[aria-pressed="true"]{background:#3d6fd6;border-color:transparent}
   .brand-btn svg{width:18px;height:18px}
   .brand-toast{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
     margin:0;
+    width:max-content;
     max-width:min(230px,68vw);
     padding:7px 12px;
     border-radius:12px;
@@ -131,6 +135,7 @@
   }
   .brand-toast.show{opacity:1;transform:translateY(0)}
   .brand-toast.warn{border-color:rgb(255 200 120 / 0.32);background:rgb(140 60 10 / 0.75);color:#fff3e0}
+  .brand-toggle.toast-left .brand-toast{left:0;right:auto;text-align:left}
 
   /* ---------- boton "?" para reabrir la vista guiada (esquina inferior
      izquierda, zona libre; el resto del HUD esta a la derecha/centro) ------- */
@@ -467,11 +472,20 @@
      * reposiciona con left/top absolutos (se descarta el anclaje `right` del
      * CSS) clampeado adentro de la ventana. */
     var brandToggle = document.getElementById("brandToggle");
-    var DRAG_THRESHOLD = 6;
+    var DRAG_THRESHOLD = 10;
     var bDown = false, bMoved = false, bPointer = null;
     var bStartX = 0, bStartY = 0, bOrigL = 0, bOrigT = 0;
 
     function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+    // El toast se abre hacia el lado libre de la pantalla (no siempre hacia la
+    // izquierda) para que nunca se salga del viewport al crecer.
+    function updateToastSide() {
+      var r = brandToggle.getBoundingClientRect();
+      var cx = r.left + r.width / 2;
+      brandToggle.classList.toggle("toast-left", cx < innerWidth / 2);
+    }
+    updateToastSide();
 
     // El seguimiento del movimiento se hace en `window` (no en el boton): el
     // boton es chico (38px) y un arrastre rapido lo abandona antes de superar
@@ -499,6 +513,7 @@
       removeEventListener("pointermove", onBrandMove);
       removeEventListener("pointerup", onBrandUp);
       removeEventListener("pointercancel", onBrandUp);
+      updateToastSide();
     }
     brandBtn.addEventListener("pointerdown", function (e) {
       bDown = true;

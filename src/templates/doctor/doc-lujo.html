@@ -96,42 +96,43 @@ box-shadow: 0 20px 50px color-mix(in srgb, var(--primary) 10%, transparent);
                 <iconify-icon icon="solar:hamburger-menu-linear" width="24"></iconify-icon>
             </button>
         </div>
+    </nav>
 
-        <!-- Mobile Menu Overlay -->
-        <div id="mobile-menu" class="fixed inset-0 bg-white z-40 transform translate-x-full transition-transform duration-300 ease-in-out md:hidden flex flex-col pt-28 px-6 pb-6 shadow-2xl">
-            <!-- Close Button inside menu for easier access -->
-            <button id="menu-close" class="absolute top-6 right-6 text-primary p-2 hover:bg-primary/5 rounded-full transition-colors">
-                <iconify-icon icon="solar:close-circle-linear" width="32"></iconify-icon>
-            </button>
+    <!-- Mobile Menu Overlay (moved out of <nav> so this fixed panel isn't
+         confined by the nav's backdrop-blur containing block) -->
+    <div id="mobile-menu" class="fixed inset-0 bg-white z-40 transform translate-x-full transition-transform duration-300 ease-in-out md:hidden flex flex-col pt-28 px-6 pb-6 shadow-2xl">
+        <!-- Close Button inside menu for easier access -->
+        <button id="menu-close" class="absolute top-6 right-6 text-primary p-2 hover:bg-primary/5 rounded-full transition-colors">
+            <iconify-icon icon="solar:close-circle-linear" width="32"></iconify-icon>
+        </button>
 
-            <div class="flex flex-col gap-6 text-xl font-['Cormorant_Garamond'] font-medium text-primary">
-                <a href="#about" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
-                    Sobre el Doctor
-                    <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
-                </a>
-                <a href="#services" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
-                    Tratamientos
-                    <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
-                </a>
-                <a href="#reviews" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
-                    Opiniones
-                    <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
-                </a>
-            </div>
+        <div class="flex flex-col gap-6 text-xl font-['Cormorant_Garamond'] font-medium text-primary">
+            <a href="#about" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
+                Sobre el Doctor
+                <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
+            </a>
+            <a href="#services" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
+                Tratamientos
+                <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
+            </a>
+            <a href="#reviews" class="mobile-link py-3 border-b border-primary/10 flex justify-between items-center group">
+                Opiniones
+                <iconify-icon icon="solar:arrow-right-linear" class="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-300"></iconify-icon>
+            </a>
+        </div>
 
-            <div class="mt-auto mb-8">
-                <a href="#book" class="mobile-link w-full bg-primary text-on-primary py-4 rounded-xl flex items-center justify-center gap-2 text-sm font-sans font-medium tracking-wide shadow-lg shadow-primary/20">
-                    <span>Reservar Cita</span>
-                    <iconify-icon icon="solar:calendar-add-linear" width="18"></iconify-icon>
-                </a>
-                <div class="mt-6 flex justify-center gap-6 text-primary/60">
-                     {{#tiene_telefono}}<a href="tel:{{telefono_href}}" class="hover:text-primary"><iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon></a>{{/tiene_telefono}}
-                     {{#tiene_whatsapp}}<a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="hover:text-primary"><iconify-icon icon="mdi:whatsapp" width="24"></iconify-icon></a>{{/tiene_whatsapp}}
-                     {{#tiene_direccion}}<a href="{{mapa_url}}" target="_blank" rel="noopener" class="hover:text-primary"><iconify-icon icon="solar:map-point-linear" width="24"></iconify-icon></a>{{/tiene_direccion}}
-                </div>
+        <div class="mt-auto mb-8">
+            <a href="#book" class="mobile-link w-full bg-primary text-on-primary py-4 rounded-xl flex items-center justify-center gap-2 text-sm font-sans font-medium tracking-wide shadow-lg shadow-primary/20">
+                <span>Reservar Cita</span>
+                <iconify-icon icon="solar:calendar-add-linear" width="18"></iconify-icon>
+            </a>
+            <div class="mt-6 flex justify-center gap-6 text-primary/60">
+                 {{#tiene_telefono}}<a href="tel:{{telefono_href}}" class="hover:text-primary"><iconify-icon icon="solar:phone-calling-linear" width="24"></iconify-icon></a>{{/tiene_telefono}}
+                 {{#tiene_whatsapp}}<a href="{{whatsapp_url}}" target="_blank" rel="noopener" class="hover:text-primary"><iconify-icon icon="mdi:whatsapp" width="24"></iconify-icon></a>{{/tiene_whatsapp}}
+                 {{#tiene_direccion}}<a href="{{mapa_url}}" target="_blank" rel="noopener" class="hover:text-primary"><iconify-icon icon="solar:map-point-linear" width="24"></iconify-icon></a>{{/tiene_direccion}}
             </div>
         </div>
-    </nav>
+    </div>
 
     <!-- Hero Section -->
     <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden">

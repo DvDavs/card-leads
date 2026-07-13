@@ -113,7 +113,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             </a>
 
             <!-- Mobile Menu Icon -->
-            <button class="md:hidden text-slate-900">
+            <button id="mobile-toggle" class="md:hidden text-slate-900">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg>
             </button>
         </nav>
@@ -536,5 +536,34 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             </div>
         </div>
     </footer>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-white/95 backdrop-blur-xl opacity-0 pointer-events-none transition-opacity duration-300 md:hidden flex flex-col items-center justify-center gap-8 text-lg font-medium text-slate-900">
+        <button id="mobile-close" aria-label="Cerrar menú" class="absolute top-6 right-6 text-slate-500 hover:text-primary p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <a href="#" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Inicio</a>
+        <a href="#about" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Sobre Nosotros</a>
+        <a href="#team" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Equipo</a>
+        <a href="#services" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Servicios</a>
+        <a href="#contact" class="text-sm font-medium text-slate-600 hover:text-primary transition-colors">Contacto</a>
+        <a href="#book" class="inline-flex items-center gap-2 bg-primary text-sm font-medium px-5 py-2.5 rounded-full transition-all shadow-lg shadow-primary/20 hover:bg-primary-600 text-on-primary">
+            {{hero_cta}}
+        </a>
+    </div>
+
+    <script>
+      (function () {
+        var t = document.getElementById('mobile-toggle');
+        var m = document.getElementById('mobile-menu');
+        var c = document.getElementById('mobile-close');
+        if (!t || !m) return;
+        function open()  { m.classList.remove('opacity-0', 'pointer-events-none'); }
+        function close() { m.classList.add('opacity-0', 'pointer-events-none'); }
+        t.addEventListener('click', open);
+        if (c) c.addEventListener('click', close);
+        m.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', close); });
+      })();
+    </script>
 
 </body></html>
