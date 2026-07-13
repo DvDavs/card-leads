@@ -88,7 +88,7 @@ display: none;
             </a>
 
             <!-- Mobile Menu Icon -->
-            <button class="md:hidden text-slate-900">
+            <button id="mobile-toggle" class="md:hidden text-slate-900">
                 <span class="iconify" data-icon="lucide:menu" data-width="24"></span>
             </button>
         </div>
@@ -355,4 +355,31 @@ display: none;
             </div>
         </div>
     </footer>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-white/95 backdrop-blur-xl opacity-0 pointer-events-none transition-opacity duration-300 md:hidden flex flex-col items-center justify-center gap-8 text-lg font-medium text-slate-900">
+        <button id="mobile-close" aria-label="Cerrar menú" class="absolute top-6 right-6 text-slate-500 hover:text-primary p-2">
+            <span class="iconify" data-icon="lucide:x" data-width="28"></span>
+        </button>
+        <a href="#about" class="hover:text-primary transition-colors">Nosotros</a>
+        <a href="#services" class="hover:text-primary transition-colors">Servicios</a>
+        <a href="#reviews" class="hover:text-primary transition-colors">Opiniones</a>
+        <a href="#book" class="inline-flex items-center justify-center px-6 py-3 text-sm font-medium tracking-wide text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors">
+            Reservar Cita
+        </a>
+    </div>
+
+    <script>
+      (function () {
+        var t = document.getElementById('mobile-toggle');
+        var m = document.getElementById('mobile-menu');
+        var c = document.getElementById('mobile-close');
+        if (!t || !m) return;
+        function open()  { m.classList.remove('opacity-0', 'pointer-events-none'); }
+        function close() { m.classList.add('opacity-0', 'pointer-events-none'); }
+        t.addEventListener('click', open);
+        if (c) c.addEventListener('click', close);
+        m.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', close); });
+      })();
+    </script>
 </body></html>

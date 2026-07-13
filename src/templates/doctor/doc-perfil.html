@@ -77,7 +77,7 @@
             </div>
 
             <!-- Mobile Menu Toggle (Simplified for single file) -->
-            <button class="md:hidden text-gray-600">
+            <button id="mobile-toggle" class="md:hidden text-gray-600">
                 <iconify-icon icon="lucide:menu" width="24" stroke-width="1.5"></iconify-icon>
             </button>
         </div>
@@ -374,5 +374,30 @@
         </div>
     </footer>
 
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-white/95 backdrop-blur-xl opacity-0 pointer-events-none transition-opacity duration-300 md:hidden flex flex-col items-center justify-center gap-8 text-lg font-medium text-gray-900">
+        <button id="mobile-close" aria-label="Cerrar menú" class="absolute top-6 right-6 text-gray-500 hover:text-primary p-2">
+            <iconify-icon icon="lucide:x" width="28" stroke-width="1.5"></iconify-icon>
+        </button>
+        {{#tiene_bio}}<a href="#about" class="hover:text-primary transition-colors font-sans">Acerca de</a>{{/tiene_bio}}
+        {{#tiene_experiencia}}<a href="#experience" class="hover:text-primary transition-colors font-sans">Experiencia</a>{{/tiene_experiencia}}
+        {{#tiene_educacion}}<a href="#education" class="hover:text-primary transition-colors font-sans">Educación</a>{{/tiene_educacion}}
+        {{#tiene_investigacion}}<a href="#research" class="hover:text-primary transition-colors font-sans">Investigación</a>{{/tiene_investigacion}}
+        <a href="#contact" class="hover:text-primary transition-colors font-sans">Contacto</a>
+    </div>
+
+    <script>
+      (function () {
+        var t = document.getElementById('mobile-toggle');
+        var m = document.getElementById('mobile-menu');
+        var c = document.getElementById('mobile-close');
+        if (!t || !m) return;
+        function open()  { m.classList.remove('opacity-0', 'pointer-events-none'); }
+        function close() { m.classList.add('opacity-0', 'pointer-events-none'); }
+        t.addEventListener('click', open);
+        if (c) c.addEventListener('click', close);
+        m.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', close); });
+      })();
+    </script>
 
 </body></html>
