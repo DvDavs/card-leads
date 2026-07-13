@@ -864,7 +864,10 @@ describe("render del visor (_viewer.html)", () => {
     expect(html).toContain('src="clinic.html"');
     expect(html).toContain('src="dark.html"');
     expect(html).toContain("data-name=\"Clinic\"");
-    expect(html).toContain("startViewTransition");
+    // motor por posicion (px, interrumpible): sin cerrojo de transitionend
+    expect(html).toContain("translate3d");
+    expect(html).toContain("FLICK_VELOCITY");
+    expect(html).not.toContain("startViewTransition");
   });
 
   it("trae el toggle 'Ver con los colores de tu marca' (icono compacto + toast) y hace broadcast por postMessage", async () => {
@@ -916,7 +919,7 @@ describe("render del visor (_viewer.html)", () => {
     expect(html).toContain('id="helpBtn"');
     expect(html).toContain("cómo se vería tu tarjeta digital");
     expect(html).toContain("los colores de tu marca");
-    expect(html).toContain("Otros diseños");
+    expect(html).toContain("Cambiá de diseño");
   });
 
   it("el paso 'tu propia página web' de la guia se muestra SOLO con hasGeneratedWeb", async () => {
