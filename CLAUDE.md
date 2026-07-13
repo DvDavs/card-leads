@@ -121,11 +121,11 @@ falta correr nada a mano.
 | `build-web` | — | `web_built` | — | **Stub**, lanza `"no implementado"`. Cuando exista: va a usar el template por rubro (`rubroConfig(rubro).webTemplate`). |
 | `deploy` | — | `deployed` | — | **Stub**, lanza `"no implementado"`. |
 | `proposal` | — | `proposal_ready` | — | **Stub**, lanza `"no implementado"`. |
-| `package` | — | `packaged` | — | **Stub**, lanza `"no implementado"`. |
+| `package` | `linktree_built` o posterior (excluye `error`; orden por índice en `StatusSchema`) | `packaged` | no | Arma el **mensaje de contacto** para WhatsApp (`buildOutreachMessage`, `src/lib/outreach.ts`, puro) y lo guarda en `generated.outreach_message`. Dos partes: apertura (saludo `Hola, buen día <nombre>` + gancho + enlaces públicos `https://cards.kronet.app/<slug>`, más el sitio web solo si el lead trae `generated.web_url`) y seguimiento (menú fijo de otros sistemas — agenda de citas, bot de WhatsApp 24/7, CRM, contable, anuncios en redes — con el propio entregable como prueba). NO exige `web_built` a propósito (`build-web` es stub, ningún lead lo alcanza); basta con que `build-cards` haya corrido. El CLI imprime front y back para copiar/pegar. |
 
-Confirmado leyendo `src/stages/build-web.ts`, `deploy.ts`, `proposal.ts` y
-`package.ts`: los cuatro son literalmente `throw new Error("...: no
-implementado")`, sin lógica todavía.
+Confirmado leyendo `src/stages/build-web.ts`, `deploy.ts` y `proposal.ts`: los
+tres son literalmente `throw new Error("...: no implementado")`, sin lógica
+todavía. `package.ts` **ya está implementado** (mensaje de contacto, ver arriba).
 
 ## `src/dc-templates/` — pool de diseños de digital card
 
@@ -302,7 +302,8 @@ Comandos (firma real, `src/cli.ts`):
 | `pnpm cli extract` | `extract <slug>` | sí (`GEMINI_API_KEY`) |
 | `pnpm cli verify` | `verify <slug>` | no |
 | `pnpm cli build-cards` | `build-cards <slug>` | no |
-| `pnpm cli build-web` \| `deploy` \| `proposal` \| `package` | `<comando> <slug>` | — (stubs) |
+| `pnpm cli package` | `package <slug>` (mensaje de contacto para WhatsApp) | no |
+| `pnpm cli build-web` \| `deploy` \| `proposal` | `<comando> <slug>` | — (stubs) |
 | `pnpm test` | suite determinista (vitest) | no |
 | `pnpm typecheck` | `tsc --noEmit` | no |
 
