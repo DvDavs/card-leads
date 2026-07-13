@@ -177,6 +177,26 @@
     pointer-events:none;
   }
   .tour.no-spot .tour-spot{display:none}
+  /* Dedito animado: demuestra el gesto de swipe durante el paso "hint:swipe".
+     Centrado fijo en pantalla (el target de ese paso es .stage = pantalla
+     completa), asi no hace falta reposicionarlo por JS. */
+  .swipe-hint{
+    position:absolute;
+    top:50%;left:50%;
+    width:44px;height:44px;
+    margin:-22px 0 0 -22px;
+    display:none;
+    align-items:center;justify-content:center;
+    font-size:30px;
+    filter:drop-shadow(0 2px 6px rgb(0 0 0 / 0.5));
+    pointer-events:none;
+  }
+  .swipe-hint.on{display:flex;animation:swipeHand 1.4s ease-in-out infinite}
+  @keyframes swipeHand{
+    0%{transform:translateX(-38px);opacity:.35}
+    50%{transform:translateX(38px);opacity:1}
+    100%{transform:translateX(-38px);opacity:.35}
+  }
   .tour-pop{
     position:absolute;
     width:min(300px,84vw);
@@ -214,6 +234,7 @@
   @media (prefers-reduced-motion: reduce){
     .track{transition:none}
     .dot,.nav,.brand-btn,.tour-spot,.tour-pop{transition:none}
+    .swipe-hint{animation:none}
   }
 </style>
 </head>
@@ -254,6 +275,7 @@
        mini-web generada (hasGeneratedWeb). -->
   <div class="tour" id="tour" role="dialog" aria-modal="true" aria-label="Guía rápida">
     <div class="tour-spot" id="tourSpot"></div>
+    <div class="swipe-hint" id="swipeHint" aria-hidden="true">👆</div>
     <div class="tour-pop" id="tourPop">
       <p class="tour-title" id="tourTitle"></p>
       <p class="tour-text" id="tourText"></p>
@@ -353,52 +375,99 @@
     });
 
     /* Swipe: pointerdown arranca el seguimiento; recien si el gesto se
-     * confirma horizontal (supera el umbral) se llama setPointerCapture,
-     * asi un tap normal sobre un boton DENTRO de la card (wa.me, tel:,
-     * mailto:) llega intacto al iframe en vez de ser interceptado. */
-    var dragging = false, captured = false, pointerId = null;
-    var startX = 0, startY = 0, dx = 0, stageWidth = 0;
+     * confirma horizontal (supera el umbral) se toma el control, asi un tap
+     * normal sobre un boton DENTRO de la card (wa.me, tel:, mailto:) llega
+     * intacto en vez de ser interceptado.
+     *
+     * Ademas del track (los margenes alrededor del iframe), el swipe se
+     * engancha DENTRO de cada iframe (mismo origen: `src` relativo, mismo
+     * host que el visor). Un <iframe> es un browsing context aparte: el
+     * navegador entrega el toque a SU documento, nunca al padre. Sin este
+     * puente el swipe quedaba muerto en el telefono, porque ahi el iframe
+     * ocupa TODA la pantalla (el padre solo veia eventos en margenes de
+     * 0px). El transform siempre se aplica sobre el track del padre; los
+     * deltas son relativos a startX/startY, asi que de que documento vengan
+     * los eventos no importa. */
     var THRESHOLD_PX = 8;
     var SWIPE_RATIO = 0.18;
 
-    track.addEventListener("pointerdown", function (e) {
-      dragging = true;
-      captured = false;
-      pointerId = e.pointerId;
-      startX = e.clientX;
-      startY = e.clientY;
-      dx = 0;
-      stageWidth = stage.getBoundingClientRect().width;
-    });
+    function attachSwipe(target, useCapture) {
+      var dragging = false, captured = false, pointerId = null;
+      var startX = 0, startY = 0, dx = 0, stageWidth = 0;
 
-    track.addEventListener("pointermove", function (e) {
-      if (!dragging || e.pointerId !== pointerId) return;
-      var deltaX = e.clientX - startX;
-      var deltaY = e.clientY - startY;
-      if (!captured) {
-        if (Math.abs(deltaX) < THRESHOLD_PX || Math.abs(deltaX) < Math.abs(deltaY)) return;
-        captured = true;
-        track.setPointerCapture(pointerId);
-        track.style.transition = "none";
+      target.addEventListener("pointerdown", function (e) {
+        dragging = true;
+        captured = false;
+        pointerId = e.pointerId;
+        startX = e.clientX;
+        startY = e.clientY;
+        dx = 0;
+        stageWidth = stage.getBoundingClientRect().width;
+      });
+
+      target.addEventListener("pointermove", function (e) {
+        if (!dragging || e.pointerId !== pointerId) return;
+        var deltaX = e.clientX - startX;
+        var deltaY = e.clientY - startY;
+        if (!captured) {
+          if (Math.abs(deltaX) < THRESHOLD_PX || Math.abs(deltaX) < Math.abs(deltaY)) return;
+          captured = true;
+          if (useCapture) { try { target.setPointerCapture(pointerId); } catch (_) {} }
+          track.style.transition = "none";
+        }
+        dx = deltaX;
+        track.style.transform = "translateX(calc(" + index * -100 + "% + " + dx + "px))";
+        e.preventDefault();
+      });
+
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        if (!captured) return;
+        captured = false;
+        var moved = -dx > stageWidth * SWIPE_RATIO ? 1 : dx > stageWidth * SWIPE_RATIO ? -1 : 0;
+        goTo(index + moved);
       }
-      dx = deltaX;
-      track.style.transform = "translateX(calc(" + index * -100 + "% + " + dx + "px))";
-      e.preventDefault();
-    });
 
-    function endDrag() {
-      if (!dragging) return;
-      dragging = false;
-      if (!captured) return;
-      captured = false;
-      var moved = -dx > stageWidth * SWIPE_RATIO ? 1 : dx > stageWidth * SWIPE_RATIO ? -1 : 0;
-      goTo(index + moved);
+      target.addEventListener("pointerup", endDrag);
+      target.addEventListener("pointercancel", endDrag);
+      target.addEventListener("pointerleave", function () {
+        if (dragging && !captured) dragging = false;
+      });
     }
 
-    track.addEventListener("pointerup", endDrag);
-    track.addEventListener("pointercancel", endDrag);
-    track.addEventListener("pointerleave", function () {
-      if (dragging && !captured) dragging = false;
+    attachSwipe(track, true);
+
+    // Puente same-origin: escucha los pointer events DENTRO del documento
+    // del iframe y los resuelve con el mismo attachSwipe. Si el iframe fuera
+    // cross-origin, contentDocument tira/da null y cae de forma segura a
+    // flechas/teclado (sin swipe sobre ese slide en particular).
+    function bridgeIframeSwipe(iframeEl) {
+      try {
+        var d = iframeEl.contentDocument;
+        if (!d) return;
+        d.documentElement.style.touchAction = "pan-y";
+        attachSwipe(d, false);
+      } catch (_) {}
+    }
+    function whenIframeReady(iframeEl, cb) {
+      function isReady() {
+        try {
+          return !!iframeEl.src && iframeEl.contentDocument &&
+            iframeEl.contentDocument.readyState === "complete" &&
+            iframeEl.contentDocument.location.href !== "about:blank";
+        } catch (_) {
+          return false;
+        }
+      }
+      if (isReady()) {
+        cb(iframeEl);
+      } else {
+        iframeEl.addEventListener("load", function () { cb(iframeEl); });
+      }
+    }
+    realSlides.forEach(function (slide) {
+      whenIframeReady(slide.querySelector("iframe"), bridgeIframeSwipe);
     });
 
     /* Toggle "Ver con los colores de tu marca": arranca OFF (colores
@@ -544,11 +613,13 @@
      * globo se posicionan por getBoundingClientRect en cada paso, asi siguen a
      * la burbuja de marca aunque el cliente la haya movido. Arranca solo la
      * primera vez (localStorage); el boton "?" la reabre siempre. */
-    var TOUR_KEY = "dc-tour-seen-v1";
+    var TOUR_KEY = "dc-tour-seen-v2";
     var steps = [
       { sel: null, title: "Tu tarjeta digital", text: "Este es un ejemplo de cómo se vería tu tarjeta digital, lista para compartir por WhatsApp o redes." },
       { sel: "#brandBtn", title: "Los colores de tu marca", text: "Con este botón puedes ver cómo se vería el diseño con los colores de tu marca. Puedes arrastrarlo si te estorba." },
-      { sel: ".dots", title: "Otros diseños", text: "Aquí puedes ver otros diseños: desliza a los lados o usa las flechas para elegir el que más te guste." },
+      { sel: ".nav-next", title: "Cambiá de diseño", text: "Tocá estas flechas a los lados para ver otro diseño." },
+      { sel: ".stage", hint: "swipe", title: "O deslizá con el dedo", text: "Deslizá de un lado a otro sobre la tarjeta, como en Instagram." },
+      { sel: ".dots", title: "Cuántos diseños hay", text: "Acá ves cuántos diseños hay disponibles y en cuál estás." },
       {{#hasGeneratedWeb}}{ sel: null, title: "Tu propia página web", text: "Y te hicimos unos ejemplos de cómo se vería tu propia página web: ábrelos con el botón «Ver mi sitio» dentro de tu tarjeta." },{{/hasGeneratedWeb}}
     ];
 
@@ -561,6 +632,7 @@
     var tourNext = document.getElementById("tourNext");
     var tourSkip = document.getElementById("tourSkip");
     var helpBtn = document.getElementById("helpBtn");
+    var swipeHint = document.getElementById("swipeHint");
     var tourStep = 0;
 
     steps.forEach(function () {
@@ -598,6 +670,7 @@
       tourText.textContent = step.text;
       tourNext.textContent = tourStep === steps.length - 1 ? "Entendido" : "Siguiente";
       tourDotEls.forEach(function (d, i) { d.classList.toggle("on", i === tourStep); });
+      swipeHint.classList.toggle("on", step.hint === "swipe");
     }
 
     function openTour() {
