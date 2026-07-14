@@ -38,17 +38,45 @@ el código, no el nombre de archivo.
 `manifest.json` es la fuente de verdad. Cada entrada tiene:
 
 ```json
-{ "tag": "RetratoDoctor01", "file": "RetratoDoctor01.jpg", "kind": "retrato", "gender": "m" }
+{ "tag": "RetratoDoctor01", "file": "RetratoDoctor01.png", "kind": "retrato", "gender": "m", "specialty": "general" }
 ```
 
 - `tag`: identificador estable (PascalCase + índice de 2 dígitos).
 - `file`: nombre del archivo dentro de este mismo directorio.
 - `kind`: uno de los 5 valores de la tabla de arriba.
 - `gender`: solo para `kind: "retrato"` (`"m"` o `"f"`). Se omite en el resto.
+- `specialty`: sub-rubro del negocio (`"general"` | `"dental"`). Se **omite** →
+  cuenta como `"general"`. Ver sección "Sub-rubro (specialty)" abajo.
 
 `build-web` lee este manifest para elegir determinísticamente qué imagen usar
 en cada rol de cada plantilla (en vez de depender de URLs externas o de un
 LLM para "adivinar" una foto).
+
+## Sub-rubro (specialty): general vs dental
+
+El rubro sigue siendo `doctor` (cubre CUALQUIER especialidad médica). Dentro del
+banco, el campo `specialty` distingue el **sub-rubro** para elegir imágenes
+acordes al tipo de consultorio:
+
+| specialty | uso | tags de ejemplo |
+| --------- | --- | --------------- |
+| `general` (default) | medicina general y cualquier especialidad no dental | `RetratoDoctor*`, `RetratoDoctora*`, `ConsultorioDoctor*`, `EquipoDoctor*`, `SonrisaPaciente*`, `RecepcionClinica*` |
+| `dental` | odontología / consultorios dentales | `RetratoDentista*` (m), `RetratoDentistaMujer*` (f), `ConsultorioDental*`, `EquipoDental*`, `SonrisaDental*`, `RecepcionDental*` |
+
+Cómo elige `build-web` (`resolveWebImages` → `byKind`):
+
+1. `detectSpecialty(lead)` mira los datos **REALES** del lead (nombre, tagline,
+   servicios, highlights, about, atributos) y devuelve `dental` si menciona
+   odontología (`dental`, `dentista`, `odontolog`, `ortodon`, `endodon`,
+   `periodon`, etc.), si no `general`. **No** mira el copy del LLM.
+2. Para cada `kind`, `byKind` PREFIERE las imágenes de esa `specialty` y **cae a
+   todas las del kind** si el banco no tiene stock de ese sub-rubro (mismo
+   fallback que `gender` en retratos). Así un lead dental sin, por ejemplo, un
+   `EquipoDental` recibe un equipo general en vez de un slot vacío.
+
+Para agregar un sub-rubro nuevo (ej. `veterinario`, `estetica`): sumar imágenes
+con ese `specialty` al manifest y extender `DENTAL_KEYWORDS`/`detectSpecialty`
+(o generalizarlo) en `src/stages/build-web.ts`.
 
 ## Cómo agregar o reemplazar una imagen
 

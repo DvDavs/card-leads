@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertWebBuildableStatus,
   buildWebView,
+  detectSpecialty,
   fnv1a,
   hoursAreReferential,
   orderWebPoolByRubro,
@@ -294,12 +295,12 @@ describe("resolveWebImages — eleccion sembrada del banco por slot", () => {
 
   it("retrato principal respeta el genero del lead (m -> RetratoDoctor, f -> RetratoDoctora)", () => {
     const hombre = resolvedImages(enrichedLead());
-    expect(hombre.slots.img_retrato_principal).toMatch(/^assets\/RetratoDoctor0\d\.jpg$/);
+    expect(hombre.slots.img_retrato_principal).toMatch(/^assets\/RetratoDoctor0\d\.\w+$/);
 
     const lead = enrichedLead();
     lead.business.person_gender = "f";
     const mujer = resolvedImages(lead);
-    expect(mujer.slots.img_retrato_principal).toMatch(/^assets\/RetratoDoctora0\d\.jpg$/);
+    expect(mujer.slots.img_retrato_principal).toMatch(/^assets\/RetratoDoctora0\d\.\w+$/);
   });
 
   it("sin genero conocido cae a retratos mixtos (kind-only), sin romper", () => {
@@ -368,6 +369,77 @@ describe("resolveWebImages — eleccion sembrada del banco por slot", () => {
     expect(slots.img_retrato_principal).toBe("");
     expect(slots.img_hero_01).toBe("");
     expect(files).toEqual([]);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* detectSpecialty + banco por sub-rubro (general | dental)            */
+/* ------------------------------------------------------------------ */
+
+/** Lead odontologico: calca el fixture pero con senal dental en datos REALES. */
+function dentalLead(overrides: Partial<Lead["business"]> = {}): Lead {
+  const lead = enrichedLead();
+  lead.business.tagline = "Odontología integral y estética dental";
+  lead.content.services = ["Limpieza dental", "Ortodoncia", "Blanqueamiento"];
+  Object.assign(lead.business, overrides);
+  return lead;
+}
+
+describe("detectSpecialty — infiere sub-rubro dental de datos REALES del lead", () => {
+  it("lead de medicina general (fixture) es 'general'", () => {
+    expect(detectSpecialty(enrichedLead())).toBe("general");
+  });
+
+  it("detecta 'dental' por tagline (sin depender de tildes: 'Odontología')", () => {
+    const lead = enrichedLead();
+    lead.business.tagline = "Odontología integral";
+    expect(detectSpecialty(lead)).toBe("dental");
+  });
+
+  it("detecta 'dental' por servicios ('Ortodoncia')", () => {
+    const lead = enrichedLead();
+    lead.business.tagline = undefined;
+    lead.content.services = ["Ortodoncia", "Endodoncia"];
+    expect(detectSpecialty(lead)).toBe("dental");
+  });
+
+  it("NO confunde 'endocrinologia' con 'endodon' (sin falso positivo dental)", () => {
+    const lead = enrichedLead();
+    lead.business.tagline = "MEDICINA INTERNA ● ENDOCRINOLOGIA";
+    lead.content.services = ["Consulta", "Estudios"];
+    expect(detectSpecialty(lead)).toBe("general");
+  });
+
+  it("NO mira el copy generado por el LLM (generated_copy), solo dato real", () => {
+    const lead = enrichedLead();
+    lead.business.tagline = undefined;
+    lead.content.services = ["Consulta"];
+    // generated_copy trae "sedacion"/"higiene" con lenguaje que podria sonar
+    // dental, pero es muestra: no debe cambiar la especialidad.
+    expect(detectSpecialty(lead)).toBe("general");
+  });
+});
+
+describe("resolveWebImages — banco por especialidad (dental vs general)", () => {
+  it("lead dental (m) -> retrato dentista, consultorio/sonrisa/recepcion/equipo dental", () => {
+    const { slots } = resolvedImages(dentalLead());
+    expect(slots.img_retrato_principal).toMatch(/^assets\/RetratoDentista0\d\.\w+$/);
+    expect(slots.img_consultorio_01).toMatch(/^assets\/ConsultorioDental/);
+    expect(slots.img_sonrisa_01).toMatch(/^assets\/SonrisaDental/);
+    expect(slots.img_recepcion_01).toMatch(/^assets\/RecepcionDental/);
+    expect(slots.img_equipo_01).toMatch(/^assets\/EquipoDental/);
+  });
+
+  it("lead dental (f) -> retrato de dentista mujer", () => {
+    const { slots } = resolvedImages(dentalLead({ person_gender: "f" }));
+    expect(slots.img_retrato_principal).toMatch(/^assets\/RetratoDentistaMujer0\d\.\w+$/);
+  });
+
+  it("lead general NO recibe imagenes dental (retrato/consultorio del set general)", () => {
+    const { slots } = resolvedImages(enrichedLead());
+    expect(slots.img_retrato_principal).not.toMatch(/Dentista/);
+    expect(slots.img_consultorio_01).toMatch(/^assets\/ConsultorioDoctor/);
+    expect(slots.img_sonrisa_01).not.toMatch(/Dental/);
   });
 });
 
