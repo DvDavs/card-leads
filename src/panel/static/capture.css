@@ -1,0 +1,185 @@
+/* capture.css — estilos de la captura mejorada de la pantalla "Nueva tarjeta":
+   dropzones por slot (front/back) con arrastrar-y-soltar + preview, y los dos
+   modales de captura (camara y recortador). Reusa las variables de styles.css
+   (--surface, --border, --text, --accent) para verse de la misma familia. */
+
+/* --- Dropzone por slot (front / back) --- */
+.uploader {
+  position: relative;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.uploader.dragover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.uploader-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.4rem 1rem;
+  text-align: center;
+}
+.uploader-icon { font-size: 1.6rem; line-height: 1; }
+.uploader-text { color: var(--muted); font-size: 0.85rem; margin: 0; }
+.uploader-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Botones internos del uploader: mas chicos que los primarios de la app. */
+.uploader-btn {
+  min-height: 40px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.88rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.uploader-btn:active { transform: scale(0.98); }
+.uploader-btn.danger-text { color: var(--danger); border-color: var(--danger); background: transparent; }
+
+.uploader-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem;
+}
+.uploader-thumb {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  object-fit: contain;
+  background: var(--bg);
+}
+.uploader-preview-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* --- Modales de captura (camara + recortador): overlay compartido --- */
+.capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.capture-overlay.open { opacity: 1; }
+.capture-overlay[hidden] { display: none; }
+
+.capture-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+.capture-title { font-weight: 700; font-size: 1rem; color: var(--text); align-self: flex-start; }
+.capture-error { color: var(--danger); font-size: 0.85rem; min-height: 1.1em; align-self: stretch; text-align: center; }
+
+.capture-footer { display: flex; gap: 0.6rem; width: 100%; }
+.capture-btn {
+  flex: 1;
+  min-height: 46px;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.capture-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.capture-btn:disabled { opacity: 0.5; cursor: default; }
+.capture-btn:active { transform: scale(0.98); }
+
+/* --- Camara --- */
+.camera-stage {
+  width: min(560px, 84vw);
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.camera-video {
+  width: 100%;
+  max-height: 64vh;
+  object-fit: contain;
+  display: block;
+}
+
+/* --- Recortador --- */
+.cropper-controls { display: flex; gap: 0.5rem; align-self: stretch; flex-wrap: wrap; }
+.cropper-tool {
+  min-height: 40px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.88rem;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.cropper-tool.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cropper-tool:active { transform: scale(0.98); }
+
+.cropper-stage {
+  position: relative;
+  overflow: hidden; /* recorta la sombra que oscurece el afuera de la caja */
+  border-radius: 10px;
+  touch-action: none;
+  background: var(--bg);
+}
+.cropper-canvas { display: block; width: 100%; height: 100%; }
+
+.cropper-box {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  /* La sombra gigante oscurece todo lo de afuera del recorte (clip por el
+     overflow:hidden del stage). */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  cursor: move;
+  touch-action: none;
+}
+.cropper-box[hidden] { display: none; }
+
+.cropper-handle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.cropper-handle-nw { left: -11px; top: -11px; cursor: nwse-resize; }
+.cropper-handle-ne { right: -11px; top: -11px; cursor: nesw-resize; }
+.cropper-handle-sw { left: -11px; bottom: -11px; cursor: nesw-resize; }
+.cropper-handle-se { right: -11px; bottom: -11px; cursor: nwse-resize; }

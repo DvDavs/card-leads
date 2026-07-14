@@ -7,6 +7,7 @@
 <title>Panel interno — card-leads</title>
 <link rel="stylesheet" href="/styles.css" />
 <link rel="stylesheet" href="/blossom.css" />
+<link rel="stylesheet" href="/capture.css" />
 </head>
 <body>
 <main>
@@ -48,12 +49,48 @@
     <p class="sub">Foto de frente (obligatoria) y reverso (opcional)</p>
     <form id="capture-form">
       <div class="field">
-        <label for="front-input">Frente *</label>
-        <input type="file" id="front-input" name="front" accept="image/*" required />
+        <label id="front-label">Frente *</label>
+        <div class="uploader" data-slot="front" aria-labelledby="front-label">
+          <input type="file" class="uploader-input" accept="image/*" hidden />
+          <div class="uploader-empty">
+            <div class="uploader-icon" aria-hidden="true">🖼️</div>
+            <p class="uploader-text">Arrastra una imagen aquí o</p>
+            <div class="uploader-actions">
+              <button type="button" class="uploader-btn" data-action="browse">Elegir archivo</button>
+              <button type="button" class="uploader-btn" data-action="camera">📷 Tomar foto</button>
+            </div>
+          </div>
+          <div class="uploader-preview" hidden>
+            <img class="uploader-thumb" alt="Vista previa del frente" />
+            <div class="uploader-preview-actions">
+              <button type="button" class="uploader-btn" data-action="crop">✂️ Recortar</button>
+              <button type="button" class="uploader-btn" data-action="camera">📷 Retomar</button>
+              <button type="button" class="uploader-btn danger-text" data-action="remove">Quitar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="field">
-        <label for="back-input">Reverso (opcional)</label>
-        <input type="file" id="back-input" name="back" accept="image/*" />
+        <label id="back-label">Reverso (opcional)</label>
+        <div class="uploader" data-slot="back" aria-labelledby="back-label">
+          <input type="file" class="uploader-input" accept="image/*" hidden />
+          <div class="uploader-empty">
+            <div class="uploader-icon" aria-hidden="true">🖼️</div>
+            <p class="uploader-text">Arrastra una imagen aquí o</p>
+            <div class="uploader-actions">
+              <button type="button" class="uploader-btn" data-action="browse">Elegir archivo</button>
+              <button type="button" class="uploader-btn" data-action="camera">📷 Tomar foto</button>
+            </div>
+          </div>
+          <div class="uploader-preview" hidden>
+            <img class="uploader-thumb" alt="Vista previa del reverso" />
+            <div class="uploader-preview-actions">
+              <button type="button" class="uploader-btn" data-action="crop">✂️ Recortar</button>
+              <button type="button" class="uploader-btn" data-action="camera">📷 Retomar</button>
+              <button type="button" class="uploader-btn danger-text" data-action="remove">Quitar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="field">
         <label for="rubro-input">Rubro</label>
@@ -116,6 +153,8 @@
 
 </main>
 <script src="/blossom.js"></script>
+<script src="/camera.js"></script>
+<script src="/cropper.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
