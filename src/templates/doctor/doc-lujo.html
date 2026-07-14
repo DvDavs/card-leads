@@ -190,13 +190,13 @@ box-shadow: 0 20px 50px color-mix(in srgb, var(--primary) 10%, transparent);
     <section id="about" class="py-20 px-6 bg-white border-y border-primary/5">
         <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-20 items-center">
             <div class="relative group">
-                <!-- Abstract Image Representation for Luxurious Feel (sin fotos: icono placeholder, identidad preservada) -->
+                <!-- Retrato del doctor via el slot estandar img_retrato_principal
+                     (foto REAL del lead si brand.photo_path existe, si no retrato
+                     del banco segun genero — ver brief §3c). El velado dorado va
+                     ENCIMA de la foto para conservar el tono calido del diseno. -->
                 <div class="aspect-[3/4] rounded-2xl overflow-hidden bg-[#FAFAF8] border border-primary/10 relative">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent"></div>
-                    <div class="absolute inset-0 flex items-center justify-center text-primary/20">
-                         <!-- Placeholder for Doctor's Photo -->
-                        <iconify-icon icon="solar:user-circle-linear" width="120" stroke-width="0.5"></iconify-icon>
-                    </div>
+                    <img src="{{img_retrato_principal}}" alt="{{nombre}}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/15 to-transparent pointer-events-none"></div>
                     {{#tiene_cita_destacada}}
                     <div class="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur p-4 rounded-xl border border-primary/10 shadow-sm">
                         <p class="font-['Cormorant_Garamond'] text-primary text-lg italic">"{{cita_destacada}}"</p>
