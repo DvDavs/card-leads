@@ -224,15 +224,123 @@ function openLead(slug, status) {
 }
 
 $("new-lead-btn").addEventListener("click", () => {
-  $("capture-form").reset();
-  $("capture-error").textContent = "";
-  $("capture-progress").style.display = "none";
+  resetCapture();
   showScreen("screen-capture");
 });
 
 /* ------------------------------------------------------------------ */
 /* Captura (upload -> ingest + extract)                                 */
+/*                                                                      */
+/* Cada slot (front/back) acepta la imagen desde tres fuentes -- elegir */
+/* archivo, arrastrar y soltar, o la camara (camera.js) -- y de forma   */
+/* opcional la pasa por el recortador (cropper.js) para ajustarla al    */
+/* encuadre de la tarjeta. Guardamos el File resultante en memoria y no */
+/* en el <input>: el <input type=file> es read-only para 2 de esas 3    */
+/* fuentes (drop y camara) y ademas la version recortada reemplaza a la */
+/* original. El submit lee los archivos de aca, no del DOM.             */
 /* ------------------------------------------------------------------ */
+
+const captureFiles = { front: null, back: null };
+
+// Refleja el estado de un slot en su caja: thumbnail + acciones, o el area
+// vacia con "arrastra / elegir / tomar foto".
+function renderSlot(slot) {
+  const box = document.querySelector(`.uploader[data-slot="${slot}"]`);
+  if (!box) return;
+  const file = captureFiles[slot];
+  const thumb = box.querySelector(".uploader-thumb");
+  // Revoca el objectURL anterior antes de crear/soltar uno nuevo: sin esto,
+  // reemplazar o quitar la foto filtraria blobs en memoria.
+  if (thumb.dataset.url) {
+    URL.revokeObjectURL(thumb.dataset.url);
+    thumb.removeAttribute("data-url");
+  }
+  if (file) {
+    const url = URL.createObjectURL(file);
+    thumb.src = url;
+    thumb.dataset.url = url;
+    box.querySelector(".uploader-empty").hidden = true;
+    box.querySelector(".uploader-preview").hidden = false;
+  } else {
+    thumb.removeAttribute("src");
+    box.querySelector(".uploader-empty").hidden = false;
+    box.querySelector(".uploader-preview").hidden = true;
+  }
+}
+
+function setSlotFile(slot, file) {
+  captureFiles[slot] = file || null;
+  renderSlot(slot);
+}
+
+// Punto de convergencia de las tres fuentes: valida que sea una imagen antes
+// de aceptarla en el slot.
+function acceptFile(slot, file) {
+  if (!file || !file.type || !file.type.startsWith("image/")) {
+    $("capture-error").textContent = "El archivo debe ser una imagen.";
+    return;
+  }
+  $("capture-error").textContent = "";
+  setSlotFile(slot, file);
+}
+
+function resetCapture() {
+  $("capture-form").reset();
+  setSlotFile("front", null);
+  setSlotFile("back", null);
+  $("capture-error").textContent = "";
+  $("capture-progress").style.display = "none";
+}
+
+// Conecta una caja de slot: click/arrastrar/camara/recortar/quitar. Un solo
+// wiring por caja; el estado vive en captureFiles.
+function initUploader(box) {
+  const slot = box.dataset.slot;
+  const input = box.querySelector(".uploader-input");
+
+  box.querySelectorAll('[data-action="browse"]').forEach((b) =>
+    b.addEventListener("click", () => input.click()));
+  input.addEventListener("change", () => {
+    const f = input.files && input.files[0];
+    if (f) acceptFile(slot, f);
+    input.value = ""; // permite volver a elegir el mismo archivo
+  });
+
+  box.querySelectorAll('[data-action="camera"]').forEach((b) =>
+    b.addEventListener("click", () => {
+      if (window.Camera) window.Camera.open({ onCapture: (file) => acceptFile(slot, file) });
+    }));
+
+  box.querySelector('[data-action="crop"]').addEventListener("click", () => {
+    const f = captureFiles[slot];
+    if (f && window.Cropper) {
+      window.Cropper.open({ file: f, onConfirm: (out) => setSlotFile(slot, out) });
+    }
+  });
+
+  box.querySelector('[data-action="remove"]').addEventListener("click", () => setSlotFile(slot, null));
+
+  // Arrastrar y soltar sobre toda la caja del slot.
+  ["dragenter", "dragover"].forEach((type) =>
+    box.addEventListener(type, (ev) => {
+      ev.preventDefault();
+      box.classList.add("dragover");
+    }));
+  ["dragleave", "dragend", "drop"].forEach((type) =>
+    box.addEventListener(type, (ev) => {
+      // dragleave dispara tambien al pasar sobre los hijos: solo apagamos el
+      // resaltado si el puntero salio de la caja de verdad.
+      if (type === "dragleave" && box.contains(ev.relatedTarget)) return;
+      box.classList.remove("dragover");
+    }));
+  box.addEventListener("drop", (ev) => {
+    ev.preventDefault();
+    const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+    if (f) acceptFile(slot, f);
+  });
+}
+
+document.querySelectorAll(".uploader").forEach(initUploader);
 
 $("capture-cancel").addEventListener("click", () => showScreen("screen-list"));
 
@@ -243,16 +351,16 @@ $("capture-form").addEventListener("submit", async (ev) => {
   const progressEl = $("capture-progress");
   errorEl.textContent = "";
 
-  const front = $("front-input").files[0];
+  const front = captureFiles.front;
   if (!front) {
     errorEl.textContent = "Falta la foto de frente.";
     return;
   }
 
   const form = new FormData();
-  form.set("front", front);
-  const back = $("back-input").files[0];
-  if (back) form.set("back", back);
+  form.set("front", front, front.name || "front.jpg");
+  const back = captureFiles.back;
+  if (back) form.set("back", back, back.name || "back.jpg");
   const rubro = $("rubro-input").value;
   if (rubro) form.set("rubro", rubro);
 
