@@ -29,7 +29,15 @@
   <section id="screen-list" class="screen">
     <h1>Leads</h1>
     <p class="sub" id="list-count">Cargando…</p>
+    <div class="list-search">
+      <input type="search" id="list-search-input" placeholder="Buscar por nombre, rubro o slug…" autocomplete="off" />
+    </div>
     <div id="leads-list"></div>
+    <div class="pager" id="list-pager" style="display:none;">
+      <button type="button" id="list-prev">← Anterior</button>
+      <span class="pager-info" id="list-page-info"></span>
+      <button type="button" id="list-next">Siguiente →</button>
+    </div>
     <button class="primary" id="new-lead-btn">+ Nuevo</button>
     <button id="logout-btn">Salir</button>
   </section>
@@ -95,6 +103,7 @@
     <button class="primary" id="run-publish-btn">Publicar</button>
     <button id="run-links-btn">Ver links</button>
     <button id="run-back-btn">Volver a la lista</button>
+    <button class="danger" id="run-delete-btn">Eliminar lead</button>
   </section>
 
   <!-- Screen: links publicos -->

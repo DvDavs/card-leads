@@ -97,6 +97,11 @@ button.primary, .btn.primary {
   border-color: var(--accent);
   color: #fff;
 }
+button.danger, .btn.danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
 button:disabled { opacity: 0.5; cursor: default; }
 button:active, .btn:active { transform: scale(0.98); }
 
@@ -121,6 +126,18 @@ textarea {
 }
 
 /* --- Lista de leads --- */
+.list-search { margin-bottom: 0.4rem; }
+.list-search input[type="search"] {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.list-search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .lead-card {
   display: flex;
   align-items: center;
@@ -133,8 +150,10 @@ textarea {
   margin-bottom: 0.6rem;
   cursor: pointer;
 }
-.lead-card-name { font-weight: 600; }
+.lead-card-main { min-width: 0; flex: 1; }
+.lead-card-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lead-card-meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.15rem; }
+.lead-card-side { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 .status-badge {
   font-size: 0.72rem;
   padding: 0.15rem 0.55rem;
@@ -143,7 +162,29 @@ textarea {
   border: 1px solid var(--border);
   white-space: nowrap;
 }
+.lead-delete-btn {
+  min-height: unset;
+  padding: 0.35rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 8px;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+.lead-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
 .empty-hint { color: var(--muted); text-align: center; padding: 2rem 1rem; }
+
+/* --- Paginador --- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.pager button { flex: 1; min-height: 44px; padding: 0.6rem 0.8rem; }
+.pager-info { color: var(--muted); font-size: 0.82rem; white-space: nowrap; text-align: center; }
 
 /* --- Verify screen --- */
 .banner-risk {
@@ -225,4 +266,24 @@ textarea {
   margin: 0.3rem 0 0.6rem;
   max-height: 11rem;
   overflow-y: auto;
+}
+
+/* --- Desktop / tablet: vista mas ancha y lista en grilla ---
+   El panel es mobile-first (main capado a 480px). En pantallas anchas damos
+   mas aire y pintamos la lista de leads en 2-3 columnas para no dejar una
+   sola tira de cards en medio de una pantalla vacia. Solo afecta la pantalla
+   de lista: los formularios de captura/verify se mantienen legibles al centro. */
+@media (min-width: 720px) {
+  main { max-width: 920px; padding-top: 2.5rem; }
+  /* Los formularios se mantienen angostos y centrados (mas legibles). */
+  .screen { max-width: 520px; width: 100%; margin: 0 auto; }
+  /* La lista rompe el ancho para aprovechar la pantalla. */
+  #screen-list.active { max-width: 920px; }
+  #leads-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.6rem;
+  }
+  #leads-list .lead-card { margin-bottom: 0; }
+  #leads-list .empty-hint { grid-column: 1 / -1; }
 }
