@@ -8,12 +8,25 @@
   /*
    * Visor swipeable de digital cards. Cada diseno se carga a pantalla
    * completa TAL CUAL quedaria en producto (mismo iframe, sin marco de
-   * telefono ni chrome extra); flechas/dots flotan ENCIMA como overlay, no
-   * dentro de un mockup ni tapando el header del diseno. Sin bucle: al llegar
-   * a una punta el boton de avance correspondiente queda disabled, no da
+   * telefono ni chrome extra); el HUD flota ENCIMA como overlay. Sin bucle:
+   * al llegar a una punta la flecha correspondiente queda disabled, no da
    * vuelta al otro lado. El primer slide real es siempre el diseno del rubro
    * del lead (`orderPoolByRubro` en build-cards.ts).
+   *
+   * HUD: un unico "dock" inferior centrado agrupa flechas + dots + nombre y
+   * contador del diseno (una sola unidad glassy en vez de controles sueltos);
+   * la burbuja de marca (arrastrable) y el "?" comparten los mismos tokens
+   * visuales (--glass-*) para que todo se lea como UNA interfaz.
    */
+  :root{
+    --glass-bg:rgb(15 15 18 / 0.62);
+    --glass-bg-hover:rgb(30 30 36 / 0.75);
+    --glass-line:rgb(255 255 255 / 0.14);
+    --ink:#f2f1ee;
+    --ink-dim:rgb(242 241 238 / 0.58);
+    --accent:#3d6fd6;
+    --accent-strong:#2f5ec0;
+  }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
   body{
@@ -26,58 +39,68 @@
   .track{
     display:flex;
     width:100%;height:100%;
-    transition:transform .45s cubic-bezier(.22,.75,.3,1);
     will-change:transform;
   }
   .slide{flex:0 0 100%;height:100%;background:#fff}
   .slide iframe{width:100%;height:100%;border:0;display:block}
 
-  /* ---------- overlay: flotan encima del producto, no lo envuelven ---------- */
-  .hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+  /* ---------- overlay: flota encima del producto, no lo envuelve ---------- */
+  .hud{position:fixed;inset:0;z-index:10;pointer-events:none;user-select:none;-webkit-user-select:none}
 
-  .nav{
+  /* Dock inferior: flechas + (nombre · contador) + dots en un solo pill. */
+  .dock{
     position:absolute;
-    top:50%;transform:translateY(-50%);
-    pointer-events:auto;
-    display:grid;place-items:center;
-    width:34px;height:34px;
-    border:none;
-    background:transparent;
-    color:rgb(255 255 255 / 0.88);
-    filter:drop-shadow(0 1px 2px rgb(0 0 0 / 0.55)) drop-shadow(0 0 6px rgb(0 0 0 / 0.22));
-    cursor:pointer;
-    transition:opacity .2s ease,transform .2s ease;
-  }
-  .nav-prev{left:max(6px,env(safe-area-inset-left))}
-  .nav-next{right:max(6px,env(safe-area-inset-right))}
-  .nav:hover{transform:translateY(-50%) scale(1.1)}
-  .nav:active{transform:translateY(-50%) scale(.9)}
-  .nav:disabled{opacity:.22;cursor:default;pointer-events:none}
-  .nav svg{width:26px;height:26px}
-
-  .dots{
-    position:absolute;
-    bottom:max(16px,env(safe-area-inset-bottom));
+    bottom:max(14px,env(safe-area-inset-bottom));
     left:50%;transform:translateX(-50%);
     pointer-events:auto;
-    display:flex;gap:7px;align-items:center;
-    padding:8px 10px;
+    display:flex;align-items:center;gap:2px;
+    padding:6px;
+    max-width:calc(100vw - 20px);
     border-radius:999px;
-    background:rgb(15 15 18 / 0.45);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-line);
+    background:var(--glass-bg);
+    backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    box-shadow:0 8px 32px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
-  .dot{
-    width:7px;height:7px;border-radius:50%;
-    border:none;padding:0;
-    background:rgb(255 255 255 / 0.35);
+  .nav{
+    width:40px;height:40px;flex:none;
+    display:grid;place-items:center;
+    border:none;border-radius:50%;
+    background:transparent;
+    color:var(--ink);
     cursor:pointer;
-    transition:background .2s ease,transform .2s ease,opacity .2s ease;
+    transition:background .2s ease,opacity .2s ease,transform .15s ease;
   }
-  .dot.active{background:#f2f1ee;transform:scale(1.3)}
+  .nav:hover{background:rgb(255 255 255 / 0.1)}
+  .nav:active{transform:scale(.88)}
+  .nav:disabled{opacity:.25;cursor:default;pointer-events:none}
+  .nav svg{width:22px;height:22px}
+  .dock-center{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:2px 12px;min-width:118px;
+  }
+  .dock-label{
+    display:flex;align-items:baseline;gap:7px;
+    font-size:11.5px;line-height:1;white-space:nowrap;
+  }
+  .dock-name{font-weight:650;color:#fff;letter-spacing:.01em}
+  .dock-pos{color:var(--ink-dim);font-weight:500;font-variant-numeric:tabular-nums}
+  .dots{display:flex;gap:6px;align-items:center}
+  .dot{
+    width:6px;height:6px;border-radius:999px;
+    border:none;padding:0;
+    background:rgb(255 255 255 / 0.32);
+    cursor:pointer;
+    transition:width .25s ease,background .25s ease,transform .25s ease,opacity .25s ease;
+  }
+  .dot:hover{background:rgb(255 255 255 / 0.55)}
+  /* dot activo: se estira a pildora (patron page-control), mas claro que solo
+     agrandar el punto. */
+  .dot.active{width:18px;background:#fff}
   /* dot en el borde de la ventana visible (hay mas fuera, hacia ese lado):
      se ve mas chico/atenuado en vez de listar TODOS los disenos del pool. */
-  .dot.edge{transform:scale(.55);opacity:.45}
+  .dot.edge{transform:scale(.65);opacity:.5}
 
   /* ---------- toggle "Ver con los colores de tu marca" (icono compacto,
      el aviso aparece como toast y se apaga solo — no tapa el header).
@@ -95,22 +118,27 @@
   .brand-toggle.dragging{transition:none}
   .brand-toggle.dragging .brand-btn{cursor:grabbing;transform:scale(1.06)}
   .brand-btn{
-    width:38px;height:38px;flex:none;
+    width:40px;height:40px;flex:none;
     border-radius:50%;
     display:grid;place-items:center;
-    border:1px solid rgb(255 255 255 / 0.22);
-    background:rgb(15 15 18 / 0.45);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    color:#f2f1ee;
+    border:1px solid var(--glass-line);
+    background:var(--glass-bg);
+    backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    box-shadow:0 4px 18px rgb(0 0 0 / 0.3);
+    color:var(--ink);
     cursor:grab;
     touch-action:none;
-    transition:background .2s ease,transform .2s ease;
+    transition:background .2s ease,transform .2s ease,box-shadow .2s ease;
   }
-  .brand-btn:hover{background:rgb(15 15 18 / 0.65)}
+  .brand-btn:hover{background:var(--glass-bg-hover)}
   .brand-btn:active{transform:scale(.92)}
-  .brand-btn[aria-pressed="true"]{background:#3d6fd6;border-color:transparent}
-  .brand-btn svg{width:18px;height:18px}
+  .brand-btn[aria-pressed="true"]{
+    background:linear-gradient(135deg,#4f83f7,var(--accent-strong));
+    border-color:rgb(255 255 255 / 0.35);
+    box-shadow:0 4px 16px rgb(61 111 214 / 0.5);
+  }
+  .brand-btn svg{width:19px;height:19px}
   .brand-toast{
     position:absolute;
     top:calc(100% + 8px);
@@ -118,13 +146,13 @@
     margin:0;
     width:max-content;
     max-width:min(230px,68vw);
-    padding:7px 12px;
+    padding:8px 12px;
     border-radius:12px;
-    border:1px solid rgb(255 255 255 / 0.16);
-    background:rgb(15 15 18 / 0.75);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    color:#f2f1ee;
+    border:1px solid var(--glass-line);
+    background:rgb(15 15 18 / 0.8);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    color:var(--ink);
     font-size:11px;
     line-height:1.35;
     text-align:right;
@@ -134,29 +162,30 @@
     transition:opacity .25s ease,transform .25s ease;
   }
   .brand-toast.show{opacity:1;transform:translateY(0)}
-  .brand-toast.warn{border-color:rgb(255 200 120 / 0.32);background:rgb(140 60 10 / 0.75);color:#fff3e0}
+  .brand-toast.warn{border-color:rgb(255 200 120 / 0.32);background:rgb(140 60 10 / 0.8);color:#fff3e0}
   .brand-toggle.toast-left .brand-toast{left:0;right:auto;text-align:left}
 
   /* ---------- boton "?" para reabrir la vista guiada (esquina inferior
      izquierda, zona libre; el resto del HUD esta a la derecha/centro) ------- */
   .help-btn{
     position:absolute;
-    bottom:max(16px,env(safe-area-inset-bottom));
+    bottom:max(14px,env(safe-area-inset-bottom));
     left:max(10px,env(safe-area-inset-left));
     pointer-events:auto;
-    width:34px;height:34px;
+    width:40px;height:40px;
     border-radius:50%;
     display:grid;place-items:center;
-    border:1px solid rgb(255 255 255 / 0.22);
-    background:rgb(15 15 18 / 0.45);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    color:#f2f1ee;
+    border:1px solid var(--glass-line);
+    background:var(--glass-bg);
+    backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    box-shadow:0 4px 18px rgb(0 0 0 / 0.3);
+    color:var(--ink);
     font:600 16px/1 system-ui,sans-serif;
     cursor:pointer;
     transition:background .2s ease,transform .2s ease;
   }
-  .help-btn:hover{background:rgb(15 15 18 / 0.65)}
+  .help-btn:hover{background:var(--glass-bg-hover)}
   .help-btn:active{transform:scale(.92)}
 
   /* ---------- vista guiada (coach-marks): overlay oscuro con un "reflector"
@@ -171,7 +200,7 @@
   .tour.no-spot{background:rgb(6 6 10 / 0.72)}
   .tour-spot{
     position:absolute;left:0;top:0;width:0;height:0;
-    border-radius:16px;
+    border-radius:18px;
     box-shadow:0 0 0 9999px rgb(6 6 10 / 0.72);
     transition:all .32s cubic-bezier(.22,.75,.3,1);
     pointer-events:none;
@@ -202,11 +231,11 @@
     width:min(300px,84vw);
     padding:16px 16px 12px;
     border-radius:16px;
-    border:1px solid rgb(255 255 255 / 0.14);
+    border:1px solid var(--glass-line);
     background:rgb(20 20 24 / 0.94);
     backdrop-filter:blur(14px);
     -webkit-backdrop-filter:blur(14px);
-    color:#f2f1ee;
+    color:var(--ink);
     box-shadow:0 12px 40px rgb(0 0 0 / 0.5);
     transition:top .3s ease,left .3s ease;
   }
@@ -215,7 +244,7 @@
   .tour-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
   .tour-dots{display:flex;gap:6px;align-items:center}
   .tour-dots i{width:6px;height:6px;border-radius:50%;background:rgb(255 255 255 / 0.28);transition:background .2s,transform .2s}
-  .tour-dots i.on{background:#f2f1ee;transform:scale(1.3)}
+  .tour-dots i.on{background:var(--ink);transform:scale(1.3)}
   .tour-skip{
     border:none;background:transparent;padding:6px 2px;
     color:rgb(242 241 238 / 0.55);font-size:12px;cursor:pointer;
@@ -224,15 +253,14 @@
   .tour-next{
     border:none;border-radius:999px;
     padding:8px 16px;
-    background:#3d6fd6;color:#fff;
+    background:var(--accent);color:#fff;
     font-size:13px;font-weight:600;cursor:pointer;
     transition:background .2s,transform .2s;
   }
-  .tour-next:hover{background:#2f5ec0}
+  .tour-next:hover{background:var(--accent-strong)}
   .tour-next:active{transform:scale(.95)}
 
   @media (prefers-reduced-motion: reduce){
-    .track{transition:none}
     .dot,.nav,.brand-btn,.tour-spot,.tour-pop{transition:none}
     .swipe-hint{animation:none}
   }
@@ -251,23 +279,29 @@
   </div>
 
   <div class="hud">
-    <button class="nav nav-prev" type="button" aria-label="Diseño anterior">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <button class="nav nav-next" type="button" aria-label="Siguiente diseño">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
-
-    <div class="dots" role="tablist" aria-label="Diseños disponibles"></div>
+    <div class="dock" role="group" aria-label="Navegación de diseños">
+      <button class="nav nav-prev" type="button" aria-label="Diseño anterior" title="Diseño anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="dock-center">
+        <div class="dock-label" aria-live="polite">
+          <span class="dock-name"></span><span class="dock-pos"></span>
+        </div>
+        <div class="dots" role="tablist" aria-label="Diseños disponibles"></div>
+      </div>
+      <button class="nav nav-next" type="button" aria-label="Siguiente diseño" title="Siguiente diseño">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
 
     <div class="brand-toggle" id="brandToggle">
-      <button type="button" class="brand-btn" id="brandBtn" aria-pressed="false" aria-label="Ver con los colores de tu marca">
+      <button type="button" class="brand-btn" id="brandBtn" aria-pressed="false" aria-label="Ver con los colores de tu marca" title="Ver con los colores de tu marca">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.9 0-.5-.2-.9-.6-1.3-.4-.4-.5-.9-.2-1.4.3-.5.9-.6 1.5-.6H16a4 4 0 0 0 4-4c0-5-3.6-8.8-8-8.8Z"/><circle cx="7.5" cy="10.5" r="1.15" fill="currentColor" stroke="none"/><circle cx="10.3" cy="7" r="1.15" fill="currentColor" stroke="none"/><circle cx="14.3" cy="7.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="16.8" cy="10.8" r="1.15" fill="currentColor" stroke="none"/></svg>
       </button>
       <p class="brand-toast" id="brandToast" role="status"></p>
     </div>
 
-    <button type="button" class="help-btn" id="helpBtn" aria-label="Ver la guía de nuevo">?</button>
+    <button type="button" class="help-btn" id="helpBtn" aria-label="Ver la guía de nuevo" title="Ver la guía de nuevo">?</button>
   </div>
 
   <!-- Vista guiada (coach-marks). El texto de cada paso vive en el JS; el
@@ -295,18 +329,60 @@
     var dotsWrap = document.querySelector(".dots");
     var prevBtn = document.querySelector(".nav-prev");
     var nextBtn = document.querySelector(".nav-next");
+    var dockName = document.querySelector(".dock-name");
+    var dockPos = document.querySelector(".dock-pos");
     var n = realSlides.length;
 
-    /* Sin bucle: index va de 0 a n-1 nomas. Al llegar a una punta el boton
+    /* ================= motor del carrusel =================
+     * Basado en POSICION (px), no en index + cerrojo de transicion. El diseno
+     * anterior (flag `animating` liberado por transitionend) se trababa: si la
+     * transicion no disparaba (transform sin cambio neto, drag soltado en el
+     * borde, view transition pisando la CSS transition) el flag quedaba en true
+     * para siempre y el track moria a mitad de camino. Aca no hay cerrojo:
+     * cualquier gesto/click INTERRUMPE la animacion en curso leyendo la
+     * posicion real del computed style y sigue desde ahi; al soltar SIEMPRE se
+     * asienta en un slide valido (clamp + snap), asi que no existe estado
+     * "a la mitad". */
+    var EASE = "cubic-bezier(.22,.75,.3,1)";
+    var DURATION_MS = 420;
+    var reduceMotion = false;
+    try { reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_) {}
+
+    /* Sin bucle: index va de 0 a n-1 nomas. Al llegar a una punta la flecha
      * correspondiente se deshabilita (disabled), no da vuelta al otro lado. */
     var index = 0;
 
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+    function stageWidth() { return stage.getBoundingClientRect().width; }
+
+    // Posicion REAL del track en px, incluso a mitad de una animacion: el
+    // computed style devuelve la matriz interpolada del frame actual.
+    function currentX() {
+      var t = getComputedStyle(track).transform;
+      if (!t || t === "none") return 0;
+      var parts = t.slice(t.indexOf("(") + 1, -1).split(",");
+      return parts.length >= 16 ? parseFloat(parts[12]) : parseFloat(parts[4]);
+    }
+
+    function setX(px, animate) {
+      track.style.transition = animate && !reduceMotion
+        ? "transform " + DURATION_MS + "ms " + EASE
+        : "none";
+      track.style.transform = "translate3d(" + px + "px,0,0)";
+    }
+
+    function goTo(i, animate) {
+      index = clamp(i, 0, n - 1);
+      setX(-index * stageWidth(), animate !== false);
+      syncHud();
+    }
+
     /* Ventana de dots: con pools grandes (14 disenos) listar un dot por
      * diseno da una barra larga. Se muestran como maximo DOT_WINDOW_RADIUS*2+1
-     * (hoy 3: el activo + 1 a cada lado); el resto queda oculto. El dot en la
-     * punta de la ventana se ve mas chico/atenuado (.edge) SOLO si de verdad
-     * hay mas disenos de ese lado — en la primera/ultima diapositiva esa
-     * punta desaparece, asi se nota que no hay mas para ese lado. */
+     * (hoy 3: el activo + 1 a cada lado); el resto queda oculto y el contador
+     * "3 / 14" del dock dice la posicion absoluta. El dot en la punta de la
+     * ventana se ve mas chico/atenuado (.edge) SOLO si de verdad hay mas
+     * disenos de ese lado. */
     var DOT_WINDOW_RADIUS = 1;
 
     realSlides.forEach(function (slide, i) {
@@ -322,10 +398,7 @@
     });
     var dots = Array.prototype.slice.call(dotsWrap.children);
 
-    function paint(withTransition) {
-      track.style.transition = withTransition === false ? "none" : "transform .45s cubic-bezier(.22,.75,.3,1)";
-      track.style.transform = "translateX(" + index * -100 + "%)";
-
+    function syncHud() {
       var windowSize = DOT_WINDOW_RADIUS * 2 + 1;
       var lo = n <= windowSize ? 0 : Math.max(0, Math.min(index - DOT_WINDOW_RADIUS, n - windowSize));
       var hi = Math.min(n - 1, lo + windowSize - 1);
@@ -333,35 +406,16 @@
         var inWindow = i >= lo && i <= hi;
         d.style.display = inWindow ? "" : "none";
         d.classList.toggle("active", i === index);
+        d.setAttribute("aria-selected", String(i === index));
         d.classList.toggle("edge", inWindow && ((i === lo && lo > 0) || (i === hi && hi < n - 1)));
       });
+
+      dockName.textContent = realSlides[index].dataset.name || "Diseño " + (index + 1);
+      dockPos.textContent = (index + 1) + " / " + n;
 
       prevBtn.disabled = index === 0;
       nextBtn.disabled = index === n - 1;
     }
-
-    // Cerrojo anti doble-click: mientras "animating" es true se ignora
-    // cualquier next/prev/teclado nuevo, para no pisar la transicion en curso.
-    var animating = false;
-
-    function goTo(i) {
-      if (animating) return;
-      if (i < 0 || i > n - 1) return;
-      animating = true;
-      index = i;
-      if (document.startViewTransition) {
-        document.startViewTransition(function () {
-          paint(true);
-        });
-      } else {
-        paint(true);
-      }
-    }
-
-    track.addEventListener("transitionend", function (e) {
-      if (e.target !== track) return;
-      animating = false;
-    });
 
     prevBtn.addEventListener("click", function () {
       goTo(index - 1);
@@ -374,80 +428,162 @@
       if (e.key === "ArrowRight") goTo(index + 1);
     });
 
-    /* Swipe: pointerdown arranca el seguimiento; recien si el gesto se
-     * confirma horizontal (supera el umbral) se toma el control, asi un tap
-     * normal sobre un boton DENTRO de la card (wa.me, tel:, mailto:) llega
-     * intacto en vez de ser interceptado.
+    /* ================= swipe =================
+     * pointerdown arranca el seguimiento; recien si el gesto se confirma
+     * horizontal (supera el umbral) se toma el control, asi un tap normal
+     * sobre un boton DENTRO de la card (wa.me, tel:, mailto:) llega intacto.
      *
-     * Ademas del track (los margenes alrededor del iframe), el swipe se
+     * Ademas del stage (los margenes alrededor del iframe), el swipe se
      * engancha DENTRO de cada iframe (mismo origen: `src` relativo, mismo
      * host que el visor). Un <iframe> es un browsing context aparte: el
-     * navegador entrega el toque a SU documento, nunca al padre. Sin este
-     * puente el swipe quedaba muerto en el telefono, porque ahi el iframe
-     * ocupa TODA la pantalla (el padre solo veia eventos en margenes de
-     * 0px). El transform siempre se aplica sobre el track del padre; los
-     * deltas son relativos a startX/startY, asi que de que documento vengan
-     * los eventos no importa. */
-    var THRESHOLD_PX = 8;
-    var SWIPE_RATIO = 0.18;
+     * navegador entrega el toque a SU documento, nunca al padre; sin este
+     * puente el swipe queda muerto en el telefono (el iframe ocupa TODA la
+     * pantalla).
+     *
+     * CLAVE del puente: los eventos del iframe traen clientX relativo a SU
+     * viewport, y ese viewport SE MUEVE junto con el track durante el drag.
+     * Usarlos crudos (como hacia la version anterior) mete un lazo de
+     * feedback: el track corre "atras" del dedo, con lag y saltos. toStageX/Y
+     * los convierte a coordenadas del visor sumando el rect ACTUAL del
+     * iframe, que ya incluye el corrimiento del track. */
+    var THRESHOLD_PX = 8;      // umbral para confirmar gesto horizontal
+    var SNAP_RATIO = 0.22;     // fraccion de pantalla arrastrada que cambia de slide
+    var FLICK_VELOCITY = 0.45; // px/ms: un flick corto y rapido tambien cambia
+    var RUBBER = 0.32;         // resistencia al estirar mas alla de la primera/ultima
 
-    function attachSwipe(target, useCapture) {
+    // Un drag con mouse termina soltando sobre un link de la card: sin esto el
+    // navegador emite click y navega. Se traga SOLO el click inmediato.
+    function suppressNextClick(node) {
+      function block(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        node.removeEventListener("click", block, true);
+      }
+      node.addEventListener("click", block, true);
+      setTimeout(function () { node.removeEventListener("click", block, true); }, 150);
+    }
+
+    function attachSwipe(target, capEl, toStageX, toStageY) {
       var dragging = false, captured = false, pointerId = null;
-      var startX = 0, startY = 0, dx = 0, stageWidth = 0;
+      var startX = 0, startY = 0, baseX = 0, posX = 0, w = 1;
+      var samples = [];
 
       target.addEventListener("pointerdown", function (e) {
+        if (dragging) return; // segundo dedo: se ignora
+        if (e.pointerType === "mouse" && e.button !== 0) return;
         dragging = true;
         captured = false;
         pointerId = e.pointerId;
-        startX = e.clientX;
-        startY = e.clientY;
-        dx = 0;
-        stageWidth = stage.getBoundingClientRect().width;
+        startX = toStageX(e);
+        startY = toStageY(e);
+        w = stageWidth() || 1;
+        samples = [];
       });
 
       target.addEventListener("pointermove", function (e) {
         if (!dragging || e.pointerId !== pointerId) return;
-        var deltaX = e.clientX - startX;
-        var deltaY = e.clientY - startY;
+        if (e.pointerType === "mouse" && e.buttons === 0) { endDrag(e); return; }
+        var x = toStageX(e);
+        var deltaX = x - startX;
+        var deltaY = toStageY(e) - startY;
         if (!captured) {
           if (Math.abs(deltaX) < THRESHOLD_PX || Math.abs(deltaX) < Math.abs(deltaY)) return;
           captured = true;
-          if (useCapture) { try { target.setPointerCapture(pointerId); } catch (_) {} }
+          baseX = currentX(); // agarra el track DONDE ESTE (aunque venga animando)
           track.style.transition = "none";
+          if (capEl) { try { capEl.setPointerCapture(pointerId); } catch (_) {} }
         }
-        dx = deltaX;
-        track.style.transform = "translateX(calc(" + index * -100 + "% + " + dx + "px))";
-        e.preventDefault();
+        posX = baseX + deltaX;
+        // Rubber band: mas alla de las puntas el track sigue al dedo con
+        // resistencia, y al soltar vuelve solo — nunca queda trabado afuera.
+        var minX = -(n - 1) * w, maxX = 0;
+        if (posX > maxX) posX = maxX + (posX - maxX) * RUBBER;
+        else if (posX < minX) posX = minX + (posX - minX) * RUBBER;
+        track.style.transform = "translate3d(" + posX + "px,0,0)";
+        samples.push({ t: e.timeStamp, x: x });
+        if (samples.length > 8) samples.shift();
+        if (e.cancelable) e.preventDefault();
       });
 
-      function endDrag() {
-        if (!dragging) return;
+      function endDrag(e) {
+        if (!dragging || (e && e.pointerId !== pointerId)) return;
         dragging = false;
         if (!captured) return;
         captured = false;
-        var moved = -dx > stageWidth * SWIPE_RATIO ? 1 : dx > stageWidth * SWIPE_RATIO ? -1 : 0;
-        goTo(index + moved);
+        suppressNextClick(target);
+
+        // Velocidad del gesto: delta sobre las muestras de los ultimos ~100ms.
+        var vx = 0;
+        var last = samples[samples.length - 1];
+        for (var i = samples.length - 2; i >= 0; i--) {
+          if (last.t - samples[i].t > 100) break;
+          var dt = last.t - samples[i].t;
+          if (dt > 0) vx = (last.x - samples[i].x) / dt;
+        }
+
+        // Snap: si el drag cruzo la mitad de otro slide, Math.round ya lo
+        // elige; si no, decide el umbral de distancia o un flick rapido en la
+        // MISMA direccion del desplazamiento. goTo clampea, asi que soltar en
+        // una punta SIEMPRE vuelve a un slide valido.
+        var raw = -posX / w;
+        var target2 = Math.round(raw);
+        if (target2 === index) {
+          var progress = raw - index;
+          if (progress > SNAP_RATIO || (vx < -FLICK_VELOCITY && progress > 0.02)) target2 = index + 1;
+          else if (progress < -SNAP_RATIO || (vx > FLICK_VELOCITY && progress < -0.02)) target2 = index - 1;
+        }
+        goTo(target2);
       }
 
       target.addEventListener("pointerup", endDrag);
       target.addEventListener("pointercancel", endDrag);
-      target.addEventListener("pointerleave", function () {
-        if (dragging && !captured) dragging = false;
-      });
     }
 
-    attachSwipe(track, true);
+    attachSwipe(
+      stage,
+      stage,
+      function (e) { return e.clientX; },
+      function (e) { return e.clientY; }
+    );
 
-    // Puente same-origin: escucha los pointer events DENTRO del documento
-    // del iframe y los resuelve con el mismo attachSwipe. Si el iframe fuera
-    // cross-origin, contentDocument tira/da null y cae de forma segura a
-    // flechas/teclado (sin swipe sobre ese slide en particular).
+    /* Trackpad/rueda horizontal (desktop): dos dedos pasan de diseno. El
+     * cooldown evita que la inercia del trackpad dispare varios saltos. */
+    var WHEEL_STEP = 90;
+    var wheelAcc = 0, wheelLock = false, wheelTimer = null;
+    function onWheel(e) {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; // scroll vertical: de la card
+      if (e.cancelable) e.preventDefault();
+      if (wheelLock) return;
+      wheelAcc += e.deltaX;
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(function () { wheelAcc = 0; }, 180);
+      if (Math.abs(wheelAcc) >= WHEEL_STEP) {
+        goTo(index + (wheelAcc > 0 ? 1 : -1));
+        wheelAcc = 0;
+        wheelLock = true;
+        setTimeout(function () { wheelLock = false; }, 450);
+      }
+    }
+    stage.addEventListener("wheel", onWheel, { passive: false });
+
+    // Puente same-origin: escucha los pointer events DENTRO del documento del
+    // iframe y los resuelve con el mismo attachSwipe, mapeando coordenadas al
+    // visor via el rect ACTUAL del iframe (ver nota arriba). Si el iframe
+    // fuera cross-origin, contentDocument tira/da null y cae de forma segura
+    // a flechas/teclado (sin swipe sobre ese slide en particular).
     function bridgeIframeSwipe(iframeEl) {
       try {
         var d = iframeEl.contentDocument;
-        if (!d) return;
+        if (!d || d.__dcSwipe) return; // "load" puede re-disparar: no doble enganche
+        d.__dcSwipe = true;
         d.documentElement.style.touchAction = "pan-y";
-        attachSwipe(d, false);
+        attachSwipe(
+          d,
+          d.documentElement,
+          function (e) { return e.clientX + iframeEl.getBoundingClientRect().left; },
+          function (e) { return e.clientY + iframeEl.getBoundingClientRect().top; }
+        );
+        d.addEventListener("wheel", onWheel, { passive: false });
       } catch (_) {}
     }
     function whenIframeReady(iframeEl, cb) {
@@ -545,8 +681,6 @@
     var bDown = false, bMoved = false, bPointer = null;
     var bStartX = 0, bStartY = 0, bOrigL = 0, bOrigT = 0;
 
-    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-
     // El toast se abre hacia el lado libre de la pantalla (no siempre hacia la
     // izquierda) para que nunca se salga del viewport al crecer.
     function updateToastSide() {
@@ -557,7 +691,7 @@
     updateToastSide();
 
     // El seguimiento del movimiento se hace en `window` (no en el boton): el
-    // boton es chico (38px) y un arrastre rapido lo abandona antes de superar
+    // boton es chico (40px) y un arrastre rapido lo abandona antes de superar
     // el umbral. Escuchando en window el gesto se sigue igual aunque el puntero
     // salga del boton.
     function onBrandMove(e) {
@@ -593,6 +727,11 @@
       var r = brandToggle.getBoundingClientRect();
       bOrigL = r.left;
       bOrigT = r.top;
+      // Captura EXPLICITA: sin esto, apenas el puntero cruza sobre el iframe
+      // (que ocupa toda la pantalla) los eventos van a SU documento y el padre
+      // queda ciego — con mouse la burbuja se congelaba en pleno arrastre.
+      // Touch ya capturaba implicito; esto empareja mouse/pen.
+      try { brandBtn.setPointerCapture(e.pointerId); } catch (_) {}
       addEventListener("pointermove", onBrandMove);
       addEventListener("pointerup", onBrandUp);
       addEventListener("pointercancel", onBrandUp);
@@ -613,13 +752,12 @@
      * globo se posicionan por getBoundingClientRect en cada paso, asi siguen a
      * la burbuja de marca aunque el cliente la haya movido. Arranca solo la
      * primera vez (localStorage); el boton "?" la reabre siempre. */
-    var TOUR_KEY = "dc-tour-seen-v2";
+    var TOUR_KEY = "dc-tour-seen-v3";
     var steps = [
       { sel: null, title: "Tu tarjeta digital", text: "Este es un ejemplo de cómo se vería tu tarjeta digital, lista para compartir por WhatsApp o redes." },
-      { sel: "#brandBtn", title: "Los colores de tu marca", text: "Con este botón puedes ver cómo se vería el diseño con los colores de tu marca. Puedes arrastrarlo si te estorba." },
-      { sel: ".nav-next", title: "Cambiá de diseño", text: "Tocá estas flechas a los lados para ver otro diseño." },
+      { sel: "#brandBtn", title: "Los colores de tu marca", text: "Con este botón ves cada diseño con los colores de tu marca. Si te estorba, puedes arrastrarlo a otro lugar." },
+      { sel: ".dock", title: "Cambiá de diseño", text: "Con las flechas pasás de un diseño a otro; el nombre y el contador te dicen cuál estás viendo y cuántos hay." },
       { sel: ".stage", hint: "swipe", title: "O deslizá con el dedo", text: "Deslizá de un lado a otro sobre la tarjeta, como en Instagram." },
-      { sel: ".dots", title: "Cuántos diseños hay", text: "Acá ves cuántos diseños hay disponibles y en cuál estás." },
       {{#hasGeneratedWeb}}{ sel: null, title: "Tu propia página web", text: "Y te hicimos unos ejemplos de cómo se vería tu propia página web: ábrelos con el botón «Ver mi sitio» dentro de tu tarjeta." },{{/hasGeneratedWeb}}
     ];
 
@@ -690,13 +828,19 @@
     });
     tourSkip.addEventListener("click", closeTour);
     helpBtn.addEventListener("click", openTour);
-    addEventListener("resize", function () { if (tour.classList.contains("open")) placeTour(); });
+
+    addEventListener("resize", function () {
+      // El track esta en px: al rotar/redimensionar se re-asienta sin animar.
+      setX(-index * stageWidth(), false);
+      updateToastSide();
+      if (tour.classList.contains("open")) placeTour();
+    });
 
     var tourSeen = false;
     try { tourSeen = localStorage.getItem(TOUR_KEY) === "1"; } catch (_) {}
     if (!tourSeen) setTimeout(openTour, 550);
 
-    paint(false);
+    goTo(0, false);
   })();
   </script>
 </body>

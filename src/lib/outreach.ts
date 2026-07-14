@@ -11,26 +11,36 @@ import type { Lead } from "./schema.js";
  * es 100% testeable y no depende del LLM.
  *
  * El mensaje viene en DOS partes (el "front" y el "back" del pedido):
- *  - apertura (front): saludo personalizado + gancho + los enlaces de la
- *    tarjeta/web que YA le generamos. Mostrar valor ENTREGADO (no una promesa)
- *    baja la friccion del primer contacto: es marketing de "muestra gratis".
- *  - seguimiento (back): un menu de otros sistemas que automatizamos, por si la
- *    tarjeta no es lo que buscaba (manejo de objecion / up-sell). La prueba de
- *    que si los hacemos es que esta misma tarjeta y su web se generaron solas
- *    desde una foto — el propio entregable ES la prueba social.
+ *  - apertura (front): saludo personalizado + contexto honesto ("estuve en su
+ *    negocio y tome una foto de su tarjeta") + los enlaces ya generados.
+ *    Mostrar valor ENTREGADO (no una promesa) baja la friccion del primer
+ *    contacto: es marketing de "muestra gratis". Cierra ofreciendo
+ *    personalizacion, sin pedir cita ni presionar.
+ *  - seguimiento (back): la explicacion tecnologica. La tarjeta es la muestra;
+ *    el menu lista que mas se automatiza. La prueba de que si lo hacemos es que
+ *    esta misma tarjeta se genero sola desde una fotografia — el propio
+ *    entregable ES la prueba social.
  */
 
 /**
- * PUBLIC_BASE_URL — dominio publico donde se sirve cada digital card. La URL
- * final de un lead es `${PUBLIC_BASE_URL}/<slug>`. Cuando exista el deploy real
- * (hoy `deploy` es stub) ese subpath es el que quedara publicado; el mensaje ya
- * apunta ahi para no tener que regenerarlo despues.
+ * PUBLIC_BASE_URL — dominio publico donde se sirve cada lead. `deploy` publica
+ * la tarjeta en `<base>/<slug>/dc/` y la web en `<base>/<slug>/web/` (ver
+ * `publicUrl` en src/stages/deploy.ts); estas URLs replican ESA estructura.
  */
 export const PUBLIC_BASE_URL = "https://cards.kronet.app";
 
-/** URL publica de la tarjeta digital de un lead (visor swipeable). */
+/**
+ * URL publica de la tarjeta digital (visor swipeable). OJO: lleva el sufijo
+ * `/dc/` — el raiz `<base>/<slug>` NO resuelve, ahi solo viven las carpetas
+ * dc/ y web/ que sube deploy.
+ */
 export function publicCardUrl(slug: string): string {
-  return `${PUBLIC_BASE_URL}/${slug}`;
+  return `${PUBLIC_BASE_URL}/${slug}/dc/`;
+}
+
+/** URL publica de la pagina web generada (visor swipeable de build-web). */
+export function publicWebUrl(slug: string): string {
+  return `${PUBLIC_BASE_URL}/${slug}/web/`;
 }
 
 /**
@@ -43,47 +53,17 @@ export function greetingName(lead: Lead): string {
 }
 
 /**
- * UpsellSystem — un item del menu de sistemas que se ofrecen en el "back". El
- * `pitch` es el beneficio en lenguaje del cliente (que gana), no la feature.
+ * UPSELL_SYSTEMS — menu de automatizaciones del mensaje de seguimiento. Frases
+ * cortas en lenguaje del cliente (que gana), sin jerga tecnica ni negritas:
+ * en WhatsApp una lista simple se lee mejor que un catalogo con pitch largo.
+ * Agregar/quitar una oferta = editar esta lista, sin tocar la logica.
  */
-export interface UpsellSystem {
-  emoji: string;
-  name: string;
-  pitch: string;
-}
-
-/**
- * UPSELL_SYSTEMS — catalogo fijo de automatizaciones que se ofrecen si la
- * tarjeta no le interesa al cliente. Es dato determinista (catalogo en codigo),
- * mismo criterio que `rubroConfig().defaultServices`. Agregar/quitar una oferta
- * = editar esta lista, sin tocar la logica del mensaje.
- */
-export const UPSELL_SYSTEMS: UpsellSystem[] = [
-  {
-    emoji: "📅",
-    name: "Agenda de citas automatizada",
-    pitch: "sus clientes reservan solos, sin llamadas ni idas y vueltas.",
-  },
-  {
-    emoji: "🤖",
-    name: "Bot de WhatsApp que atiende 24/7",
-    pitch: "responde dudas y agenda aunque usted esté ocupado o ya haya cerrado.",
-  },
-  {
-    emoji: "👥",
-    name: "Sistema de seguimiento de clientes (CRM)",
-    pitch: "recordatorios y mensajes automáticos para que vuelvan y no se enfríen.",
-  },
-  {
-    emoji: "📊",
-    name: "Sistema contable",
-    pitch: "ventas, gastos y cortes de caja ordenados, sin hojas de cálculo sueltas.",
-  },
-  {
-    emoji: "📣",
-    name: "Automatización de anuncios en redes sociales",
-    pitch: "publica y promociona su negocio de forma automática, todos los días.",
-  },
+export const UPSELL_SYSTEMS: string[] = [
+  "Agenda de citas en línea.",
+  "WhatsApp que responde y agenda automáticamente.",
+  "Seguimiento de clientes y recordatorios.",
+  "Sistemas administrativos.",
+  "Sitios web y presencia digital.",
 ];
 
 /**
@@ -91,9 +71,9 @@ export const UPSELL_SYSTEMS: UpsellSystem[] = [
  * (ambas juntas) que se persiste en `generated.outreach_message`.
  */
 export interface OutreachMessage {
-  /** Mensaje de apertura: saludo + gancho + enlaces. */
+  /** Mensaje de apertura: saludo + contexto + enlaces. */
   front: string;
-  /** Mensaje de seguimiento: menu de otros sistemas (up-sell). */
+  /** Mensaje de seguimiento: explicacion tecnologica + menu de sistemas. */
   back: string;
   /** front + back, separados, listo para guardar/enviar. */
   full: string;
@@ -104,39 +84,46 @@ const PART_SEPARATOR = "———";
 
 /**
  * buildOutreachMessage — PURA: Lead -> mensaje de contacto en frio. No toca
- * disco ni status. Los enlaces salen del dominio publico + el slug (la tarjeta
- * siempre existe cuando corre `package`); el sitio web solo se incluye si el
- * lead ya trae `generated.web_url` (hoy `build-web` es stub, asi que casi
- * siempre solo va la tarjeta).
+ * disco ni status. Ambos enlaces se derivan del slug (dominio publico + la
+ * estructura /dc/ y /web/ que sube deploy) — `generated.web_url` puede traer
+ * una ruta RELATIVA antes del deploy ("web/index.html"), asi que solo se usa
+ * como SENAL de que la web existe, nunca como URL del mensaje. La linea de la
+ * pagina web solo se incluye si esa senal esta presente.
  */
 export function buildOutreachMessage(lead: Lead): OutreachMessage {
   const nombre = greetingName(lead);
   const negocio = lead.business.name?.trim() || "su negocio";
-  const cardUrl = publicCardUrl(lead.slug);
-  const webUrl = lead.generated.web_url?.trim();
+  const hasWeb = Boolean(lead.generated.web_url?.trim());
 
-  const enlaces = [`🔗 Tarjeta digital: ${cardUrl}`];
-  if (webUrl) enlaces.push(`🌐 Sitio web: ${webUrl}`);
+  const enlaces = [`📱 Tarjeta digital:`, publicCardUrl(lead.slug)];
+  if (hasWeb) enlaces.push(``, `🌐 Página web:`, publicWebUrl(lead.slug));
 
   const front = [
-    `Hola, buen día ${nombre} 👋`,
+    `Hola, buen día ${nombre}. 👋`,
     ``,
-    `Le escribo de Kronet. Tomé la tarjeta de ${negocio} y me di a la tarea de convertirla en una *tarjeta digital*: se abre desde el celular, se comparte con un solo enlace, guarda su contacto con un toque y está disponible las 24 horas.`,
+    `Estuve en ${negocio} y tomé una foto de su tarjeta de presentación. Como parte de una demostración, la convertí en una tarjeta digital interactiva.`,
     ``,
-    `Ya se la dejé lista, aquí puede verla:`,
+    `Ya está lista y puede verla aquí:`,
+    ``,
     ...enlaces,
     ``,
-    `Vienen varios diseños para que elija el que más le guste; si alguno le convence, se lo publicamos con sus datos. ¿Le parece si lo revisamos juntos?`,
+    `Incluye varios diseños para que pueda comparar distintas opciones y ver cómo podría presentarse su negocio de forma profesional desde un solo enlace.`,
+    ``,
+    `Si le gusta la idea, con gusto puedo personalizarla con la información o los cambios que desee.`,
   ].join("\n");
 
-  const menu = UPSELL_SYSTEMS.map((s) => `• ${s.emoji} *${s.name}* — ${s.pitch}`).join("\n");
+  const menu = UPSELL_SYSTEMS.map((s) => `• ${s}`).join("\n");
 
   const back = [
-    `Y si la tarjeta no es justo lo que buscaba, es apenas una muestra. También creamos sistemas que le ahorran tiempo y le traen más clientes:`,
+    `La tarjeta digital es solo una pequeña muestra de lo que hacemos.`,
+    ``,
+    `Ayudamos a negocios a automatizar procesos para ahorrar tiempo y mejorar la atención a sus clientes, por ejemplo:`,
     ``,
     menu,
     ``,
-    `La mejor prueba de que sí lo hacemos: esta tarjeta digital (y su versión web) se generaron *de forma automática* a partir de una sola foto de su tarjeta. Dígame qué le serviría a ${negocio} y se lo preparo, sin compromiso.`,
+    `De hecho, esta misma tarjeta se creó automáticamente a partir de una fotografía. Esa misma automatización es la que aplicamos en otros procesos del negocio.`,
+    ``,
+    `Si en algún momento le interesa conocer cómo podría aprovechar estas herramientas en ${negocio}, con gusto le muestro algunas ideas, sin compromiso.`,
   ].join("\n");
 
   const full = `${front}\n\n${PART_SEPARATOR}\n\n${back}`;

@@ -168,8 +168,8 @@ describe("stages route (SSE) — con ssh mockeado", () => {
     const links = await app.request("/api/leads/carlos-doc/links", { headers: { cookie } });
     const data = (await links.json()) as { outreach_front: string | null; outreach_back: string | null };
     expect(data.outreach_front).toContain("Hola, buen día");
-    expect(data.outreach_front).toContain("https://cards.kronet.app/carlos-doc");
-    expect(data.outreach_back).toContain("de forma automática");
+    expect(data.outreach_front).toContain("https://cards.kronet.app/carlos-doc/dc/");
+    expect(data.outreach_back).toContain("se creó automáticamente");
   });
 
   it("una stage desconocida da 400", async () => {
