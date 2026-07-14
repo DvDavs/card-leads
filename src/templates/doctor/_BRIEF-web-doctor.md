@@ -264,8 +264,9 @@ El template las usa directo en `src`, sin `../`:
 | `img_avatar_01`, `img_avatar_02`, `img_avatar_03` | Avatares chicos (testimonios, equipo reducido). |
 
 Reglas de imágenes:
-- Un template **sin fotos** (ej. `doc-lujo`) simplemente **no usa ningún slot**.
-  No hay obligación de mostrar imágenes.
+- Un template **sin fotos** simplemente **no usa ningún slot**. No hay
+  obligación de mostrar imágenes. (`doc-lujo` fue el ejemplo de esto hasta que
+  se le agregó el retrato principal a pedido; hoy todo el pool usa slots.)
 - Los slots que un template usa deben ir siempre asociados a su dato: si un slot
   no está resuelto, build-web lo resuelve a un asset por defecto del kind — pero
   el template no debe asumir una imagen concreta.
