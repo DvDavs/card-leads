@@ -127,6 +127,39 @@ Confirmado leyendo `src/stages/build-web.ts`, `deploy.ts` y `proposal.ts`: los
 tres son literalmente `throw new Error("...: no implementado")`, sin lógica
 todavía. `package.ts` **ya está implementado** (mensaje de contacto, ver arriba).
 
+## `src/templates/` — plantillas WEB (para `build-web`, aún stub)
+
+Los `index.html` de `doctor/estetica/barberia/generico` son los templates reales
+con placeholders `{{...}}` (hoy sin fotos, solo avatar de logo/inicial). Los
+`.html` grandes de `dental/`, `doctor/dr_arefin.html`, etc. son **diseños de
+referencia** (páginas completas guardadas de sitios reales, con imágenes
+remotas) — inspiración, todavía no cableados.
+
+### `src/templates/assets/` — librería de imágenes placeholder
+
+Imágenes para las plantillas web, organizadas por los dos ejes que el negocio
+pidió: **género del doctor** (`neutral`·`female`·`male`, `neutral` = default, no
+se infiere del nombre) y **especialidad/tipo de doctor** (`general`·`dental`·
+`aesthetic`·`surgeon`). Estructura: `assets/doctors/doctor-<esp>-<genero>.svg`
+(12 retratos) y `assets/offices/office-<esp>.svg` (4 consultorios).
+
+Son **ilustraciones SVG deterministas** (pictogramas sin rostro), NO fotos:
+`CLAUDE.md` prohíbe caras/fotos falsas de personas, el entorno bloquea bajar
+stock, y el repo es self-contained. Las genera
+`scripts/gen-template-images.mjs` (regenerar = re-correr el script; no editar
+los SVG a mano). Para usar fotos reales con licencia: reemplazar con el MISMO
+nombre de archivo y ajustar la extensión en el manifest — el selector no cambia.
+
+El selector vive en `src/config/doctor-images.ts` (puro, testeado en
+`tests/deterministic/doctor-images.test.ts`): `pickDoctorImage(lead)` /
+`pickOfficeImage(lead)` leen `business.attrs.especialidad`/`attrs.genero`, caen a
+la especialidad del rubro (`estetica`→`aesthetic`, resto→`general`) y a género
+`neutral`; `doctorImage`/`officeImage` arman la ruta directa;
+`normalizeSpecialty`/`normalizeGender` mapean texto libre;
+`DOCTOR_IMAGE_MANIFEST` es la lista completa (la usará `build-web` para saber qué
+copiar al lead, igual que `build-cards` espeja los assets de Guelaguetza). Ver
+`src/templates/assets/README.md`.
+
 ## `src/dc-templates/` — pool de diseños de digital card
 
 Cada `.html` de esta carpeta (menos los que empiezan con `_`) es un diseño

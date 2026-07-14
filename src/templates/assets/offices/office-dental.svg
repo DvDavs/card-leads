@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="Consultorio dental (ilustracion)">
+  <rect width="480" height="300" fill="#cffafe"/>
+    <rect y="214" width="480" height="86" fill="#eef2f5"/>
+    <line x1="0" y1="214" x2="480" y2="214" stroke="#0891b2" stroke-width="2" opacity="0.4"/>
+    <!-- ventana -->
+    <rect x="40" y="46" width="120" height="86" rx="6" fill="#ffffff" stroke="#0891b2" stroke-width="3"/>
+    <line x1="100" y1="46" x2="100" y2="132" stroke="#0891b2" stroke-width="2" opacity="0.5"/>
+    <line x1="40" y1="89" x2="160" y2="89" stroke="#0891b2" stroke-width="2" opacity="0.5"/>
+    <!-- cruz de rotulo -->
+    <g transform="translate(410,60)"><rect x="-16" y="-6" width="32" height="12" rx="3" fill="#0891b2"/><rect x="-6" y="-16" width="12" height="32" rx="3" fill="#0891b2"/></g>
+  <path d="M 250 200 C 250 150, 360 150, 372 190 L 380 214 L 250 214 Z" fill="#0891b2"/>
+      <rect x="330" y="120" width="26" height="70" rx="8" fill="#ffffff" stroke="#0891b2" stroke-width="3"/>
+      <circle cx="300" cy="96" r="20" fill="#fde68a" stroke="#0891b2" stroke-width="3"/>
+      <line x1="300" y1="116" x2="300" y2="150" stroke="#155e75" stroke-width="4"/>
+      <line x1="300" y1="116" x2="240" y2="132" stroke="#155e75" stroke-width="4"/>
+      <rect x="250" y="200" width="150" height="14" rx="4" fill="#155e75"/>
+</svg>

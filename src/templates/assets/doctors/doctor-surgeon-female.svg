@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Doctor surgeon female (ilustracion)">
+  <defs>
+    <clipPath id="c"><circle cx="120" cy="120" r="120"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect width="240" height="240" fill="#d1fae5"/>
+    <circle cx="120" cy="120" r="114" fill="#ffffff" opacity="0.55"/>
+    <!-- torso / bata -->
+    <path d="M 42 240 L 42 196 C 42 156, 86 138, 120 138 C 154 138, 198 156, 198 196 L 198 240 Z" fill="#d1fae5" stroke="#047857" stroke-width="2"/>
+    <!-- solapa -->
+    <path d="M 120 140 L 100 176 L 112 190 Z" fill="#d1fae5"/>
+    <path d="M 120 140 L 140 176 L 128 190 Z" fill="#d1fae5"/>
+    <!-- cuello -->
+    <rect x="108" y="120" width="24" height="26" rx="10" fill="#e7c6a5"/>
+    <!-- estetoscopio -->
+    <path d="M 104 148 C 90 176, 112 206, 124 190" fill="none" stroke="#047857" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="126" cy="192" r="7" fill="#047857"/>
+    <!-- cabeza (sin rostro) -->
+    <circle cx="120" cy="96" r="34" fill="#e7c6a5"/>
+    <path d="M 82 138 C 78 62, 88 54, 120 56 C 152 54, 162 62, 158 138 L 152 138 C 156 96, 152 64, 120 63 C 88 64, 84 96, 88 138 Z" fill="#3f3a36"/>
+    <!-- insignia de especialidad -->
+    <circle cx="172" cy="184" r="18" fill="#ffffff" stroke="#047857" stroke-width="1.5"/><path d="M 166 190 L 175 181 L 178 178 L 176 183 L 168 191 Z" fill="#047857"/><rect x="165" y="189" width="4" height="3" rx="1" transform="rotate(-45 167 190)" fill="#047857"/>
+  </g>
+  <circle cx="120" cy="120" r="119" fill="none" stroke="#047857" stroke-width="2"/>
+</svg>

@@ -52,7 +52,10 @@ src/
   dc-templates/     pool de disenos de digital card (clinic/dark/executive/
                     luxury/credencial) + _viewer.html (visor swipeable)
   templates/        HTML con {{variables}} para build-web (stub), por rubro
+    assets/         imagenes placeholder (SVG) doctor por genero + consultorio
+                    por especialidad; selector en config/doctor-images.ts
   config/rubro-map  rubro -> template web + servicios/ideas base + CARD_LABELS
+  config/doctor-images  selector de imagenes por genero/especialidad (puro)
 leads/              datos de terceros (gitignored)
 tests/
   deterministic/    slug, template, schema, build-cards, ...
