@@ -3,6 +3,7 @@ import {
   buildOutreachMessage,
   greetingName,
   publicCardUrl,
+  publicWebUrl,
   PUBLIC_BASE_URL,
   UPSELL_SYSTEMS,
 } from "../../src/lib/outreach.js";
@@ -45,10 +46,12 @@ function builtLead(overrides: Partial<Lead> = {}): Lead {
   };
 }
 
-describe("publicCardUrl", () => {
-  it("arma la URL publica con el dominio de kronet y el slug", () => {
-    expect(publicCardUrl("dr-karey")).toBe(`${PUBLIC_BASE_URL}/dr-karey`);
-    expect(publicCardUrl("dr-karey")).toBe("https://cards.kronet.app/dr-karey");
+describe("publicCardUrl / publicWebUrl", () => {
+  it("arma la URL publica con dominio + slug + subcarpeta que sube deploy", () => {
+    // el raiz <base>/<slug> NO resuelve: deploy publica en /dc/ y /web/
+    expect(publicCardUrl("dr-karey")).toBe(`${PUBLIC_BASE_URL}/dr-karey/dc/`);
+    expect(publicCardUrl("dr-karey")).toBe("https://cards.kronet.app/dr-karey/dc/");
+    expect(publicWebUrl("dr-karey")).toBe("https://cards.kronet.app/dr-karey/web/");
   });
 });
 
@@ -76,34 +79,37 @@ describe("buildOutreachMessage", () => {
     expect(front).toContain("Hola, buen día Dr. Guillermo Karey Perez Cortes");
   });
 
-  it("incluye el enlace publico de la tarjeta digital", () => {
+  it("incluye el enlace publico de la tarjeta digital con el sufijo /dc/", () => {
     const { front, full } = buildOutreachMessage(builtLead());
-    expect(front).toContain("https://cards.kronet.app/dr-karey");
-    expect(full).toContain("https://cards.kronet.app/dr-karey");
+    expect(front).toContain("📱 Tarjeta digital:\nhttps://cards.kronet.app/dr-karey/dc/");
+    expect(full).toContain("https://cards.kronet.app/dr-karey/dc/");
   });
 
-  it("incluye el enlace del sitio web solo si el lead ya lo tiene", () => {
+  it("incluye la pagina web solo si el lead ya la tiene, siempre con la URL canonica", () => {
     const sin = buildOutreachMessage(builtLead());
-    expect(sin.front).not.toContain("Sitio web:");
+    expect(sin.front).not.toContain("Página web:");
 
+    // web_url relativo (build-web sin deploy): es SENAL de que la web existe,
+    // pero la URL del mensaje se deriva del slug, nunca de ese valor.
     const con = buildOutreachMessage(
       builtLead({
-        generated: { dc_url: "dc/index.html", web_url: "https://cards.kronet.app/dr-karey/web" },
+        generated: { dc_url: "dc/index.html", web_url: "web/index.html" },
       }),
     );
-    expect(con.front).toContain("🌐 Sitio web: https://cards.kronet.app/dr-karey/web");
+    expect(con.front).toContain("🌐 Página web:\nhttps://cards.kronet.app/dr-karey/web/");
+    expect(con.front).not.toContain("web/index.html");
   });
 
   it("el back lista TODOS los sistemas del menu de up-sell", () => {
     const { back } = buildOutreachMessage(builtLead());
     for (const s of UPSELL_SYSTEMS) {
-      expect(back).toContain(s.name);
+      expect(back).toContain(`• ${s}`);
     }
   });
 
-  it("el back usa el propio entregable como prueba (se generaron de forma automatica)", () => {
+  it("el back usa el propio entregable como prueba (se creo automaticamente desde una foto)", () => {
     const { back } = buildOutreachMessage(builtLead());
-    expect(back).toContain("de forma automática");
+    expect(back).toContain("se creó automáticamente a partir de una fotografía");
   });
 
   it("el mensaje completo une apertura y seguimiento", () => {
@@ -114,8 +120,15 @@ describe("buildOutreachMessage", () => {
 
   it("usa 'su negocio' como fallback cuando no hay nombre de negocio", () => {
     const lead = builtLead({ business: { name: "", attrs: {} } });
-    const { front } = buildOutreachMessage(lead);
-    expect(front).toContain("Tomé la tarjeta de su negocio");
+    const { front, back } = buildOutreachMessage(lead);
+    expect(front).toContain("Estuve en su negocio y tomé una foto");
+    expect(back).toContain("estas herramientas en su negocio");
+  });
+
+  it("menciona el negocio por nombre en la apertura y el seguimiento", () => {
+    const { front, back } = buildOutreachMessage(builtLead());
+    expect(front).toContain("Estuve en DR. GUILLERMO KAREY y tomé una foto");
+    expect(back).toContain("estas herramientas en DR. GUILLERMO KAREY");
   });
 });
 
