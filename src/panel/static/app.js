@@ -7,6 +7,9 @@ const $ = (id) => document.getElementById(id);
 
 let currentSlug = null;
 
+// Estado de la lista de leads (paginada + con busqueda en el server).
+const listState = { page: 1, query: "", totalPages: 1 };
+
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   $(id).classList.add("active");
@@ -88,36 +91,124 @@ $("logout-btn").addEventListener("click", async () => {
 async function loadLeadsList() {
   const countEl = $("list-count");
   const listEl = $("leads-list");
+  const pagerEl = $("list-pager");
   countEl.textContent = "Cargando…";
   try {
-    const res = await fetch("/api/leads", { credentials: "same-origin" });
+    const params = new URLSearchParams({ page: String(listState.page) });
+    if (listState.query) params.set("q", listState.query);
+    const res = await fetch(`/api/leads?${params.toString()}`, { credentials: "same-origin" });
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const leads = await res.json();
-    countEl.textContent = leads.length === 1 ? "1 lead" : `${leads.length} leads`;
-    if (leads.length === 0) {
-      listEl.innerHTML = '<p class="empty-hint">Todavia no hay leads. Toca "+ Nuevo" para empezar.</p>';
+    const data = await res.json();
+    const items = data.items || [];
+    const total = data.total ?? items.length;
+    listState.page = data.page || 1;
+    listState.totalPages = data.totalPages || 1;
+
+    countEl.textContent = total === 1 ? "1 lead" : `${total} leads`;
+
+    if (items.length === 0) {
+      pagerEl.style.display = "none";
+      listEl.innerHTML = listState.query
+        ? `<p class="empty-hint">Sin resultados para “${esc(listState.query)}”.</p>`
+        : '<p class="empty-hint">Todavia no hay leads. Toca "+ Nuevo" para empezar.</p>';
       return;
     }
-    listEl.innerHTML = leads
+
+    listEl.innerHTML = items
       .map(
         (l) => `
       <div class="lead-card" data-slug="${esc(l.slug)}" data-status="${esc(l.status)}">
-        <div>
+        <div class="lead-card-main">
           <div class="lead-card-name">${esc(l.name)}</div>
           <div class="lead-card-meta">${esc(l.rubro)}</div>
         </div>
-        <span class="status-badge">${esc(statusLabel(l.status))}</span>
+        <div class="lead-card-side">
+          <span class="status-badge">${esc(statusLabel(l.status))}</span>
+          <button type="button" class="lead-delete-btn" data-delete-slug="${esc(l.slug)}" data-name="${esc(l.name)}" title="Eliminar lead" aria-label="Eliminar ${esc(l.name)}">🗑</button>
+        </div>
       </div>`,
       )
       .join("");
     listEl.querySelectorAll(".lead-card").forEach((el) => {
-      el.addEventListener("click", () => openLead(el.dataset.slug, el.dataset.status));
+      el.addEventListener("click", (ev) => {
+        // El boton de borrar vive dentro de la card: no debe abrir el lead.
+        if (ev.target.closest(".lead-delete-btn")) return;
+        openLead(el.dataset.slug, el.dataset.status);
+      });
     });
+    listEl.querySelectorAll(".lead-delete-btn").forEach((btn) => {
+      btn.addEventListener("click", () => deleteLead(btn.dataset.deleteSlug, btn.dataset.name));
+    });
+
+    // Pager: solo se muestra si hay mas de una pagina.
+    if (listState.totalPages > 1) {
+      pagerEl.style.display = "flex";
+      $("list-page-info").textContent = `Página ${listState.page} de ${listState.totalPages}`;
+      $("list-prev").disabled = listState.page <= 1;
+      $("list-next").disabled = listState.page >= listState.totalPages;
+    } else {
+      pagerEl.style.display = "none";
+    }
   } catch {
     countEl.textContent = "";
+    pagerEl.style.display = "none";
     listEl.innerHTML = '<p class="empty-hint">No se pudo cargar la lista.</p>';
   }
 }
+
+/**
+ * Borra un lead (confirma primero). Tras borrar recarga la lista; si la pagina
+ * actual quedo vacia por el borrado, el clamp del server nos trae la ultima
+ * pagina valida en el proximo fetch (page se re-sincroniza con data.page).
+ */
+async function deleteLead(slug, name) {
+  if (!slug) return false;
+  const label = name || slug;
+  if (!window.confirm(`¿Eliminar el lead “${label}”?\n\nSe borra su carpeta local (datos, imágenes y artefactos). Esta acción no se puede deshacer.`)) {
+    return false;
+  }
+  try {
+    const res = await fetch(`/api/leads/${encodeURIComponent(slug)}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    await loadLeadsList();
+    return true;
+  } catch (err) {
+    window.alert(err.message || "No se pudo eliminar el lead.");
+    return false;
+  }
+}
+
+// Busqueda con debounce: cada tecla reinicia a la pagina 1.
+let searchTimer = null;
+$("list-search-input").addEventListener("input", (ev) => {
+  const value = ev.target.value.trim();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    listState.query = value;
+    listState.page = 1;
+    loadLeadsList();
+  }, 250);
+});
+
+$("list-prev").addEventListener("click", () => {
+  if (listState.page > 1) {
+    listState.page -= 1;
+    loadLeadsList();
+  }
+});
+
+$("list-next").addEventListener("click", () => {
+  if (listState.page < listState.totalPages) {
+    listState.page += 1;
+    loadLeadsList();
+  }
+});
 
 // "extracted" todavia no paso el checkpoint humano -> verify. Cualquier otro
 // status (verified en adelante) ya puede correr/reintentar stages -> run.
@@ -502,6 +593,16 @@ $("run-links-btn").addEventListener("click", async () => {
 $("run-back-btn").addEventListener("click", () => {
   showScreen("screen-list");
   loadLeadsList();
+});
+
+// Borrar desde la pantalla de detalle: reusa deleteLead() y, solo si borro de
+// verdad (usuario confirmo + server ok), vuelve a la lista. Si cancela o falla,
+// nos quedamos en el detalle.
+$("run-delete-btn").addEventListener("click", async () => {
+  const name = $("run-subtitle").textContent.split(" · ")[0];
+  if (await deleteLead(currentSlug, name)) {
+    showScreen("screen-list");
+  }
 });
 
 /* ------------------------------------------------------------------ */

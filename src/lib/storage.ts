@@ -54,6 +54,16 @@ export async function writeLead(lead: Lead): Promise<void> {
   );
 }
 
+/**
+ * Borra por completo la carpeta local del lead (data.json + artefactos + fotos).
+ * Solo toca la copia local que administra el panel; NO despublica nada que ya
+ * viva en el server remoto (eso esta fuera de leadsRoot). Idempotente: `force`
+ * evita que lance si la carpeta ya no existe.
+ */
+export async function deleteLead(slug: string): Promise<void> {
+  await fs.rm(leadDir(slug), { recursive: true, force: true });
+}
+
 /** Copia un archivo dentro de la carpeta del lead y devuelve el nombre relativo. */
 export async function copyIntoLead(
   slug: string,
