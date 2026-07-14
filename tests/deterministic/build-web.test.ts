@@ -856,7 +856,7 @@ describe("doc-perfil — CV: experiencia, educacion, idiomas, habilidades", () =
   });
 });
 
-describe("doc-lujo — higiene, firma del doctor, testimonios; sin <img>", () => {
+describe("doc-lujo — higiene, firma del doctor, testimonios, retrato", () => {
   it("renderiza higiene_puntos, doctor_cita y los 4 testimonios", async () => {
     const html = await renderFinal("doc-lujo.html");
     expect(html).toContain("Esterilización certificada");
@@ -869,9 +869,14 @@ describe("doc-lujo — higiene, firma del doctor, testimonios; sin <img>", () =>
     expect(html).toContain("Excelente seguimiento a mi tratamiento de tiroides.");
   });
 
-  it("identidad sin fotos: cero tags <img>", async () => {
+  // Antes el diseno era deliberadamente "sin fotos" (icono placeholder en el
+  // hueco del retrato); se cambio a pedido: el hueco ahora consume el slot
+  // estandar img_retrato_principal como el resto del pool.
+  it("el retrato del doctor sale del slot img_retrato_principal (banco por genero o foto real)", async () => {
     const html = await renderFinal("doc-lujo.html");
-    expect(html).not.toContain("<img");
+    expect(html).toContain('<img src="assets/Retrato');
+    expect(html).not.toContain("solar:user-circle-linear\" width=\"120\""); // ya no hay icono placeholder
+    expect(html).not.toMatch(/<img[^>]+src="https?:\/\//); // cero imagenes externas (brief §5)
   });
 });
 
