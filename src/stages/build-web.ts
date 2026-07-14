@@ -119,6 +119,55 @@ export function webAssetSrc(p: string | undefined): string {
 }
 
 /**
+ * normalizeText — PURA: minusculas + sin acentos (NFD sin diacriticos), para
+ * matchear palabras clave sin depender de tildes/mayusculas ("Odontología" ->
+ * "odontologia").
+ */
+function normalizeText(s: string): string {
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
+/**
+ * Palabras que marcan a un lead como odontologico. El rubro sigue siendo
+ * `doctor` (cubre CUALQUIER especialidad medica); esto solo distingue el
+ * SUB-rubro dental para elegir imagenes del banco acordes. Ver detectSpecialty.
+ */
+const DENTAL_KEYWORDS = [
+  "dental",
+  "dentista",
+  "dentist",
+  "odontolog",
+  "odontopediatr",
+  "ortodon",
+  "endodon",
+  "periodon",
+  "estomatolog",
+  "implantolog",
+];
+
+/**
+ * detectSpecialty — PURA: infiere el sub-rubro del banco (`WebSpecialty`) a
+ * partir de los datos REALES del lead (nombre, tagline, servicios, highlights,
+ * about, atributos). Devuelve "dental" si algun campo menciona odontologia; si
+ * no, "general". NO mira el copy generado por el LLM (`generated_copy` es
+ * muestra); solo dato real del negocio. Determinista: mismo lead -> misma
+ * especialidad, sin `Math.random`.
+ */
+export function detectSpecialty(lead: Lead): WebSpecialty {
+  const haystack = normalizeText(
+    [
+      lead.business.name,
+      lead.business.tagline ?? "",
+      lead.content.about ?? "",
+      ...(lead.content.services ?? []),
+      ...(lead.content.highlights ?? []),
+      ...Object.values(lead.business.attrs ?? {}),
+    ].join(" "),
+  );
+  return DENTAL_KEYWORDS.some((k) => haystack.includes(k)) ? "dental" : "general";
+}
+
+/**
  * fnv1a — hash FNV-1a de 32 bits, PURO y determinista. Es la semilla de la
  * seleccion de imagenes: mismo `slug:slot` -> mismo indice -> mismo archivo,
  * en cualquier maquina y corrida (no hay Math.random en el pipeline).
@@ -160,16 +209,28 @@ export function assertWebBuildableStatus(status: Status): void {
 /* Banco de imagenes                                                   */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Sub-rubro del banco de imagenes dentro del rubro `doctor`: "general"
+ * (medicina general/cualquier especialidad no dental) o "dental" (odontologia).
+ * Es el equivalente a `gender` pero para el TIPO de negocio: `resolveWebImages`
+ * prefiere las imagenes cuya especialidad coincide con la del lead (detectada
+ * por `detectSpecialty`), con fallback a "general" si no hay stock. Una imagen
+ * sin `specialty` en el manifest se trata como "general".
+ */
+export type WebSpecialty = "general" | "dental";
+
 /** Una imagen del banco del rubro, tal como la describe manifest.json. */
 export interface WebImage {
   /** Nombre legible/estable, usado para ordenar candidatos (estabilidad). */
   tag: string;
-  /** Nombre de archivo dentro de assets/ (ej. "RetratoDoctor01.jpg"). */
+  /** Nombre de archivo dentro de assets/ (ej. "RetratoDoctor01.png"). */
   file: string;
   /** Categoria: "retrato" | "consultorio" | "equipo" | "sonrisa" | "recepcion". */
   kind: string;
   /** Solo retratos: genero de la persona retratada. */
   gender?: PersonGender;
+  /** Sub-rubro: "general" (default si se omite) | "dental". Ver WebSpecialty. */
+  specialty?: WebSpecialty;
 }
 
 export interface WebImageManifest {
@@ -255,7 +316,16 @@ export function resolveWebImages(
     return img;
   };
 
-  const byKind = (...kinds: string[]): WebImage[] => images.filter((i) => kinds.includes(i.kind));
+  // Sub-rubro del lead (general | dental). byKind PREFIERE las imagenes de esa
+  // especialidad y cae a todo el kind si el banco no tiene stock de ese
+  // sub-rubro (mismo criterio de fallback que el genero en retratosDe). Una
+  // imagen sin `specialty` cuenta como "general".
+  const specialty = detectSpecialty(lead);
+  const byKind = (...kinds: string[]): WebImage[] => {
+    const ofKind = images.filter((i) => kinds.includes(i.kind));
+    const preferred = ofKind.filter((i) => (i.specialty ?? "general") === specialty);
+    return preferred.length ? preferred : ofKind;
+  };
 
   /**
    * Eleccion sembrada con exclusiones en dos niveles: `avoid` son los archivos

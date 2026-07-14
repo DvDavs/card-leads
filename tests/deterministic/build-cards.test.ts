@@ -916,7 +916,9 @@ describe("render del visor (_viewer.html)", () => {
     expect(html).toContain('id="helpBtn"');
     expect(html).toContain("cómo se vería tu tarjeta digital");
     expect(html).toContain("los colores de tu marca");
-    expect(html).toContain("Otros diseños");
+    // el paso "Otros diseños" fue reemplazado en PR #5 (rework de swipe) por los
+    // pasos de flechas ("Cambiá de diseño") + gesto de swipe ("deslizá con el dedo").
+    expect(html).toContain("Cambiá de diseño");
   });
 
   it("el paso 'tu propia página web' de la guia se muestra SOLO con hasGeneratedWeb", async () => {
