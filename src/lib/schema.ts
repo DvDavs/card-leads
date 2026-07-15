@@ -33,6 +33,42 @@ export type Status = z.infer<typeof StatusSchema>;
 export const ChannelSchema = z.enum(["telegram", "manual"]);
 export type Channel = z.infer<typeof ChannelSchema>;
 
+/**
+ * SendStateSchema — estado de ENVÍO de la tarjeta, ortogonal al `status` del
+ * pipeline (que mide en qué etapa técnica va: ingested/extracted/…/deployed).
+ * Este eje lo maneja el operador a mano para llevar el control comercial:
+ *  - draft: borrador, todavía se está armando (default).
+ *  - ready: lista para enviar al negocio.
+ *  - sent:  ya se envió (se estampa quién y cuándo, ver TrackingSchema).
+ *  - test:  es una prueba / no es un lead real.
+ */
+export const SendStateSchema = z.enum(["draft", "ready", "sent", "test"]);
+export type SendState = z.infer<typeof SendStateSchema>;
+
+/**
+ * TrackingSchema — metadata de ORGANIZACIÓN y control de la tarjeta, separada
+ * de los datos del negocio. La llena el operador desde el panel:
+ *  - folder: carpeta libre para agrupar por persona/uso ("David", "Juan",
+ *    "Borradores"). undefined = sin carpeta asignada.
+ *  - send_state: ver SendStateSchema. Default "draft".
+ *  - created_by / sent_by: quién creó la tarjeta y quién la envió (el operador
+ *    se identifica en el panel; el login es una passphrase compartida, así que
+ *    esta es la única forma de saber quién hizo qué).
+ *  - sent_at: ISO, cuándo se marcó como enviada.
+ * Cuando el bloque está presente, send_state cae a "draft" si falta. El bloque
+ * ENTERO es opcional (`.optional()`) para que los data.json viejos —sin esta
+ * clave— sigan validando sin migración (mismo criterio que colorsText/palette);
+ * los sitios de lectura tratan la ausencia como send_state="draft" / sin carpeta.
+ */
+export const TrackingSchema = z.object({
+  folder: z.string().optional(),
+  send_state: SendStateSchema.default("draft"),
+  created_by: z.string().optional(),
+  sent_by: z.string().optional(),
+  sent_at: z.string().optional(),
+});
+export type Tracking = z.infer<typeof TrackingSchema>;
+
 // PersonGenderSchema: genero de LA PERSONA del negocio (no del negocio en si),
 // inferido por el LLM de nombre/foto/honorifico en `extract` y confirmable a
 // mano en `verify` (mismo patron que RubroSchema). Se usa unicamente para
@@ -293,6 +329,12 @@ export const LeadSchema = z.object({
     proposal_path: z.string().optional(),
     outreach_message: z.string().optional(),
   }),
+
+  // tracking: organización (carpeta) + control de envío (estado, quién creó /
+  // envió). Ver TrackingSchema. Vive separado de `meta` (proceso) a propósito:
+  // esto lo maneja el operador, no el pipeline. Opcional => data.json viejos
+  // (sin esta clave) siguen validando.
+  tracking: TrackingSchema.optional(),
 
   meta: z.object({
     needs: z.array(z.string()), // que le falta para avanzar (human-in-loop)

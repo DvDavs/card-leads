@@ -28,10 +28,24 @@
 
   <!-- Screen: lista de leads -->
   <section id="screen-list" class="screen">
+    <div class="operator-bar">
+      <span class="operator-who">👤 <strong id="operator-name">—</strong></span>
+      <button type="button" id="operator-btn" class="mini-btn">Cambiar</button>
+    </div>
     <h1>Leads</h1>
     <p class="sub" id="list-count">Cargando…</p>
     <div class="list-search">
       <input type="search" id="list-search-input" placeholder="Buscar por nombre, rubro o slug…" autocomplete="off" />
+    </div>
+    <div class="filter-bar">
+      <div id="folder-chips" class="folder-chips"></div>
+      <select id="sendstate-filter" class="sendstate-filter" aria-label="Filtrar por estado de envío">
+        <option value="">Todos los estados</option>
+        <option value="draft">Borrador</option>
+        <option value="ready">Lista para enviar</option>
+        <option value="sent">Enviada</option>
+        <option value="test">Prueba</option>
+      </select>
     </div>
     <div id="leads-list"></div>
     <div class="pager" id="list-pager" style="display:none;">
@@ -115,6 +129,7 @@
   <section id="screen-verify" class="screen">
     <h1>Verificar</h1>
     <p class="sub" id="verify-subtitle"></p>
+    <div class="images-gallery" id="verify-images"></div>
     <div class="banner-risk">⚠ Verificar estos datos contra la tarjeta fisica</div>
 
     <div id="verify-phones"></div>
@@ -135,13 +150,42 @@
   <section id="screen-run" class="screen">
     <h1>Publicar</h1>
     <p class="sub" id="run-subtitle"></p>
+
+    <!-- Control de organización y envío (carpeta, estado, quién creó/envió) -->
+    <div class="tracking-panel" id="tracking-panel"></div>
+
+    <!-- Imágenes subidas (frente/reverso/logo/retrato) -->
+    <div class="images-gallery" id="run-images"></div>
+
     <div id="run-steps"></div>
     <div class="error-msg" id="run-error"></div>
     <button class="primary" id="run-publish-btn">Publicar</button>
+    <button id="run-edit-btn">✎ Editar datos (re-verificar)</button>
     <button id="run-links-btn">Ver links</button>
     <button id="run-back-btn">Volver a la lista</button>
     <button class="danger" id="run-delete-btn">Eliminar lead</button>
   </section>
+
+  <!-- Modal generico (elegir operador / mover a carpeta) -->
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title"></h2>
+      <p class="sub" id="modal-desc"></p>
+      <div id="modal-quick" class="modal-quick"></div>
+      <input type="text" id="modal-input" autocomplete="off" />
+      <div class="error-msg" id="modal-error"></div>
+      <div class="modal-actions">
+        <button type="button" id="modal-cancel">Cancelar</button>
+        <button type="button" class="primary" id="modal-confirm">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox para ver una imagen a pantalla completa -->
+  <div id="lightbox" class="lightbox" hidden>
+    <img id="lightbox-img" alt="Imagen de la tarjeta" />
+    <button type="button" id="lightbox-close" class="lightbox-close" aria-label="Cerrar">✕</button>
+  </div>
 
   <!-- Screen: links publicos -->
   <section id="screen-links" class="screen">
