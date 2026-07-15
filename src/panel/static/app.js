@@ -6,9 +6,16 @@
 const $ = (id) => document.getElementById(id);
 
 let currentSlug = null;
+// Ultimo status conocido de la pantalla verify (para el modo "volver" del boton
+// finalizar cuando el lead ya paso el checkpoint).
+let lastVerifyStatus = null;
 
-// Estado de la lista de leads (paginada + con busqueda en el server).
-const listState = { page: 1, query: "", totalPages: 1 };
+// Estado de la lista de leads (paginada + con busqueda + filtros en el server).
+const listState = { page: 1, query: "", folder: "", sendState: "", totalPages: 1 };
+
+// Carpetas conocidas (se refrescan con cada respuesta de /leads) para poblar los
+// atajos del modal "mover a carpeta".
+let knownFolders = [];
 
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
@@ -38,10 +45,182 @@ function statusLabel(status) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Operador (identidad local) + estados de envio                        */
+/* ------------------------------------------------------------------ */
+
+// El login es una passphrase compartida (no hay usuarios). Para saber "quien
+// creo / quien envio" el operador se identifica una vez y su nombre se guarda
+// en localStorage (solo este dispositivo). Se estampa en created_by al crear y
+// en sent_by al marcar como enviada.
+const OPERATOR_KEY = "panel_operator";
+const DEFAULT_OPERATORS = ["David", "Juan"];
+
+function getOperator() {
+  return (localStorage.getItem(OPERATOR_KEY) || "").trim();
+}
+function setOperator(name) {
+  const v = (name || "").trim();
+  if (v) localStorage.setItem(OPERATOR_KEY, v);
+  else localStorage.removeItem(OPERATOR_KEY);
+  renderOperator();
+}
+function renderOperator() {
+  const el = $("operator-name");
+  if (el) el.textContent = getOperator() || "sin definir";
+}
+
+// Estados de envio (eje comercial, ortogonal al status del pipeline).
+const SEND_STATES = [
+  { key: "draft", label: "Borrador" },
+  { key: "ready", label: "Lista" },
+  { key: "sent", label: "Enviada" },
+  { key: "test", label: "Prueba" },
+];
+function sendStateLabel(k) {
+  const s = SEND_STATES.find((x) => x.key === k);
+  return s ? s.label : "Borrador";
+}
+
+// Fecha ISO -> texto local corto. Guardado ante fechas invalidas.
+function formatDate(iso) {
+  try {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "" : d.toLocaleString();
+  } catch {
+    return "";
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Modal generico + lightbox                                            */
+/* ------------------------------------------------------------------ */
+
+let modalConfirmHandler = null;
+
+// openModal({title, desc, quick[], value, confirmLabel, onConfirm}). onConfirm
+// recibe el texto y es responsable de cerrar (closeModal) cuando termina, para
+// poder validar/mostrar error sin cerrar.
+function openModal({ title, desc, quick, value, confirmLabel, onConfirm }) {
+  $("modal-title").textContent = title || "";
+  $("modal-desc").textContent = desc || "";
+  $("modal-error").textContent = "";
+  const input = $("modal-input");
+  input.value = value || "";
+  $("modal-confirm").textContent = confirmLabel || "Guardar";
+  const quickEl = $("modal-quick");
+  quickEl.innerHTML = (quick || [])
+    .map((q) => `<button type="button" class="mini-btn" data-quick="${esc(q)}">${esc(q)}</button>`)
+    .join("");
+  quickEl.querySelectorAll("[data-quick]").forEach((b) =>
+    b.addEventListener("click", () => {
+      input.value = b.dataset.quick;
+      input.focus();
+    }),
+  );
+  modalConfirmHandler = onConfirm;
+  $("modal-overlay").hidden = false;
+  input.focus();
+}
+function closeModal() {
+  $("modal-overlay").hidden = true;
+  modalConfirmHandler = null;
+}
+function modalError(msg) {
+  $("modal-error").textContent = msg;
+}
+
+$("modal-cancel").addEventListener("click", closeModal);
+$("modal-overlay").addEventListener("click", (ev) => {
+  if (ev.target === $("modal-overlay")) closeModal();
+});
+$("modal-confirm").addEventListener("click", () => {
+  if (modalConfirmHandler) modalConfirmHandler($("modal-input").value.trim());
+});
+$("modal-input").addEventListener("keydown", (ev) => {
+  if (ev.key === "Enter") {
+    ev.preventDefault();
+    $("modal-confirm").click();
+  }
+});
+
+function openLightbox(url) {
+  $("lightbox-img").src = url;
+  $("lightbox").hidden = false;
+}
+function closeLightbox() {
+  $("lightbox").hidden = true;
+  $("lightbox-img").removeAttribute("src");
+}
+$("lightbox-close").addEventListener("click", closeLightbox);
+$("lightbox").addEventListener("click", (ev) => {
+  if (ev.target === $("lightbox")) closeLightbox();
+});
+
+// Selector de operador (reusa el modal). Al confirmar valida no-vacio.
+function promptOperator() {
+  openModal({
+    title: "¿Quién eres?",
+    desc: "Se usa para marcar quién crea y envía las tarjetas. Se guarda solo en este dispositivo.",
+    quick: DEFAULT_OPERATORS,
+    value: getOperator(),
+    confirmLabel: "Guardar",
+    onConfirm: (val) => {
+      if (!val) {
+        modalError("Escribe un nombre.");
+        return;
+      }
+      setOperator(val);
+      closeModal();
+    },
+  });
+}
+$("operator-btn").addEventListener("click", promptOperator);
+
+/* ------------------------------------------------------------------ */
+/* Galeria de imagenes (frente/reverso/logo/retrato)                    */
+/* ------------------------------------------------------------------ */
+
+// Pinta las imagenes locales del lead en `containerId`. Cada thumbnail abre el
+// lightbox a pantalla completa al tocarla.
+async function loadImages(slug, containerId) {
+  const el = $(containerId);
+  if (!el) return;
+  el.innerHTML = '<p class="hint">Cargando imágenes…</p>';
+  try {
+    const res = await fetch(`/api/leads/${encodeURIComponent(slug)}/images`, { credentials: "same-origin" });
+    if (!res.ok) {
+      el.innerHTML = "";
+      return;
+    }
+    const data = await res.json();
+    const imgs = data.images || [];
+    if (!imgs.length) {
+      el.innerHTML = '<p class="hint">Sin imágenes subidas.</p>';
+      return;
+    }
+    el.innerHTML = imgs
+      .map(
+        (im) => `
+      <figure class="thumb">
+        <img src="${esc(im.url)}" alt="${esc(im.label)}" data-full="${esc(im.url)}" loading="lazy" />
+        <figcaption>${esc(im.label)}</figcaption>
+      </figure>`,
+      )
+      .join("");
+    el.querySelectorAll("img[data-full]").forEach((img) =>
+      img.addEventListener("click", () => openLightbox(img.dataset.full)),
+    );
+  } catch {
+    el.innerHTML = "";
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Sesion (login/logout)                                                */
 /* ------------------------------------------------------------------ */
 
 async function checkSession() {
+  renderOperator();
   const res = await fetch("/api/me", { credentials: "same-origin" }).catch(() => null);
   if (res && res.ok) {
     showScreen("screen-list");
@@ -96,6 +275,8 @@ async function loadLeadsList() {
   try {
     const params = new URLSearchParams({ page: String(listState.page) });
     if (listState.query) params.set("q", listState.query);
+    if (listState.folder) params.set("folder", listState.folder);
+    if (listState.sendState) params.set("sendState", listState.sendState);
     const res = await fetch(`/api/leads?${params.toString()}`, { credentials: "same-origin" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
@@ -104,6 +285,7 @@ async function loadLeadsList() {
     listState.page = data.page || 1;
     listState.totalPages = data.totalPages || 1;
 
+    renderFolderChips(data.folders || []);
     countEl.textContent = total === 1 ? "1 lead" : `${total} leads`;
 
     if (items.length === 0) {
@@ -115,19 +297,29 @@ async function loadLeadsList() {
     }
 
     listEl.innerHTML = items
-      .map(
-        (l) => `
+      .map((l) => {
+        const sendState = l.send_state || "draft";
+        const metaBits = [esc(l.rubro)];
+        if (l.folder) metaBits.push(`📁 ${esc(l.folder)}`);
+        const people = [];
+        if (l.created_by) people.push(`✍ ${esc(l.created_by)}`);
+        if (l.sent_by) people.push(`📤 ${esc(l.sent_by)}`);
+        return `
       <div class="lead-card" data-slug="${esc(l.slug)}" data-status="${esc(l.status)}">
         <div class="lead-card-main">
           <div class="lead-card-name">${esc(l.name)}</div>
-          <div class="lead-card-meta">${esc(l.rubro)}</div>
+          <div class="lead-card-meta">${metaBits.join(" · ")}</div>
+          ${people.length ? `<div class="lead-card-people">${people.join(" · ")}</div>` : ""}
         </div>
         <div class="lead-card-side">
-          <span class="status-badge">${esc(statusLabel(l.status))}</span>
+          <div class="badge-col">
+            <span class="send-badge send-${esc(sendState)}">${esc(sendStateLabel(sendState))}</span>
+            <span class="status-badge">${esc(statusLabel(l.status))}</span>
+          </div>
           <button type="button" class="lead-delete-btn" data-delete-slug="${esc(l.slug)}" data-name="${esc(l.name)}" title="Eliminar lead" aria-label="Eliminar ${esc(l.name)}">🗑</button>
         </div>
-      </div>`,
-      )
+      </div>`;
+      })
       .join("");
     listEl.querySelectorAll(".lead-card").forEach((el) => {
       el.addEventListener("click", (ev) => {
@@ -184,6 +376,37 @@ async function deleteLead(slug, name) {
   }
 }
 
+// Pinta los chips de carpeta (facetas que manda el server). "Todas" limpia el
+// filtro; cada chip filtra por su carpeta. El chip activo se resalta.
+function renderFolderChips(folders) {
+  knownFolders = folders.map((f) => f.name).filter((n) => n && n !== "(sin carpeta)");
+  const el = $("folder-chips");
+  if (!el) return;
+  const total = folders.reduce((s, f) => s + (f.count || 0), 0);
+  const chips = [
+    `<button type="button" class="fchip ${listState.folder === "" ? "active" : ""}" data-folder="">Todas <span class="fchip-count">${total}</span></button>`,
+  ];
+  for (const f of folders) {
+    chips.push(
+      `<button type="button" class="fchip ${listState.folder === f.name ? "active" : ""}" data-folder="${esc(f.name)}">${esc(f.name)} <span class="fchip-count">${f.count}</span></button>`,
+    );
+  }
+  el.innerHTML = chips.join("");
+  el.querySelectorAll("[data-folder]").forEach((b) =>
+    b.addEventListener("click", () => {
+      listState.folder = b.dataset.folder;
+      listState.page = 1;
+      loadLeadsList();
+    }),
+  );
+}
+
+$("sendstate-filter").addEventListener("change", (ev) => {
+  listState.sendState = ev.target.value;
+  listState.page = 1;
+  loadLeadsList();
+});
+
 // Busqueda con debounce: cada tecla reinicia a la pagina 1.
 let searchTimer = null;
 $("list-search-input").addEventListener("input", (ev) => {
@@ -224,6 +447,11 @@ function openLead(slug, status) {
 }
 
 $("new-lead-btn").addEventListener("click", () => {
+  // Sin operador definido no podemos estampar created_by: pedirlo primero.
+  if (!getOperator()) {
+    promptOperator();
+    return;
+  }
   resetCapture();
   showScreen("screen-capture");
 });
@@ -363,6 +591,13 @@ $("capture-form").addEventListener("submit", async (ev) => {
   if (back) form.set("back", back, back.name || "back.jpg");
   const rubro = $("rubro-input").value;
   if (rubro) form.set("rubro", rubro);
+  // Estampa quién crea y, por defecto, agrupa la tarjeta en la carpeta del
+  // operador (David -> carpeta "David"). Ambos editables luego desde el detalle.
+  const op = getOperator();
+  if (op) {
+    form.set("created_by", op);
+    form.set("folder", op);
+  }
 
   submitBtn.disabled = true;
   progressEl.style.display = "block";
@@ -453,6 +688,7 @@ function renderColorField(c, palette) {
 
 async function loadVerifyView(slug) {
   $("verify-error").textContent = "";
+  loadImages(slug, "verify-images");
   const res = await fetch(`/api/leads/${encodeURIComponent(slug)}/verify-view`, { credentials: "same-origin" });
   if (!res.ok) {
     $("verify-error").textContent = "No se pudo cargar el lead.";
@@ -471,9 +707,19 @@ function renderVerifyView(view) {
   $("verify-general").innerHTML = view.general.map(renderStringField).join("");
   $("verify-services").innerHTML = renderListField(view.services);
 
+  lastVerifyStatus = view.status;
   const finalizeBtn = $("verify-finalize-btn");
-  finalizeBtn.textContent = view.status === "verified" ? "Ya verificado" : "Confirmar y continuar";
-  finalizeBtn.disabled = view.status !== "extracted" && view.status !== "verified";
+  if (view.status === "extracted") {
+    // Aun sin pasar el checkpoint: confirmar avanza extracted -> verified.
+    finalizeBtn.textContent = "Confirmar y continuar";
+    finalizeBtn.dataset.mode = "finalize";
+  } else {
+    // Ya verificado (o mas alla): los campos se autoguardan al editarlos, asi
+    // que aca solo volvemos a Publicar para re-correr las stages si algo fallo.
+    finalizeBtn.textContent = "Guardar y volver a Publicar";
+    finalizeBtn.dataset.mode = "back";
+  }
+  finalizeBtn.disabled = false;
 }
 
 function readFieldValue(el) {
@@ -557,6 +803,14 @@ document.getElementById("screen-verify").addEventListener("click", (ev) => {
 $("verify-finalize-btn").addEventListener("click", async () => {
   const errorEl = $("verify-error");
   errorEl.textContent = "";
+  // Modo "back": el lead ya estaba verificado; los cambios se autoguardaron
+  // campo a campo, no hay que finalizar de nuevo. Volvemos a Publicar (donde se
+  // puede re-correr el pipeline).
+  if ($("verify-finalize-btn").dataset.mode === "back") {
+    setupRunScreen(currentSlug, lastVerifyStatus || "verified");
+    showScreen("screen-run");
+    return;
+  }
   try {
     const res = await fetch(`/api/leads/${encodeURIComponent(currentSlug)}/finalize`, {
       method: "POST",
@@ -624,6 +878,94 @@ function setupRunScreen(slug, status) {
   $("run-error").textContent = "";
   renderRunSteps(status);
   $("run-publish-btn").textContent = status === "deployed" ? "Volver a publicar" : "Publicar";
+  loadImages(slug, "run-images");
+  renderTrackingPanel(slug);
+}
+
+/* ------------------------------------------------------------------ */
+/* Panel de tracking (carpeta + estado de envio + quien creo/envio)     */
+/* ------------------------------------------------------------------ */
+
+// PATCH del tracking. Devuelve el lead actualizado o null (y muestra el error).
+async function patchTracking(slug, patch) {
+  try {
+    const res = await fetch(`/api/leads/${encodeURIComponent(slug)}/tracking`, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  } catch (err) {
+    $("run-error").textContent = err.message || "No se pudo actualizar el control.";
+    return null;
+  }
+}
+
+async function renderTrackingPanel(slug) {
+  const el = $("tracking-panel");
+  if (!el) return;
+  el.innerHTML = '<p class="hint">Cargando control…</p>';
+  let lead;
+  try {
+    const res = await fetch(`/api/leads/${encodeURIComponent(slug)}`, { credentials: "same-origin" });
+    if (!res.ok) throw new Error();
+    lead = await res.json();
+  } catch {
+    el.innerHTML = "";
+    return;
+  }
+  const t = lead.tracking || {};
+  const state = t.send_state || "draft";
+  const folder = t.folder || "";
+  const stateBtns = SEND_STATES.map(
+    (s) => `<button type="button" class="seg-btn seg-${s.key} ${state === s.key ? "active" : ""}" data-set-state="${s.key}">${esc(s.label)}</button>`,
+  ).join("");
+  el.innerHTML = `
+    <div class="tp-row">
+      <span class="tp-label">📁 Carpeta</span>
+      <button type="button" class="mini-btn" id="tp-folder-btn">${folder ? esc(folder) : "Sin carpeta · asignar"}</button>
+    </div>
+    <div class="tp-states">
+      <span class="tp-label">Estado de envío</span>
+      <div class="seg">${stateBtns}</div>
+    </div>
+    <div class="tp-people">
+      <span>✍ Creada por: <strong>${esc(t.created_by || "—")}</strong></span>
+      <span>📤 Enviada por: <strong>${esc(t.sent_by || "—")}</strong>${t.sent_at ? ` · <span class="tp-date">${esc(formatDate(t.sent_at))}</span>` : ""}</span>
+    </div>`;
+  $("tp-folder-btn").addEventListener("click", () => moveToFolder(slug, folder));
+  el.querySelectorAll("[data-set-state]").forEach((b) =>
+    b.addEventListener("click", () => setSendState(slug, b.dataset.setState)),
+  );
+}
+
+// Mueve la tarjeta a una carpeta (texto libre, con atajos a las conocidas).
+// Vacio = sin carpeta.
+function moveToFolder(slug, current) {
+  openModal({
+    title: "Mover a carpeta",
+    desc: "Elige o escribe el nombre de una carpeta. Vacío = sin carpeta.",
+    quick: knownFolders.length ? knownFolders : DEFAULT_OPERATORS.concat("Borradores"),
+    value: current,
+    confirmLabel: "Mover",
+    onConfirm: async (val) => {
+      closeModal();
+      await patchTracking(slug, { folder: val || null });
+      renderTrackingPanel(slug);
+    },
+  });
+}
+
+// Cambia el estado de envio. Al marcar "Enviada" pasa el operador como actor
+// para estampar sent_by/sent_at en el server.
+async function setSendState(slug, state) {
+  const patch = { send_state: state };
+  if (state === "sent") patch.actor = getOperator();
+  const updated = await patchTracking(slug, patch);
+  if (updated) renderTrackingPanel(slug);
 }
 
 // Consume el SSE de una stage via fetch (EventSource nativo no soporta POST).
@@ -691,6 +1033,14 @@ $("run-publish-btn").addEventListener("click", async () => {
   } finally {
     btn.disabled = false;
   }
+});
+
+// Re-verificar: abre la pantalla de verificacion sobre el lead actual (aunque
+// ya este verificado/publicado). Permite corregir datos y luego volver a
+// Publicar para re-correr las stages si algo fallo.
+$("run-edit-btn").addEventListener("click", () => {
+  loadVerifyView(currentSlug);
+  showScreen("screen-verify");
 });
 
 $("run-links-btn").addEventListener("click", async () => {

@@ -11,6 +11,8 @@ export interface IngestOptions {
   rubro?: string; // override; default "otro"
   channel?: string; // "telegram" | "manual"; default "manual"
   force?: boolean; // sobreescribe un lead existente
+  createdBy?: string; // operador que crea la tarjeta (se guarda en tracking.created_by)
+  folder?: string; // carpeta inicial (tracking.folder); si falta queda sin carpeta
 }
 
 async function fileExists(p: string): Promise<boolean> {
@@ -97,6 +99,11 @@ export async function ingest(opts: IngestOptions): Promise<Lead> {
     brand: { colors: {}, has_logo: false },
     content: { services: [] },
     generated: {},
+    tracking: {
+      send_state: "draft",
+      ...(opts.createdBy?.trim() ? { created_by: opts.createdBy.trim() } : {}),
+      ...(opts.folder?.trim() ? { folder: opts.folder.trim() } : {}),
+    },
     meta: { needs, errors: [], updated_at: new Date().toISOString() },
   };
 

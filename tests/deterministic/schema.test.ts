@@ -38,6 +38,19 @@ describe("LeadSchema", () => {
     expect(LeadSchema.safeParse(bad).success).toBe(false);
   });
 
+  it("acepta un lead SIN tracking (back-compat) y no lo inventa", () => {
+    const parsed = parseLead(ingestedLead());
+    expect(parsed.tracking).toBeUndefined();
+  });
+
+  it("si viene tracking sin send_state, cae a 'draft'; valida los estados", () => {
+    const withTracking = { ...ingestedLead(), tracking: { folder: "David" } };
+    expect(parseLead(withTracking).tracking?.send_state).toBe("draft");
+
+    const badState = { ...ingestedLead(), tracking: { send_state: "enviadisima" } };
+    expect(LeadSchema.safeParse(badState).success).toBe(false);
+  });
+
   it("rechaza un rubro invalido", () => {
     const bad = { ...ingestedLead(), rubro: "abogado" };
     expect(LeadSchema.safeParse(bad).success).toBe(false);

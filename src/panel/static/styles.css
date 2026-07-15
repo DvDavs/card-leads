@@ -268,6 +268,164 @@ textarea {
   overflow-y: auto;
 }
 
+/* --- Barra de operador --- */
+.operator-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.operator-who { font-size: 0.85rem; color: var(--muted); }
+.operator-who strong { color: var(--text); }
+.mini-btn {
+  min-height: unset;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* --- Filtros de la lista (carpeta + estado) --- */
+.filter-bar { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+.folder-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.fchip {
+  min-height: unset;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.fchip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fchip-count { opacity: 0.7; font-size: 0.72rem; }
+.sendstate-filter { padding: 0.55rem 0.7rem; font-size: 0.9rem; }
+
+/* --- Badges de la card (estado de envio + status del pipeline) --- */
+.badge-col { display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-end; }
+.lead-card-people { color: var(--muted); font-size: 0.75rem; margin-top: 0.2rem; }
+.send-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.send-draft { background: var(--surface-2); color: var(--muted); border-color: var(--border); }
+.send-ready { background: rgba(91, 140, 255, 0.16); color: var(--accent); border-color: var(--accent); }
+.send-sent { background: rgba(76, 175, 125, 0.16); color: var(--ok); border-color: var(--ok); }
+.send-test { background: rgba(224, 104, 91, 0.14); color: var(--danger); border-color: var(--danger); }
+
+/* --- Galeria de imagenes --- */
+.images-gallery { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.images-gallery .thumb { margin: 0; width: 120px; }
+.images-gallery .thumb img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: zoom-in;
+  display: block;
+}
+.images-gallery figcaption { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 0.2rem; }
+
+/* --- Panel de tracking (pantalla Publicar) --- */
+.tracking-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.tp-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.tp-label { font-size: 0.8rem; color: var(--muted); }
+.tp-states { display: flex; flex-direction: column; gap: 0.4rem; }
+.seg { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.seg-btn {
+  min-height: unset;
+  flex: 1;
+  min-width: 4.5rem;
+  padding: 0.5rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.seg-btn.active { color: #fff; }
+.seg-btn.seg-draft.active { background: var(--muted); border-color: var(--muted); }
+.seg-btn.seg-ready.active { background: var(--accent); border-color: var(--accent); }
+.seg-btn.seg-sent.active { background: var(--ok); border-color: var(--ok); }
+.seg-btn.seg-test.active { background: var(--danger); border-color: var(--danger); }
+.tp-people { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; color: var(--muted); }
+.tp-people strong { color: var(--text); font-weight: 600; }
+.tp-date { font-size: 0.75rem; }
+
+/* --- Modal generico --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+  z-index: 50;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.3rem;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.modal h2 { font-size: 1.1rem; margin: 0; }
+.modal-quick { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.modal-actions { display: flex; gap: 0.6rem; margin-top: 0.3rem; }
+.modal-actions button { flex: 1; }
+
+/* --- Lightbox --- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 60;
+}
+.lightbox[hidden] { display: none; }
+.lightbox img { max-width: 100%; max-height: 90dvh; border-radius: 8px; }
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  min-height: unset;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
 /* --- Desktop / tablet: vista mas ancha y lista en grilla ---
    El panel es mobile-first (main capado a 480px). En pantallas anchas damos
    mas aire y pintamos la lista de leads en 2-3 columnas para no dejar una
