@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { leadExists, readLead } from "../../lib/storage.js";
 import { buildOutreachMessage } from "../../lib/outreach.js";
-import { runStage, type RunnableStage } from "../services/pipeline.js";
+import { undeploy } from "../../stages/undeploy.js";
+import { runStage, withSlugLock, type RunnableStage } from "../services/pipeline.js";
 
 const stagesRoutes = new Hono();
 
@@ -62,6 +63,24 @@ stagesRoutes.post("/leads/:slug/stages/:stage", async (c) => {
       clearInterval(heartbeat);
     }
   });
+});
+
+/**
+ * Despublica el lead: borra su carpeta remota en el droplet y lo saca del
+ * manifest del panel, dejando el link publico en 404. No borra la carpeta
+ * local (para eso esta DELETE /leads/:slug); el lead queda re-publicable. Bajo
+ * lock del slug para no pelear con un deploy/redeploy en curso sobre el mismo
+ * manifest remoto.
+ */
+stagesRoutes.post("/leads/:slug/undeploy", async (c) => {
+  const slug = c.req.param("slug");
+  if (!(await leadExists(slug))) return c.json({ error: "lead no existe" }, 404);
+  try {
+    const lead = await withSlugLock(slug, () => undeploy(slug));
+    return c.json({ slug: lead.slug, status: lead.status });
+  } catch (err) {
+    return c.json({ error: err instanceof Error ? err.message : String(err) }, 400);
+  }
 });
 
 /**

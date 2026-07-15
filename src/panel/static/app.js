@@ -619,11 +619,18 @@ function setStepIcon(stage, icon) {
   if (row) row.querySelector("[data-icon]").textContent = icon;
 }
 
+// "Despublicar" solo tiene sentido si el lead ya esta publicado (deployed en
+// adelante): antes de eso no hay carpeta remota ni link que bajar.
+function isPublished(status) {
+  return status !== "error" && STATUS_ORDER.indexOf(status) >= STATUS_ORDER.indexOf("deployed");
+}
+
 function setupRunScreen(slug, status) {
   $("run-subtitle").textContent = `${slug} · ${statusLabel(status)}`;
   $("run-error").textContent = "";
   renderRunSteps(status);
   $("run-publish-btn").textContent = status === "deployed" ? "Volver a publicar" : "Publicar";
+  $("run-undeploy-btn").style.display = isPublished(status) ? "" : "none";
 }
 
 // Consume el SSE de una stage via fetch (EventSource nativo no soporta POST).
@@ -710,6 +717,32 @@ $("run-delete-btn").addEventListener("click", async () => {
   const name = $("run-subtitle").textContent.split(" · ")[0];
   if (await deleteLead(currentSlug, name)) {
     showScreen("screen-list");
+  }
+});
+
+// Despublicar: baja el lead del server publico (link -> 404) sin borrar la
+// carpeta local, asi se puede volver a publicar. El status regresa a
+// "construido pero sin publicar", asi que refrescamos la pantalla de run.
+$("run-undeploy-btn").addEventListener("click", async () => {
+  const errorEl = $("run-error");
+  errorEl.textContent = "";
+  if (!window.confirm("¿Despublicar este lead?\n\nSe borra su carpeta del server público y deja de aparecer en el link. La carpeta local se conserva y puedes volver a publicar cuando quieras.")) {
+    return;
+  }
+  const btn = $("run-undeploy-btn");
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/leads/${encodeURIComponent(currentSlug)}/undeploy`, {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    setupRunScreen(currentSlug, data.status);
+  } catch (err) {
+    errorEl.textContent = err.message || "No se pudo despublicar.";
+  } finally {
+    btn.disabled = false;
   }
 });
 

@@ -76,7 +76,7 @@ export function publicUrl(cfg: DeployConfig, slug: string, kind: "dc" | "web"): 
 }
 
 /** Escapa un valor para interpolarlo seguro dentro de un comando de shell POSIX remoto. */
-function posixQuote(value: string): string {
+export function posixQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 

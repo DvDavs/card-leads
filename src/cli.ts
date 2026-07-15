@@ -6,6 +6,7 @@ import { verify } from "./stages/verify.js";
 import { enrich } from "./stages/enrich.js";
 import { buildWeb } from "./stages/build-web.js";
 import { deploy } from "./stages/deploy.js";
+import { undeploy } from "./stages/undeploy.js";
 import { proposal } from "./stages/proposal.js";
 import { pkg } from "./stages/package.js";
 
@@ -57,6 +58,7 @@ Uso:
   cli enrich <slug>           (genera copy de marketing con IA)
   cli build-web <slug>        (stub)
   cli deploy <slug>
+  cli undeploy <slug>         (baja el lead del server publico: link -> 404)
   cli proposal <slug>         (stub)
   cli package <slug>          (mensaje de contacto para WhatsApp)
 
@@ -141,6 +143,11 @@ async function main(): Promise<void> {
       console.log(`deployed: ${lead.slug} (status=${lead.status})`);
       if (lead.generated.dc_url) console.log(`  dc:  ${lead.generated.dc_url}`);
       if (lead.generated.web_url) console.log(`  web: ${lead.generated.web_url}`);
+      break;
+    }
+    case "undeploy": {
+      const lead = await undeploy(positionals[0]!);
+      console.log(`despublicado: ${lead.slug} (status=${lead.status})`);
       break;
     }
     case "proposal":
